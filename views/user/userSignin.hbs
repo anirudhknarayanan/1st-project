@@ -1,0 +1,136 @@
+<div class="login-container">
+  <a href="/auth/google"> 
+  <div class="google-login">
+    <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/google/google-original.svg" alt="Google Icon" />
+    <span>Continue with Google</span>
+  </div>
+</a>
+  <div class="or-divider"><span>OR</span></div>
+
+  <form action="/signup" id="signupForm" method="post">
+  {{!-- {{#if message}}
+  <div class="alert-message">{{message}}</div>
+{{/if}} --}}
+    <div class="form-group">
+      <label>Full Name</label>
+      <input id="fullName" type="text" placeholder="Enter your full name" name="name" />
+      <div id="fullNameError" class="error"></div>
+    </div>
+    <div class="form-group">
+      <label>Mobile</label>
+      <input id="mobile" type="text" placeholder="Enter your mobile number" name="phone" />
+      <div id="mobileError" class="error"></div>
+    </div>
+    <div class="form-group">
+      <label>Email</label>
+      <input id="email" type="email" placeholder="Enter your email" name="email" />
+      <div id="emailError" class="error"></div>
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input id="password" type="password" placeholder="Create a password" name="password" />
+      <div id="passwordError" class="error"></div>
+    </div>
+    <div class="form-group">
+      <label>Confirm Password</label>
+      <input id="confirmPassword" type="password" placeholder="Confirm your password" name="cpassword" />
+      <div id="confirmPasswordError" class="error"></div>
+    </div>
+    <button class="login-btn" type="submit">Sign Up</button>
+  </form>
+
+  <div class="signup-msg">
+    Already have an account? <a href="/login">Login</a>
+  </div>
+</div>
+
+<script>
+  document.addEventListener("DOMContentLoaded", function () {
+    const form = document.getElementById('signupForm');
+
+    form.addEventListener('submit', function (e) {
+      e.preventDefault();
+
+      const name = document.getElementById('fullName');
+      const phone = document.getElementById('mobile');
+      const email = document.getElementById('email');
+      const password = document.getElementById('password');
+      const confirmPassword = document.getElementById('confirmPassword');
+
+      const nameError = document.getElementById('fullNameError');
+      const phoneError = document.getElementById('mobileError');
+      const emailError = document.getElementById('emailError');
+      const passwordError = document.getElementById('passwordError');
+      const confirmPasswordError = document.getElementById('confirmPasswordError');
+
+      let valid = true;
+      nameError.textContent = "";
+      phoneError.textContent = "";
+      emailError.textContent = "";
+      passwordError.textContent = "";
+      confirmPasswordError.textContent = "";
+
+      // Name Validation: only letters, min 3 characters
+      const nameRegex = /^[A-Za-z\s]{3,}$/;
+      if (!name.value.trim()) {
+        nameError.textContent = "Full name is required.";
+        valid = false;
+      } else if (!nameRegex.test(name.value.trim())) {
+        nameError.textContent = "Enter a valid name (letters only, min 3 characters).";
+        valid = false;
+      }
+
+      // Mobile Validation: digits, optional +, 10–15 digits
+      const phoneRegex = /^\+?[0-9]{10,15}$/;
+      if (!phone.value.trim()) {
+        phoneError.textContent = "Mobile number is required.";
+        valid = false;
+      } else if (!phoneRegex.test(phone.value.trim())) {
+        phoneError.textContent = "Enter a valid mobile number.";
+        valid = false;
+      }
+
+      // Email Validation
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!email.value.trim()) {
+        emailError.textContent = "Email is required.";
+        valid = false;
+      } else if (!emailRegex.test(email.value.trim())) {
+        emailError.textContent = "Enter a valid email address.";
+        valid = false;
+      }
+
+      // Password Validation: min 6 chars, at least 1 letter and 1 number
+   if (!password.value.trim()) {
+  passwordError.textContent = "Password is required.";
+  valid = false;
+} else if (password.value.length < 6) {
+  passwordError.textContent = "Password must be at least 6 characters.";
+  valid = false;
+}
+
+      // Confirm Password
+      if (confirmPassword.value !== password.value) {
+        confirmPasswordError.textContent = "Passwords do not match.";
+        valid = false;
+      }
+
+      if (valid) {
+        form.submit(); // Submit if all fields are valid
+      }
+    });
+  });
+  
+</script>
+
+{{#if message}}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+  Swal.fire({
+    icon: 'error',
+    title: 'Oops...',
+    text: '{{message}}',
+    confirmButtonColor: '#d33'
+  });
+</script>
+{{/if}}

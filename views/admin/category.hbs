@@ -1,0 +1,580 @@
+<style>
+  .content-main {
+
+    padding-top: 20px;
+    padding-left: 20px;
+  }
+
+  .content-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 30px;
+  }
+
+  .content-title {
+    color: #333;
+    font-size: 24px;
+    font-weight: 600;
+    margin: 0;
+  }
+
+  .category-container {
+    background: #fff;
+    border-radius: 10px;
+    box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    padding: 25px;
+  }
+
+  .category-form {
+    background: #f8f9fa;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 30px;
+  }
+
+  .category-form form {
+    display: flex;
+    align-items: flex-end;
+    gap: 15px;
+    flex-wrap: wrap;
+  }
+
+  .form-group {
+    flex: 1;
+    min-width: 200px;
+    margin: 0;
+  }
+
+  .category-form .form-label {
+    font-weight: 500;
+    color: #4a5568;
+    margin-bottom: 8px;
+  }
+
+  .category-form .form-control {
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    padding: 10px 15px;
+    transition: all 0.3s ease;
+  }
+
+  .category-form .form-control:focus {
+    border-color: #4299e1;
+    box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.15);
+  }
+
+  .btn-add-category {
+    background: linear-gradient(45deg, #ffa500, #ffd700);
+    color: white;
+    margin-right: 0.5rem;
+    border: none;
+    padding: 10px 24px;
+    border-radius: 6px;
+    font-weight: 500;
+    height: 42px;
+    transition: all 0.3s ease;
+  }
+
+  .btn-add-category:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(66, 153, 225, 0.15);
+    background: linear-gradient(45deg, #ff8c00, #ffc000);
+  }
+
+  .category-table {
+    margin-top: 20px;
+  }
+
+  .table {
+    width: 100%;
+    background: #fff;
+    border-radius: 8px;
+  }
+
+  .table thead th {
+    background: #f7fafc;
+    color: #4a5568;
+    font-weight: 600;
+    padding: 15px;
+    border-bottom: 2px solid #e2e8f0;
+  }
+
+  .table tbody td {
+    padding: 15px;
+    vertical-align: middle;
+    border-bottom: 1px solid #e2e8f0;
+  }
+
+  .badge {
+    padding: 6px 12px;
+    font-weight: 500;
+    font-size: 12px;
+    border-radius: 20px;
+  }
+
+  .badge.alert-success {
+    background: #ebf8f4;
+    color: #0f766e;
+  }
+
+  .badge.alert-danger {
+    background: #fef2f2;
+    color: #dc2626;
+  }
+
+  .btn-action {
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-weight: 500;
+    font-size: 13px;
+    margin-right: 8px;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 90px;
+  }
+
+  .btn-action.btn-danger {
+    background: #fee2e2;
+    color: #dc2626;
+    border: 1px solid #fecaca;
+  }
+
+  .btn-action.btn-danger:hover {
+    background: #fecaca;
+    border-color: #ef4444;
+    transform: translateY(-1px);
+  }
+
+  .btn-action.btn-success {
+    background: #ecfdf5;
+    color: #059669;
+    border: 1px solid #d1fae5;
+  }
+
+  .btn-action.btn-success:hover {
+    background: #d1fae5;
+    border-color: #10b981;
+    transform: translateY(-1px);
+  }
+
+  .actions-cell {
+    white-space: nowrap;
+  }
+
+  .pagination-container {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 30px;
+  }
+
+  .pagination-btn {
+    padding: 8px 16px;
+    border-radius: 6px;
+    font-weight: 500;
+    font-size: 14px;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    border: 1px solid #e2e8f0;
+    background: #fff;
+    color: #4a5568;
+    min-width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .pagination-btn:hover {
+    background: #f7fafc;
+    border-color: #4299e1;
+    color: #4299e1;
+    transform: translateY(-1px);
+  }
+
+  .pagination-btn.active {
+    background: linear-gradient(45deg, #4299e1, #667eea);
+    border-color: transparent;
+    color: white;
+  }
+
+  .pagination-btn.disabled {
+    opacity: 0.5;
+    pointer-events: none;
+    cursor: not-allowed;
+  }
+
+  .error-message {
+    color: #dc2626
+  }
+</style>
+
+
+
+
+<!-- Add SweetAlert2 -->
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+
+
+
+<section class="content-main">
+  <div class="content-header">
+    <h2 class="content-title">Category Management</h2>
+  </div>
+
+  <div class="category-container">
+    <!-- Add Category Form -->
+    <div class="category-form">
+      <h4 class="mb-4">Add New Category</h4>
+      <form id="addCategoryForm" method="post" onsubmit="return handleFormSubmit(event)">
+        <div class="form-group">
+          <label for="categoryName" class="form-label">Category Name</label>
+          <input type="text" id="categoryName" name="name" placeholder="Enter category name" class="form-control" />
+          <div id="name-error" class="error-message"></div>
+        </div>
+
+        <div class="form-group">
+          <label for="description" class="form-label">Description</label>
+          <textarea id="description" name="description" placeholder="Enter category description"
+            class="form-control"></textarea>
+          <div id="description-error" class="error-message"></div>
+        </div>
+
+        <div class="form-group">
+          <label for="categoryOffer" class="form-label">Offer (%)</label>
+          <input type="number" id="categoryOffer" name="categoryOffer" placeholder="Enter category offer"
+            class="form-control" min="0" max="100" />
+          <div id="category-offer-error" class="error-message"></div>
+        </div>
+
+        <button class="btn-add-category" type="submit">Add Category</button>
+      </form>
+    </div>
+
+    <!-- Categories Table -->
+    <div class="category-table mt-5">
+      <div class="table-responsive">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Category</th>
+              <th>Description</th>
+              <th>Category Offer%</th>
+              <th>offer</th>
+              <th>List/Unlist</th>
+              <th class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {{#each cat}}
+            <tr>
+              <td>{{this.name}}</td>
+              <td>{{this.description}}</td>
+              <td>{{this.categoryOffer}}</td>
+              <td>
+                {{#if (eq this.categoryOffer 0)}}
+
+                <button type="submit" class="btn btn-success btn-sm" onclick="addOffer('{{this._id}}')">Add
+                  Offer</button>
+
+                {{else}}
+
+                <button type="submit" class="btn btn-danger btn-sm" onclick="removeOffer('{{this._id}}')">Remove
+                  Offer</button>
+
+                {{/if}}
+              </td>
+
+              <td>
+                <div class="form-check form-switch d-flex align-items-center">
+                  <input type="checkbox" class="form-check-input toggle-status" data-id="{{this._id}}" {{#if
+                    this.isListed}}checked{{/if}} />
+                  <span class="status-label ms-2 {{#if this.isListed}}text-success{{else}}text-danger{{/if}}">
+                    {{#if this.isListed}}Listed{{else}}Unlisted{{/if}}
+                  </span>
+                </div>
+              </td>
+
+              <td class="text-end">
+                <a href="/admin/editCategory/{{this._id}}">
+                  <button class="btn btn-sm btn-outline-primary edit-category" title="Edit Category"
+                    style="background-color: black; color: wheat; width: 64px; height: 58px;">
+                    <i class="fas fa-edit me-1"></i> Edit
+                  </button>
+                </a>
+              </td>
+            </tr>
+            {{/each}}
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      <!-- Pagination -->
+      <div class="pagination-container mt-4">
+        {{#if totalPages}}
+        {{#if (gt currentPage 1)}}
+        <a href="?page={{subtract currentPage 1}}" class="pagination-btn"><i class="fas fa-chevron-left"></i></a>
+        {{/if}}
+
+        {{#each (range 1 totalPages)}}
+        <a href="?page={{this}}" class="pagination-btn {{#if (eq this ../currentPage)}}active{{/if}}">
+          {{this}}
+        </a>
+        {{/each}}
+
+        {{#if (lt currentPage totalPages)}}
+        <a href="?page={{add currentPage 1}}" class="pagination-btn"><i class="fas fa-chevron-right"></i></a>
+        {{/if}}
+        {{/if}}
+      </div>
+
+    </div>
+  </div>
+</section>
+
+<script>
+  function handleFormSubmit(event) {
+    event.preventDefault();
+    clearErrorMessages();
+
+    const name = document.getElementById('categoryName').value.trim();
+    const description = document.getElementById('description').value.trim();
+    const offerValue = document.getElementById('categoryOffer').value.trim();
+
+    let isValid = true;
+
+    if (!name) {
+      showError('name-error', 'Category name is required');
+      isValid = false;
+    } else if (name.length < 3) {
+      showError('name-error', 'Category name must be at least 3 characters');
+      isValid = false;
+    }
+
+    if (!description) {
+      showError('description-error', 'Description is required');
+      isValid = false;
+    } else if (description.length < 10) {
+      showError('description-error', 'Description must be at least 10 characters');
+      isValid = false;
+    }
+
+    const offer = Number(offerValue);
+    if (offerValue === '' || isNaN(offer)) {
+      showError('category-offer-error', 'Category offer must be a number');
+      isValid = false;
+    } else if (offer < 0 || offer > 100) {
+      showError('category-offer-error', 'Category offer must be between 0 and 100');
+      isValid = false;
+    }
+
+    if (!isValid) return false;
+
+    const data = {
+      name,
+      description,
+      categoryOffer: offer
+    };
+
+    fetch('/admin/addCategory', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(data)
+    })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          Swal.fire({
+            icon: 'success',
+            title: 'Success!',
+            text: 'Category added successfully',
+            showConfirmButton: false,
+            timer: 1500
+          }).then(() => {
+            window.location.reload();
+          });
+        } else {
+          throw new Error(data.message || 'Failed to add category');
+        }
+      })
+      .catch(error => {
+        console.error('Error:', error);
+        Swal.fire({
+          icon: 'error',
+          title: 'Error!',
+          text: error.message || 'Failed to add category',
+        });
+      });
+
+    return false;
+  }
+
+  function showError(id, msg) {
+    const el = document.getElementById(id);
+    el.textContent = msg;
+    el.classList.add('show');
+  }
+
+  function clearErrorMessages() {
+    document.querySelectorAll('.error-message').forEach(el => {
+      el.textContent = '';
+      el.classList.remove('show');
+    });
+  }
+
+  // add Offer
+
+  async function addOffer(categoryId) {
+
+    const { value: amount } = await Swal.fire(
+      {
+        title: "offer in percentage",
+        input: "number",
+        inputLabel: "percentage",
+        inputPlaceOder: "%",
+
+      }
+    );
+    if (amount) {
+      try {
+        const response = await fetch("/admin/addCategoryOffer", {
+          method: "POST",
+          headers: {
+            'content-type': "application/json",
+
+          },
+          body: JSON.stringify({
+            percentage: amount,
+            categoryId: categoryId,
+
+          })
+        });
+
+        const data = await response.json();
+        if (response.ok && data.status === true) {
+          Swal.fire({
+            title: "offer added",
+            content: "offer has been added",
+            type: "success"
+          }).then(() => {
+            location.reload();
+          })
+        } else {
+          Swal.fire(
+            "Failed",
+            data.message || "Adding offer failed", "error"
+
+          );
+        }
+
+      } catch (error) {
+        swal.fire("Error",
+          "An error occur while adding"
+          , "Error");
+        console.log("error adding offer", error)
+
+      }
+    }
+  }
+
+  //remove offer
+
+  async function removeOffer(categoryId) {
+    try {
+      const response = await fetch("/admin/removeCategoryOffer", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json"
+        },
+        body: JSON.stringify({
+          categoryId: categoryId,
+        })
+      })
+      const data = await response.json()
+      if (response.ok && data.status === true) {
+        Swal.fire(
+          "Offer removed",
+          "Offer has been removed",
+          "success"
+        ).then(() => {
+          location.reload()
+        })
+      } else {
+        Swal.fire(
+          "Error",
+          data.message || "removing offer failed", "error"
+        )
+      }
+
+    } catch (error) {
+      Swal.fire(
+        "Error",
+        "An error occured while removing",
+        "error"
+      )
+      console.log("error removing offer")
+
+    }
+  }
+
+  // Toggle List/Unlist
+  document.querySelectorAll('.toggle-status').forEach(toggle => {
+    toggle.addEventListener('change', function () {
+      const categoryId = this.dataset.id;
+      const isListed = this.checked;
+      const statusLabel = this.parentElement.querySelector('.status-label');
+
+      Swal.fire({
+        title: 'Are you sure?',
+        text: `Do you want to ${isListed ? 'list' : 'unlist'} this category?`,
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonText: 'Yes, update it!',
+        cancelButtonText: 'Cancel'
+      }).then(result => {
+        if (result.isConfirmed) {
+          fetch(`/admin/toggleCategory/${categoryId}`, {
+            method: 'PATCH',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ isListed })
+          })
+            .then(res => res.json())
+            .then(data => {
+              if (data.success) {
+                statusLabel.textContent = isListed ? 'Listed' : 'Unlisted';
+                statusLabel.className = `status-label ms-2 ${isListed ? 'text-success' : 'text-danger'}`;
+
+                Swal.fire({
+                  icon: 'success',
+                  title: 'Updated!',
+                  text: `Category has been ${isListed ? 'listed' : 'unlisted'}`,
+                  showConfirmButton: false,
+                  timer: 1500
+                });
+              } else {
+                throw new Error(data.message || 'Update failed');
+              }
+            })
+            .catch(error => {
+              console.error('Error:', error);
+              this.checked = !isListed;
+              Swal.fire({
+                icon: 'error',
+                title: 'Error!',
+                text: 'Failed to update category status'
+              });
+            });
+        } else {
+          this.checked = !isListed;
+        }
+      });
+    });
+  });
+</script>

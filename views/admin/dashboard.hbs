@@ -1,0 +1,113 @@
+<style>
+  body {
+    background-color: #f8f9fa;
+  }
+  .sidebar {
+    height: 100vh;
+    background-color: #8BCAC3;
+    padding-top: 20px;
+  }
+  .sidebar a {
+    color: white;
+    display: block;
+    padding: 10px 20px;
+    text-decoration: none;
+  }
+  .sidebar a:hover, .sidebar a.active {
+    background-color: #76b1ab;
+    border-radius: 0 20px 20px 0;
+  }
+  .dashboard-cards .card {
+    border: none;
+    border-left: 5px solid #8BCAC3;
+  }
+</style>
+
+<!-- Main Content -->
+<div class="col-md-10">
+  <!-- Top Bar -->
+  <div class="d-flex justify-content-between align-items-center py-3 px-4 border-bottom">
+    <h4 class="mb-0">Dashboard</h4>
+    <div>
+      <input type="text" class="form-control d-inline-block me-2" placeholder="Search..." style="width: 200px;">
+      <i class="fas fa-bell me-3"></i>
+      <i class="fas fa-user-circle"></i>
+    </div>
+  </div>
+
+  <!-- Cards -->
+  <div class="row dashboard-cards p-4">
+    <div class="col-md-3 mb-4">
+      <div class="card p-3">
+        <h6>Total Orders</h6>
+        <h3>1,245</h3>
+      </div>
+    </div>
+    <div class="col-md-3 mb-4">
+      <div class="card p-3">
+        <h6>Revenue</h6>
+        <h3>$58,900</h3>
+      </div>
+    </div>
+    <div class="col-md-3 mb-4">
+      <div class="card p-3">
+        <h6>Customers</h6>
+        <h3>784</h3>
+      </div>
+    </div>
+    <div class="col-md-3 mb-4">
+      <div class="card p-3">
+        <h6>Stock</h6>
+        <h3>3,200</h3>
+      </div>
+    </div>
+  </div>
+
+  <!-- Orders Table -->
+  <div class="px-4">
+    <div class="card">
+      <div class="card-header bg-white">
+        <h5>Recent Orders</h5>
+      </div>
+      <div class="card-body">
+        <table class="table table-hover">
+          <thead>
+            <tr>
+              <th>Order ID</th>
+              <th>Customer</th>
+              <th>Date</th>
+              <th>Status</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>#00123</td>
+              <td>John Doe</td>
+              <td>2025-06-13</td>
+              <td><span class="badge bg-success">Delivered</span></td>
+              <td>$120.00</td>
+            </tr>
+            <tr>
+              <td>#00124</td>
+              <td>Jane Smith</td>
+              <td>2025-06-12</td>
+              <td><span class="badge bg-warning text-dark">Pending</span></td>
+              <td>$85.50</td>
+            </tr>
+            <tr>
+              <td>#00125</td>
+              <td>Michael Lee</td>
+              <td>2025-06-11</td>
+              <td><span class="badge bg-danger">Cancelled</span></td>
+              <td>$0.00</td>
+            </tr>
+          </tbody>
+        </table>
+      </div> <!-- card-body -->
+    </div> <!-- card -->
+  </div> <!-- px-4 -->
+</div> <!-- col-md-10 -->
+
+  
+

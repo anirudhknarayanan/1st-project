@@ -1,0 +1,35 @@
+<div class="container mt-5">
+  <h2 class="mb-4">Customer Management</h2>
+  <div class="table-responsive">
+    <table class="table table-bordered table-striped">
+      <thead class="thead-dark">
+        <tr>
+          <th>Name</th>
+          <th>Email</th>
+          <th>Phone Number</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+      <tbody>
+        {{#each userData}}
+          <tr>
+            <td>{{this.name}}</td>
+            <td>{{this.email}}</td>
+            <td>{{this.phone}}</td>
+            <td>
+              {{#if this.isBlocked}}
+                <form action="/admin/unblock/{{this._id}}" method="POST" style="display:inline-block;">
+                  <button type="submit" class="btn btn-success btn-sm">Unblock</button>
+                </form>
+              {{else}}
+                <form action="/admin/block/{{this._id}}" method="POST" style="display:inline-block;">
+                  <button type="submit" class="btn btn-danger btn-sm">Block</button>
+                </form>
+              {{/if}}
+            </td>
+          </tr>
+        {{/each}}
+      </tbody>
+    </table>
+  </div>
+</div>

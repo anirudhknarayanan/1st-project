@@ -1,0 +1,181 @@
+
+<style>
+    body {
+  margin: 0;
+  font-family: 'Segoe UI', sans-serif;
+  background-color: #f9fcfd;
+  color: #333;
+}
+
+.profile-container {
+  display: flex;
+  min-height: 100vh;
+}
+
+.sidebar {
+  width: 220px;
+  background-color: #fff;
+  padding: 30px 20px;
+  box-shadow: 2px 0 10px rgba(0,0,0,0.05);
+}
+
+.sidebar ul {
+  list-style: none;
+  padding: 0;
+}
+
+.sidebar li {
+  margin: 20px 0;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.profile-main {
+  flex: 1;
+  padding: 40px;
+  background-color: #f5fcfd;
+}
+
+.profile-header {
+  text-align: center;
+  margin-bottom: 30px;
+}
+
+.avatar {
+  position: relative;
+  display: inline-block;
+}
+
+.avatar img {
+  width: 90px;
+  height: 90px;
+  border-radius: 50%;
+  background-color: #ddd;
+}
+
+.edit-icon {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  font-size: 14px;
+  background: #fff;
+  border: 1px solid #ccc;
+  border-radius: 50%;
+  cursor: pointer;
+}
+
+.profile-header h2 {
+  margin: 10px 0 5px;
+  font-size: 22px;
+}
+
+.profile-header p {
+  color: #666;
+  font-size: 14px;
+}
+
+.profile-details {
+  background-color: #fff;
+  padding: 20px;
+  border-radius: 12px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.05);
+}
+
+.detail-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+  gap: 15px;
+}
+
+.detail-item .icon {
+  font-size: 20px;
+}
+
+.detail-item label {
+  font-weight: bold;
+  font-size: 13px;
+  color: #444;
+}
+
+.detail-item p {
+  margin: 5px 0 0;
+}
+
+.edit-btn {
+  display: block;
+  margin: 30px auto 0;
+  padding: 10px 20px;
+  border: none;
+  background-color: #0a2540;
+  color: #fff;
+  border-radius: 8px;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+</style>
+<div class="profile-container">
+  <aside class="sidebar">
+    <ul>
+      <li><i class="icon">👤</i> Profile</li>
+      <li><i class="icon">📦</i> Orders</li>
+      <li><i class="icon">💰</i> Wallet</li>
+      <li><i class="icon">📍</i> Address</li>
+      <li><i class="icon">🔒</i> Password</li>
+      <li><i class="icon">🎁</i> Refer & Earn</li>
+      <li><a href="/logout"><i class="icon">🚪</i> Logout</a></li>
+    </ul>
+  </aside>
+{{#if user}}
+  <main class="profile-main">
+    <div class="profile-header">
+      <div class="avatar">
+        <img src="https://cdn-icons-png.flaticon.com/512/847/847969.png" alt="Profile" />
+        <button class="edit-icon">✏️</button>
+      </div>
+      <h2>{{user.name}}</h2>
+      <p>Member since 2025</p>
+    </div>
+
+    <div class="profile-details">
+      <div class="detail-item">
+        <i class="icon">👤</i>
+        <div>
+          <label>Full Name</label>
+          <p>{{user.name}}</p>
+        </div>
+      </div>
+      <div class="detail-item">
+        <i class="icon">📧</i>
+        <div>
+          <label>Email</label>
+          <p>{{user.email}}</p>
+        </div>
+      </div>
+      <div class="detail-item">
+        <i class="icon">📞</i>
+        <div>
+          <label>Phone</label>
+          <p>{{user.phone}}</p>
+        </div>
+      </div>
+      <div class="detail-item">
+        <i class="icon">📍</i>
+        <div>
+          <label>Address</label>
+          <p>No default address set.</p>
+        </div>
+      </div>
+    </div>
+   
+
+    <button class="edit-btn">✏️ Edit Profile</button>
+  </main>
+</div>
+{{else}}
+  <p>User not logged in.</p>
+{{/if}}

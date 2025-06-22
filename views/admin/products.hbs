@@ -1,0 +1,444 @@
+<style>
+    body {
+        background-color: #f8f9fa;
+        font-family: 'Segoe UI', sans-serif;
+    }
+
+    /* Sidebar */
+    .sidebar {
+        height: 100vh;
+        background-color: #8BCAC3;
+        padding-top: 20px;
+    }
+
+    .sidebar a {
+        color: white;
+        display: block;
+        padding: 10px 20px;
+        text-decoration: none;
+    }
+
+    .sidebar a:hover,
+    .sidebar a.active {
+        background-color: #76b1ab;
+        border-radius: 0 20px 20px 0;
+    }
+
+    /* Page Heading */
+    .headname {
+        font-size: 28px;
+        font-weight: 600;
+        margin: 30px 0 20px;
+        text-align: center;
+        color: #343a40;
+    }
+
+    /* Container */
+    .admin-products-container {
+        padding: 20px;
+    }
+
+    /* Search bar */
+    .search-container {
+        margin-bottom: 20px;
+    }
+
+    .search-container .form-control {
+        border-radius: 10px 0 0 10px;
+        border-right: none;
+    }
+
+    .search-container .searchbtn {
+        border-radius: 0 10px 10px 0;
+        background-color: #8BCAC3;
+        border: none;
+        padding: 10px 20px;
+        color: white;
+        font-weight: bold;
+    }
+
+    .search-container .searchbtn:hover {
+        background-color: #76b1ab;
+    }
+
+    /* Table */
+    .products-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .products-table th {
+        background-color: #8BCAC3;
+        color: white;
+        text-align: center;
+    }
+
+    .products-table td,
+    .products-table th {
+        padding: 12px;
+        border: 1px solid #dee2e6;
+        vertical-align: middle;
+    }
+
+    .products-table td img.product-image {
+        width: 50px;
+        height: 50px;
+        object-fit: cover;
+        margin-right: 10px;
+        border-radius: 5px;
+    }
+
+    /* Toggle Switch */
+    .form-check-input {
+        cursor: pointer;
+    }
+
+    .status-label {
+        font-weight: bold;
+    }
+
+    /* Pagination */
+    .pagination {
+        display: flex;
+        justify-content: center;
+        margin-top: 20px;
+    }
+
+    .pagination .btn {
+        margin: 0 5px;
+        min-width: 40px;
+        text-align: center;
+    }
+
+    /* Modal */
+    .offer-modal {
+        display: none;
+        position: fixed;
+        z-index: 999;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        overflow: auto;
+        background-color: rgba(0, 0, 0, 0.4);
+    }
+
+    .offer-modal-content {
+        background-color: #fff;
+        margin: 10% auto;
+        padding: 30px;
+        border: 1px solid #ccc;
+        width: 400px;
+        border-radius: 10px;
+        animation: slideIn 0.3s ease;
+    }
+
+    .offer-modal-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 20px;
+    }
+
+    .offer-modal-close {
+        font-size: 24px;
+        cursor: pointer;
+        color: #aaa;
+    }
+
+    .offer-modal-close:hover {
+        color: #333;
+    }
+
+    .offer-modal .form-group label {
+        font-weight: 600;
+    }
+
+    /* Animations */
+    @keyframes slideIn {
+        from {
+            transform: translateY(-50px);
+            opacity: 0;
+        }
+
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+</style>
+<div class="headname">Products Management</div>
+<div class="admin-products-container">
+    <div class="search-container">
+        <form action="" method="get" class="w-100">
+            <div class="input-group">
+                <input type="text" style="padding-left: 68px;" class="form-control" placeholder="Search products"
+                    name="search" value="{{searchTerm}}">
+                <button class="searchbtn" type="submit">Search</button>
+            </div>
+        </form>
+    </div>
+
+    <div class="table-responsive">
+        <table class="table products-table">
+            <thead>
+                <tr>
+                    <th>Product Name</th>
+                    <th>Category</th>
+                    <th>Brand</th>
+                    <th>Sale Price</th>
+                    <th>Offer</th>
+                    <th>Quantity</th>
+                    <th>Edit</th>
+                    <th>List / Unlist</th>
+                    <th>Offer MGt.</th>
+                    <th>delete</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{#each data}}
+                <tr class="div-product" data-product-id="{{_id}}">
+                    <td style="display: flex; align-items: center;">
+                        <img class="product-image" src="/uploads/product-images/{{productImage.[0]}}"
+                            alt="{{productName}}">
+                        {{productName}}
+                    </td>
+                    <td>
+                        {{#if category}}
+                        {{category.name}}
+                        {{else}}
+                        No Category
+                        {{/if}}
+                    </td>
+                    <td>{{brand }}</td>
+                    <td>₹{{salePrice}}</td>
+                    <td>
+                        {{#if productOffer}}
+                        {{productOffer}}
+                        {{else}}
+                        No Offer
+                        {{/if}}
+                    </td>
+                    <td>{{quantity}}</td>
+                    <td>
+                        <a href="/admin/editProduct?id={{_id}}" class="btn btn-info"
+                            style="text-decoration: none;">Edit</a>
+                    </td>
+                    <td>
+
+                        {{#if isBlocked}}
+                        <button class="btn btn-success btn-sm">
+                            <a href="/admin/unblockProduct/{{_id}}">unblock</a>
+                        </button>
+
+
+                        {{else}}
+                        <button class="btn btn-danger btn-sm">
+                            <a href="/admin/blockProduct/{{_id}}">block</a>
+                        </button>
+                        {{/if}}
+                    </td>
+
+
+                    <td>
+                        {{#if productOffer}}
+                        <button class="btn btn-danger btn-sm delete-offer" onclick="removeOffer('{{_id}}')"
+                            data-product-id="{{_id}}">
+                            <i class="fas fa-trash"></i> Delete Offer
+                        </button>
+                        {{else}}
+                        <button class="btn btn-primary btn-sm add-product-offer" onclick="addOffer('{{_id}}')"
+                            data-product-id="{{_id}}" data-product-name="{{productName}} ">
+                            <i class="fas fa-percent"></i> Add Offer
+                        </button>
+                        {{/if}}
+                    </td>
+                    <td>
+                         <button class="btn btn-danger btn-sm" onclick="deleteProduct('{{_id}}')">
+                            Delete
+                        </button>
+                    </td>
+                </tr>
+                {{/each}}
+            </tbody>
+        </table>
+    </div>
+
+    <div class="pagination">
+
+        {{!-- ✅ Previous Button --}}
+        {{#if (gt currentPage 1)}}
+        <a href="?page={{subtract currentPage 1}}{{#if searchTerm}}&search={{searchTerm}}{{/if}}"
+            class="btn btn-outline-primary">Previous</a>
+        {{/if}}
+
+        {{!-- ✅ Page Numbers --}}
+        {{#each (range 1 totalPages)}}
+        <a href="?page={{this}}{{#if ../searchTerm}}&search={{../searchTerm}}{{/if}}"
+            class="btn {{#if (eq this ../currentPage)}}btn-primary{{else}}btn-outline-primary{{/if}}">
+            {{this}}
+        </a>
+        {{/each}}
+
+        {{!-- ✅ Next Button --}}
+        {{#if (lt currentPage totalPages)}}
+        <a href="?page={{add currentPage 1}}{{#if searchTerm}}&search={{searchTerm}}{{/if}}"
+            class="btn btn-outline-primary">Next</a>
+        {{/if}}
+
+    </div>
+</div>
+
+<div id="productOfferModal" class="offer-modal">
+    <div class="offer-modal-content">
+        <div class="offer-modal-header">
+            <h4>Add Product Offer</h4>
+            <span class="offer-modal-close">&times;</span>
+        </div>
+        <form id="productOfferForm">
+            <input type="hidden" id="offerProductId" name="productId">
+            <div class="form-group mb-3">
+                <label for="productName" class="form-label">Product Name</label>
+                <input type="text" class="form-control" id="offerProductName" readonly>
+            </div>
+            <div class="form-group mb-3">
+                <label for="offerPercentage" class="form-label">Offer Percentage</label>
+                <input type="number" class="form-control" id="offerPercentage" name="offerPercentage" min="0" max="100"
+                    placeholder="Enter offer percentage">
+            </div>
+            <div class="form-group mb-3">
+                <label for="offerEndDate" class="form-label">End Date</label>
+                <input type="date" class="form-control" id="offerEndDate" name="offerEndDate">
+            </div>
+            <button type="submit" class="btn btn-success w-100">Save Offer</button>
+        </form>
+    </div>
+</div>
+
+<script>
+    async function addOffer(productId) {
+        const { value: amount } = await Swal.fire({
+            title: "Offer in percentage",
+            input: "number",
+            inputLabel: "Percentage",
+            inputPlaceholder: "%",
+            showCancelButton: true,
+            confirmButtonText: "Add Offer"
+        });
+
+
+        if (amount) {
+            $.ajax({
+                url: "/admin/addProductOffer",
+                method: "POST",
+                data: {
+                    percentage: amount,
+                    productId: productId,
+                },
+                success: (response) => {
+                    if (response.status === true) {
+                        Swal.fire("Offer Added", "Offer has been added", "success").then(() => {
+                            location.reload();
+                        });
+                    } else {
+                        Swal.fire("Failed", "Could not add offer alredy has a category offer", "error");
+                    }
+                },
+                error: () => {
+                    Swal.fire("Error", "Something went wrong", "error");
+                }
+            });
+        }
+    }
+
+    async function removeOffer(productId) {
+        try {
+            const result = await Swal.fire({
+                title: "Remove Offer",
+                text: "Are you sure you want to remove this offer?",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#3085d6",
+                cancelButtonColor: "#d33",
+                confirmButtonText: "Yes, remove it"
+                // 🔴 Remove `timer` and `timerProgressBar` unless you *want* to auto-close.
+            });
+
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: "/admin/removeProductOffer", // ✅ ensure backend route is correct
+                    method: "POST",
+                    data: {
+                        productId: productId
+                    },
+                    success: (response) => {
+                        if (response.status === true) {
+                            Swal.fire("Removed", "Offer has been removed", "success").then(() => {
+                                location.reload();
+                            });
+                        } else {
+                            Swal.fire("Failed", response.message || "Could not remove offer", "error");
+                        }
+                    },
+                    error: () => {
+                        Swal.fire("Error", "Server error occurred", "error");
+                    }
+                });
+            }
+
+        } catch (error) {
+            console.error("Error in removeOffer:", error);
+            Swal.fire("Error", "Unexpected error occurred", "error");
+        }
+    }
+
+    async function deleteProduct(productId){
+        try{
+            const result = await Swal.fire({
+                title : "Delete Product",
+                text: "Are you sure you want to remove this Product?",
+                icon: "warning",
+                showCancelButton: true,
+                confirmButtonColor: "#3085d6",
+                cancelButtonColor: "#d33",
+                confirmButtonText: "Yes, remove it"
+            })
+            if(result.isConfirmed){
+                $.ajax({
+                    url : "/admin/deleteProduct",
+                    method : "POST",
+                    data : {
+                        productId : productId
+
+                    },
+                    success : (response) =>{
+                        if (response.status === true) {
+                            Swal.fire("Deleted", "Offer has been removed", "success").then(() => {
+                                location.reload();
+                            });
+                        } else {
+                            Swal.fire("Failed", response.message || "Could not delete product", "error");
+                        }
+
+                    },
+                     error: () => {
+                        Swal.fire("Error", "Server error occurred", "error");
+                    }
+
+                })
+            }
+
+        }catch(error){
+            console.error("Error in removeOffer:", error);
+            Swal.fire("Error", "Unexpected error occurred", "error");
+
+        }
+
+    }
+
+
+
+
+
+
+</script>

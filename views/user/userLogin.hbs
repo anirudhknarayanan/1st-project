@@ -1,0 +1,77 @@
+<style>
+  .forgot-password-link{
+    font-size: 0.875rem;
+    color: #007bff;
+    text-decoration: none;
+
+  }
+</style>
+<div class="login-container">
+  <a href="/auth/google">
+  <div class="google-login">
+    <img src="https://cdn.jsdelivr.net/gh/devicons/devicon/icons/google/google-original.svg" alt="Google Icon" />
+    <span>Continue with Google</span>
+  </div>
+</a>
+  <div class="or-divider"><span>OR</span></div>
+
+  <form id="loginForm" action="/login" method="post">
+    {{#if message}}
+    <div class="alert alert-danger">{{message}}</div>
+    {{/if}}
+    <div class="form-group">
+      <label>Email</label>
+      <input id="email" type="email" placeholder="Enter your email" name="email" />
+      <div id="emailError" class="error"></div>
+    </div>
+    <div class="form-group">
+      <label>Password</label>
+      <input id="password" type="password" placeholder="Enter your password" name="password" />
+      <div id="passwordError" class="error"></div>
+    </div>
+    <div class="form-actions">
+      <a href="/forget-password" class="forgot-password-link ms-auto">Forgot password?</a>
+    </div>
+    <button class="login-btn" type="submit">Login</button>
+  </form>
+
+  <div class="signup-msg">
+    Don't have an account? <a href="/signup">Sign up</a>
+  </div>
+</div>
+
+<script>
+
+  document.getElementById('loginForm').addEventListener('submit', function (e) {
+    const email = document.getElementById('email');
+    const password = document.getElementById('password');
+    const emailError = document.getElementById('emailError');
+    const passwordError = document.getElementById('passwordError');
+
+    let valid = true;
+
+    // Clear previous errors
+    emailError.textContent = "";
+    passwordError.textContent = "";
+
+    // Email validation
+    if (!email.value.trim()) {
+      emailError.textContent = "Email is required.";
+      valid = false;
+    }
+
+    // Password validation
+    if (!password.value.trim()) {
+      passwordError.textContent = "Password is required.";
+      valid = false;
+    } else if (password.value.length < 6) {
+      passwordError.textContent = "Password must be at least 6 characters long.";
+      valid = false;
+    }
+
+    // Stop form submission if not valid
+    if (!valid) {
+      e.preventDefault();
+    }
+  });
+</script>

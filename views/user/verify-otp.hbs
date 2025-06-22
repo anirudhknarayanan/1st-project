@@ -1,0 +1,181 @@
+<style>
+    * {
+      box-sizing: border-box;
+    }
+
+   
+    .container1 {
+      margin:80px auto;
+      background-color: #fff;
+      padding: 30px;
+      border-radius: 12px;
+      box-shadow: 0 8px 30px rgba(0,0,0,0.1);
+      width: 100%;
+      max-width: 400px;
+      text-align: center;
+    }
+
+    h2 {
+      margin-bottom: 20px;
+    }
+
+    input[type="text"] {
+      width: 100%;
+      padding: 14px;
+      margin-bottom: 15px;
+      font-size: 16px;
+      border: 1px solid #ccc;
+      border-radius: 6px;
+    }
+
+    .btn {
+      width: 100%;
+      padding: 12px;
+      font-size: 16px;
+      font-weight: bold;
+      background-color: #6dc9c4;
+      color: white;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      margin-top: 10px;
+    }
+
+    .btn:hover {
+      background-color: #57b1aa;
+    }
+
+    .timer, .resend {
+      margin-top: 10px;
+      font-size: 14px;
+      color: #555;
+    }
+
+    .resend button {
+      border: none;
+      background: none;
+      color: #007bff;
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .resend button:disabled {
+      color: grey;
+      cursor: not-allowed;
+    }
+  </style>
+
+  <div class="container1">
+    <h2>OTP Verification</h2>
+    <p>Enter the OTP sent to your email</p>
+
+    <form id="otpForm" action="/verify-otp" method="POST" >
+      <input type="text" name="otp" id="otp" placeholder="Enter OTP" maxlength="6" />
+      <button type="submit" class="btn">Verify</button>
+    </form>
+
+    <div class="timer" id="timer">Resend OTP in 60s</div>
+    <div class="resend">
+      <button id="resendBtn" disabled>Resend OTP</button>
+    </div>
+  </div>
+
+  <script>
+    const resendBtn = document.getElementById('resendBtn');
+    const timerDisplay = document.getElementById('timer');
+
+    let timer = 60;
+    let interval = setInterval(updateTimer, 1000);
+
+    function updateTimer() {
+      if (timer > 0) {
+        timer--;
+        timerDisplay.textContent = `Resend OTP in ${timer}s`;
+      } else {
+        clearInterval(interval);
+        timerDisplay.textContent = '';
+        resendBtn.disabled = false;
+      }
+    }
+
+    resendBtn.addEventListener('click', function () {
+      resendBtn.disabled = true;
+      timer = 60;
+      timerDisplay.textContent = `Resend OTP in ${timer}s`;
+      interval = setInterval(updateTimer, 1000);
+      $.ajax({
+        type : "POST",
+        url : "resend-otp",
+        success : function(response){
+          if(response.success){
+            Swal.fire({
+              icon : "success",
+              title : "OTP Resend success",
+              showConfirmButton : false,
+              timer : 1500,
+
+            })
+          }else{
+            Swal.fire({
+              icon : "error",
+              title : "Error ",
+              text : "An error occured while resending otp . please try again",
+
+            })
+          }
+
+        }
+      })
+      return false;
+
+    
+    });
+    function validateOTPForm(){
+      const otpinput = document.getElementById("otp").value;
+      $.ajax({
+  type : "POST",
+  url : "/verify-otp",
+  data : { otp: otpinput },
+  success : function(response){
+    if(response.success){
+      Swal.fire({
+        icon : "success",
+        title : "OTP verified Successfully",
+        showConfirmButton: false,
+        timer : 1500,
+      }).then(() => {
+        window.location.href = response.redirectUrl;
+      });
+    } else {
+      Swal.fire({
+        icon : "error",
+        title : "Error",
+        text : response.message,
+      });
+    }
+  },
+  error: function() {
+    Swal.fire({
+      icon : "error",
+      title : "Invalid OTP",
+      text : "Please try again"
+    });
+  }
+});
+
+      return false
+    }
+  </script>
+
+  {{#if message}}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+  Swal.fire({
+    icon: 'error',
+    title: 'OTP Error',
+    text: '{{message}}',
+    confirmButtonColor: '#d33'
+  });
+</script>
+{{/if}}
+

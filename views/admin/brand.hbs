@@ -1,0 +1,420 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>Brand Management</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/sweetalert2@11/dist/sweetalert2.min.css">
+  <style>
+    .content-main {
+
+      padding-top: 10px;
+      padding-left: 10px;
+    }
+
+    .content-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 30px;
+    }
+
+    .content-title {
+      color: #333;
+      font-size: 24px;
+      font-weight: 600;
+      margin: 0;
+    }
+
+    .brand-container {
+      background: #fff;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      padding: 25px;
+    }
+
+    .brand-form {
+      background: #f8f9fa;
+      border-radius: 8px;
+      padding: 20px;
+      margin-bottom: 30px;
+    }
+
+    .brand-form form {
+      display: flex;
+      align-items: flex-end;
+      gap: 15px;
+      flex-wrap: wrap;
+    }
+
+    .form-group {
+      flex: 1;
+      min-width: 200px;
+      margin: 0;
+    }
+
+    .brand-form .form-label {
+      font-weight: 500;
+      color: #4a5568;
+      margin-bottom: 8px;
+    }
+
+    .brand-form .form-control {
+      border: 1px solid #e2e8f0;
+      border-radius: 6px;
+      padding: 10px 15px;
+      transition: all 0.3s ease;
+    }
+
+    .brand-form .form-control:focus {
+      border-color: #4299e1;
+      box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.15);
+    }
+
+    .btn-add-brand {
+      background: linear-gradient(45deg, #4299e1, #667eea);
+      color: white;
+      border: none;
+      padding: 10px 24px;
+      border-radius: 6px;
+      font-weight: 500;
+      height: 42px;
+      transition: all 0.3s ease;
+    }
+
+    .btn-add-brand:hover {
+      transform: translateY(-1px);
+      box-shadow: 0 4px 12px rgba(66, 153, 225, 0.15);
+      background: linear-gradient(45deg, #3182ce, #5a67d8);
+    }
+
+    .brand-table {
+      margin-top: 20px;
+    }
+
+    .table {
+      width: 100%;
+      background: #fff;
+      border-radius: 8px;
+    }
+
+    .table thead th {
+      background: #f7fafc;
+      color: #4a5568;
+      font-weight: 600;
+      padding: 15px;
+      border-bottom: 2px solid #e2e8f0;
+    }
+
+    .table tbody td {
+      padding: 15px;
+      vertical-align: middle;
+      border-bottom: 1px solid #e2e8f0;
+    }
+
+    .brand-logo {
+      width: 45px;
+      height: 45px;
+      border-radius: 50%;
+      overflow: hidden;
+      border: 2px solid #e2e8f0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .brand-logo img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+    }
+
+    .badge {
+      padding: 6px 12px;
+      font-weight: 500;
+      font-size: 12px;
+      border-radius: 20px;
+    }
+
+    .badge.alert-success {
+      background: #ebf8f4;
+      color: #0f766e;
+    }
+
+    .badge.alert-danger {
+      background: #fef2f2;
+      color: #dc2626;
+    }
+
+    .btn-action {
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-weight: 500;
+      font-size: 13px;
+      margin-right: 8px;
+      transition: all 0.3s ease;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-width: 90px;
+    }
+
+    .btn-action.btn-danger {
+      background: #fee2e2;
+      color: #dc2626;
+      border: 1px solid #fecaca;
+    }
+
+    .btn-action.btn-danger:hover {
+      background: #fecaca;
+      border-color: #ef4444;
+      transform: translateY(-1px);
+    }
+
+    .btn-action.btn-success {
+      background: #ecfdf5;
+      color: #059669;
+      border: 1px solid #d1fae5;
+    }
+
+    .btn-action.btn-success:hover {
+      background: #d1fae5;
+      border-color: #10b981;
+      transform: translateY(-1px);
+    }
+
+    .actions-cell {
+      white-space: nowrap;
+    }
+  </style>
+</head>
+
+<body>
+  <section class="content-main">
+    <div class="content-header">
+      <div>
+        <h2 class="content-title">Brand Management</h2>
+      </div>
+    </div>
+
+    <div class="brand-container">
+      <!-- Add Brand Form -->
+      <div class="brand-form">
+        <h4 class="mb-4">Add New Brand</h4>
+        <form id="brandForm" enctype="multipart/form-data">
+          <div class="form-group">
+            <label for="brandName" class="form-label">Brand Name</label>
+            <input type="text" id="brandName" name="name" placeholder="Enter brand name" class="form-control"
+              required />
+          </div>
+          <div class="form-group">
+            <label for="brandImage" class="form-label">Brand Logo</label>
+            <input class="form-control" id="brandImage" name="image" type="file" accept="image/*" required />
+          </div>
+          <button class="btn-add-brand" type="submit">Add Brand</button>
+        </form>
+      </div>
+
+      <!-- Brands Table -->
+      <div class="brand-table">
+        <div class="table-responsive">
+          <table class="table">
+            <thead>
+              <tr>
+                <th>Brand</th>
+                <th>Logo</th>
+                <th>Status</th>
+                <th>Actions</th>
+              </tr>
+            </thead>
+
+            <tbody id="brandTableBody">
+              {{#each brand}}
+              <tr>
+                <td>{{this.brandName}}</td>
+                <td>
+                  <div class="brand-logo">
+                    <img src="/uploads/brands/{{this.brandImage}}" alt="{{this.brandName}}" />
+                  </div>
+                </td>
+                <td>
+                  <span class="badge {{#if this.isBlocked}}alert-danger{{else}}alert-success{{/if}}">
+                    {{#if this.isBlocked}}Blocked{{else}}Active{{/if}}
+                  </span>
+                </td>
+                <td class="actions-cell">
+                  <a href="#" class="btn-action {{#if this.isBlocked}}btn-success{{else}}btn-danger{{/if}}"
+                    onclick="toggleBlock('{{this._id}}', this)">
+                    {{#if this.isBlocked}}Unblock{{else}}Block{{/if}}
+                  </a>
+                  <a href="#" class="btn-action btn-danger"
+                    onclick="confirmDelete('{{this._id}}', '{{this.brandName}}', this)">
+                    Delete
+                  </a>
+                </td>
+              </tr>
+              {{/each}}
+            </tbody>
+
+
+          </table>
+
+        </div>
+
+      </div>
+      <div class="pagination">
+
+        {{!-- ✅ Previous Button --}}
+        {{#if (gt currentPage 1)}}
+        <a href="?page={{subtract currentPage 1}}{{#if searchTerm}}&search={{searchTerm}}{{/if}}"
+          class="btn btn-outline-primary">Previous</a>
+        {{/if}}
+
+        {{!-- ✅ Page Numbers --}}
+        {{#each (range 1 totalPages)}}
+        <a href="?page={{this}}{{#if ../searchTerm}}&search={{../searchTerm}}{{/if}}"
+          class="btn {{#if (eq this ../currentPage)}}btn-primary{{else}}btn-outline-primary{{/if}}">
+          {{this}}
+        </a>
+        {{/each}}
+
+        {{!-- ✅ Next Button --}}
+        {{#if (lt currentPage totalPages)}}
+        <a href="?page={{add currentPage 1}}{{#if searchTerm}}&search={{searchTerm}}{{/if}}"
+          class="btn btn-outline-primary">Next</a>
+        {{/if}}
+
+      </div>
+    </div>
+
+
+  </section>
+
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const brandForm = document.getElementById("brandForm");
+      const brandTableBody = document.getElementById("brandTableBody");
+
+      // Fetch and display brands
+      async function loadBrands() {
+        try {
+          const res = await fetch("/admin/getBrands");
+          const data = await res.json();
+          brandTableBody.innerHTML = "";
+          data.forEach(brand => addBrandToTable(brand));
+        } catch (err) {
+          console.error("Error loading brands:", err);
+        }
+      }
+
+      // Submit form to add a brand
+      brandForm.addEventListener("submit", async function (e) {
+        e.preventDefault();
+        const formData = new FormData(brandForm);
+        try {
+          const res = await fetch("/admin/addBrand", {
+            method: "POST",
+            body: formData
+          });
+          const result = await res.json();
+          if (result.success) {
+            Swal.fire("Success!", result.message, "success");
+            addBrandToTable(result.brand);
+            brandForm.reset();
+          } else {
+            Swal.fire("Error", result.message, "error");
+          }
+        } catch (error) {
+          console.error(error);
+          Swal.fire("Error", "Something went wrong.", "error");
+        }
+      });
+
+      // Add a brand row to table
+      function addBrandToTable(brand) {
+        const row = document.createElement("tr");
+        row.innerHTML = `
+          <td>${brand.brandName}</td>
+          <td>
+            <div class="brand-logo">
+              <img src="/uploads/brands/${brand.brandImage}" alt="${brand.brandName}" />
+            </div>
+          </td>
+          <td>
+            <span class="badge ${brand.isBlocked ? 'alert-danger' : 'alert-success'}">
+              ${brand.isBlocked ? 'Blocked' : 'Active'}
+            </span>
+          </td>
+          <td class="actions-cell">
+            <a href="#" class="btn-action ${brand.isBlocked ? 'btn-success' : 'btn-danger'}" onclick="toggleBlock('${brand._id}', this)">
+              ${brand.isBlocked ? 'Unblock' : 'Block'}
+            </a>
+            <a href="#" class="btn-action btn-danger" onclick="confirmDelete('${brand._id}', '${brand.brandName}', this)">Delete</a>
+          </td>`;
+        brandTableBody.appendChild(row);
+      }
+
+      // Toggle block/unblock
+      window.toggleBlock = function (brandId, btn) {
+        const isBlocking = btn.textContent === "Block";
+        const url = isBlocking ? "/admin/blockBrand" : "/admin/unblockBrand";
+        console.log(brandId)
+        fetch(`${url}?id=${brandId}`)
+          .then(res => res.json())
+          .then(result => {
+            if (result.success) {
+              const badge = btn.closest("tr").querySelector(".badge");
+              badge.className = `badge ${isBlocking ? 'alert-danger' : 'alert-success'}`;
+              badge.textContent = isBlocking ? "Blocked" : "Active";
+              btn.textContent = isBlocking ? "Unblock" : "Block";
+              btn.className = `btn-action ${isBlocking ? 'btn-success' : 'btn-danger'}`;
+              Swal.fire("Updated!", result.message, "success");
+            } else {
+              Swal.fire("Error", result.message, "error");
+            }
+          })
+          .catch(err => {
+            console.error(err);
+            Swal.fire("Error", "Something went wrong.", "error");
+          });
+      };
+
+      // Delete brand
+      window.confirmDelete = function (brandId, brandName, btn) {
+        Swal.fire({
+          title: `Delete ${brandName}?`,
+          text: "This action cannot be undone.",
+          icon: "warning",
+          showCancelButton: true,
+          confirmButtonText: "Yes, delete it!",
+          cancelButtonText: "Cancel",
+          confirmButtonColor: "#dc3545"
+        }).then(result => {
+          if (result.isConfirmed) {
+            fetch(`/admin/deleteBrand?id=${brandId}`)
+              .then(res => res.json())
+              .then(result => {
+                if (result.success) {
+                  btn.closest("tr").remove();
+                  Swal.fire("Deleted!", "Brand has been deleted.", "success");
+                } else {
+                  Swal.fire("Error", result.message, "error");
+                }
+              })
+              .catch(err => {
+                console.error(err);
+                Swal.fire("Error", "Something went wrong.", "error");
+              });
+          }
+        });
+      };
+
+      // Load initial brands
+      loadBrands();
+    });
+  </script>
+</body>
+
+</html>
