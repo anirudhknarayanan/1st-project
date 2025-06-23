@@ -311,8 +311,8 @@
         <div class="col-lg-8 mx-auto">
             <div class="card mb-4">
                 <div class="card-body">
-                    <form method="POST" action="/admin/addProduct" enctype="multipart/form-data" id="addProductForm"
-                        onsubmit="return validateForm()">
+                    <form method="POST" action="/admin/addProduct" enctype="multipart/form-data" id="addProductForm">
+
 
                         <div class="mb-4" id="flexy">
                             <label for="product_name" class="form-label">Product Name</label>
@@ -352,6 +352,7 @@
                             <div class="col-lg-4 mb-4" id="flexy">
                                 <label class="form-label">Category</label>
                                 <select class="form-select" name="category">
+                                    <option value="" disabled selected>Select a category</option>
                                     {{#each category}}
                                     <option value="{{this._id}}">{{this.name}}</option>
                                     {{/each}}
@@ -362,10 +363,12 @@
                             <div class="col-lg-4 mb-4" id="flexy">
                                 <label class="form-label">Brand</label>
                                 <select class="form-select" name="brand">
+                                    <option value="" disabled selected>Select a brand</option>
                                     {{#each brand}}
                                     <option value="{{this._id}}">{{this.brandName}}</option>
                                     {{/each}}
                                 </select>
+
                                 <div id="brand-error" class="error-message"></div>
                             </div>
                         </div>

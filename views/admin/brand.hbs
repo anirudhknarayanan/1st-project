@@ -298,7 +298,7 @@
       const brandTableBody = document.getElementById("brandTableBody");
 
       // Fetch and display brands
-      async function loadBrands() {
+        async function loadBrands() {
         try {
           const res = await fetch("/admin/getBrands");
           const data = await res.json();
@@ -307,7 +307,7 @@
         } catch (err) {
           console.error("Error loading brands:", err);
         }
-      }
+      }  
 
       // Submit form to add a brand
       brandForm.addEventListener("submit", async function (e) {
