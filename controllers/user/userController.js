@@ -235,26 +235,7 @@ module.exports = {
 
     }
   },
-  showProfile: async (req, res) => {
-    try {
-      const user = req.session.user;
-      console.log(user);
-
-      if (user) {
-        const userData = await User.findOne({ _id: user }).lean()
-        console.log("hello : ", userData);
-
-        res.render("user/profile", { user: userData })
-      } else {
-        res.redirect("/login")
-      }
-
-
-    } catch (error) {
-
-    }
-
-  },
+  
   logout: async (req, res) => {
     try {
       req.session.destroy((err) => {

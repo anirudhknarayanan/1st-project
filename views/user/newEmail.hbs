@@ -1,0 +1,59 @@
+<div class="container mt-5">
+  <div class="row justify-content-center">
+    <div class="col-md-6">
+      <div class="card shadow rounded-3">
+        <div class="card-header bg-primary text-white text-center">
+          <h4>New Email</h4>
+        </div>
+        <div class="card-body">
+          <form action="/resetEmail" id="emailForm" method="post" novalidate>
+            <!-- Current Email Input -->
+            <div class="mb-3">
+              <label for="currentEmail" class="form-label">Email</label>
+              <input type="email" class="form-control" id="currentEmail" placeholder="Enter your new email" name="newEmail" required>
+              <div class="invalid-feedback">Please enter a valid email address.</div>
+            </div>
+
+            <!-- Verify Button -->
+            <div class="d-grid">
+              <button type="submit" class="btn btn-success">Verify</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+ document.getElementById("emailForm").addEventListener("submit", function (e) {
+  e.preventDefault();
+
+  const emailInput = document.getElementById("currentEmail");
+  const emailValue = emailInput.value.trim();
+  const emailRegex = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
+
+  if (!emailValue || !emailRegex.test(emailValue)) {
+    emailInput.classList.add("is-invalid");
+    Swal.fire({
+      icon: 'error',
+      title: 'Invalid Email',
+      text: 'Please enter a valid current email address.',
+    });
+    return;
+  } else {
+    emailInput.classList.remove("is-invalid");
+
+    // Show success and submit after confirmation
+    Swal.fire({
+      icon: 'success',
+      title: 'Email Verified',
+      text: `The email "${emailValue}" is valid.`,
+      confirmButtonText: 'Continue',
+    }).then(() => {
+      document.getElementById("emailForm").submit();
+    });
+  }
+});
+
+</script>

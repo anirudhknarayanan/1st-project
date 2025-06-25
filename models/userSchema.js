@@ -80,7 +80,11 @@ const userSchema = new Schema({
             default: Date.now
         }
 
-    }]
+    }],
+    userImage : {
+        type : String,
+        required : false
+    }
 })
 
 const User = mongoose.model("User", userSchema)

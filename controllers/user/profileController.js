@@ -1,6 +1,9 @@
 const User = require("../../models/userSchema");
+const Address = require("../../models/addressSchema")
 const nodemailer = require("nodemailer");
+const path = require("path")
 const bcrypt = require("bcrypt");
+const mongoose = require("mongoose");
 require("dotenv").config();
 
 function generateOtp() {
@@ -45,12 +48,12 @@ async function sendVerificationEmail(email, otp) {
   }
 }
 
-const securePassword = async (password)=>{
+const securePassword = async (password) => {
   try {
-    const passwordHash = await bcrypt.hash(password,10)
-    return passwordHash 
+    const passwordHash = await bcrypt.hash(password, 10)
+    return passwordHash
   } catch (error) {
-    
+
   }
 }
 
@@ -76,8 +79,8 @@ module.exports = {
         if (emailSent) {
           req.session.userOtp = otp;
           req.session.email = email;
-         console.log("Sending OTP to:", email);
-         console.log("your otp : ",otp)
+          console.log("Sending OTP to:", email);
+          console.log("your otp : ", otp)
           res.render("user/forgotpass-otp", { hideFooter: true });
         } else {
           res.json({ success: false, message: "Failed to send OTP. Try again." });
@@ -93,58 +96,417 @@ module.exports = {
       res.redirect("/pageNotFound");
     }
   },
-  verifyForgotPassOtp : async(req,res)=>{
+  verifyForgotPassOtp: async (req, res) => {
     try {
       const enteredOtp = req.body.otp;
-      if(enteredOtp===req.session.userOtp){
-        res.json({success : true,redirectUrl:"/reset-password"})
-      }else{
-        res.json({success : false,message : "Otp NOT MATCHING"})
+      if (enteredOtp === req.session.userOtp) {
+        res.json({ success: true, redirectUrl: "/reset-password" })
+      } else {
+        res.json({ success: false, message: "Otp NOT MATCHING" })
       }
     } catch (error) {
-      res.status(500).json({success : false,message  : "An Error occured please try again"})
+      res.status(500).json({ success: false, message: "An Error occured please try again" })
     }
   },
-  getResetPass : async (req,res) =>{
+  getResetPass: async (req, res) => {
     try {
       res.render("user/reset-password")
     } catch (error) {
       res.redirect("/pageNotFound")
     }
   },
-  resendOtp : async (req,res)=>{
+  resendOtp: async (req, res) => {
     try {
       const otp = generateOtp()
       req.session.userOtp = otp;
       const email = req.session.email;
-      console.log("resending otp to email : ",email);
-      const emailSent = await sendVerificationEmail(email,otp);
-      if(emailSent){
-        console.log("resend otp",otp);
-        res.status(200).json({success : true,message:"Resent otp successfull"})
-        
+      console.log("resending otp to email : ", email);
+      const emailSent = await sendVerificationEmail(email, otp);
+      if (emailSent) {
+        console.log("resend otp", otp);
+        res.status(200).json({ success: true, message: "Resent otp successfull" })
+
       }
-      
+
     } catch (error) {
       console.error("Error in resending in otp");
-      res.status(500).json({success : false,message:"internal server error"})
+      res.status(500).json({ success: false, message: "internal server error" })
     }
 
   },
-  postNewPassword : async (req,res)=>{
+  postNewPassword: async (req, res) => {
     try {
-      const {newpass1,newpass2} = req.body;
-      const email = req.session.email;
-      if(newpass1===newpass2){
-        const passwordHash = await securePassword(newpass1)
-        await User.updateOne({email : email},{$set:{password:passwordHash}})
-        res.redirect("/login")
-      }else{
-        res.render("reset-password",{message : "password do not match"})
-      }
+      const { newpass1, newpass2 } = req.body;
+      console.log(newpass1,newpass2);
       
+      const email = req.session.email;
+      if (newpass1 === newpass2) {
+        const passwordHash = await securePassword(newpass1)
+        await User.updateOne({ email: email }, { $set: { password: passwordHash } })
+        res.redirect("/login")
+      } else {
+        res.render("reset-password", { message: "password do not match" })
+      }
+
     } catch (error) {
       res.redirect("/pageNotFound")
     }
+  },
+  showProfile: async (req, res) => {
+    try {
+      const user = req.session.user;
+      console.log(user);
+
+      if (user) {
+        const userData = await User.findOne({ _id: user }).lean();
+        console.log("hello : ", userData);
+        const addressData = await Address.findOne({ userId: user }).lean();
+        console.log("addressData", addressData);
+
+
+
+        res.render("user/profile", { user: userData, addressData: addressData || { address: [] } })
+      } else {
+        res.redirect("/login")
+      }
+
+
+    } catch (error) {
+
+    }
+
+  },
+  addAddress: async (req, res) => {
+    try {
+      const user = req.session.user;
+      res.render("user/addAddress")
+    } catch (error) {
+      res.redirect("/pageerror")
+    }
+
+  },
+  postAddress: async (req, res) => {
+    try {
+      const userId = req.session.user;
+      const userData = await User.findOne({ _id: userId });
+      const { addressType, name, city, landMark, state, pincode, phone, altPhone } = req.body;
+      const userAddress = await Address.findOne({ userId: userData._id })
+      if (!userAddress) {
+        const newAddress = new Address({
+          userId: userData._id,
+          address: [{ addressType, name, city, landMark, state, pincode, phone, altPhone }]
+
+        })
+        await newAddress.save()
+      } else {
+        userAddress.address.push({ addressType, name, city, landMark, state, pincode, phone, altPhone });
+        await userAddress.save()
+      }
+      res.json({ success: true, message: "Address added successfully!" });
+
+    } catch (error) {
+      console.error("Error adding address");
+      res.status(500).json({ success: false, message: "Something went wrong!" });
+
+    }
+
+  },
+  editAddress: async (req, res) => {
+    try {
+      const addressId = req.params.id;
+      const userId = req.session.user;
+
+      const currAddress = await Address.findOne({
+        userId: userId,
+        "address._id": new mongoose.Types.ObjectId(addressId)
+      }).lean();
+      console.log("curent adress: ", currAddress);
+
+
+      if (!currAddress) {
+        return res.redirect("/pageNotFound");
+      }
+
+      const addressData = currAddress.address.find(item => item._id.toString() === addressId);
+      console.log("adressData : ", addressData);
+
+
+      if (!addressData) {
+        return res.redirect("/pageNotFound");
+      }
+
+      const user = await User.findById(userId);
+
+      res.render("user/edit-address", {
+        address: addressData,
+        user: user
+      });
+
+    } catch (error) {
+      console.error("Error in editAddress:", error);
+      res.redirect("/pageNotFound");
+    }
+  },
+  postEditAddress: async (req, res) => {
+    try {
+      const userId = req.session.user;
+      const addressId = req.params.id;
+      const updatedData = req.body;
+
+      console.log("Editing address data:", updatedData);
+
+      // Find if the address exists for this user
+      const existingAddress = await Address.findOne({
+        userId: userId,
+        "address._id": addressId,
+      });
+
+      if (!existingAddress) {
+        return res.redirect("/pageNotFound");
+      }
+
+      // Update the specific address inside the address array
+      await Address.updateOne(
+        { userId: userId, "address._id": addressId },
+        {
+          $set: {
+            "address.$": {
+              _id: addressId,
+              addressType: updatedData.addressType,
+              name: updatedData.name,
+              city: updatedData.city,
+              landMark: updatedData.landMark,
+              state: updatedData.state,
+              pincode: updatedData.pincode,
+              phone: updatedData.phone,
+              altPhone: updatedData.altPhone,
+            },
+          },
+        }
+      );
+
+      return res.redirect("/profile");
+    } catch (error) {
+      console.error("Error while updating address:", error);
+      return res.status(500).send("Internal Server Error");
+    }
+  },
+
+  deleteAddress: async (req, res) => {
+    try {
+      const addressId = req.params.id;
+      const findAddress = await Address.findOne({ "address._id": addressId })
+      if (!findAddress) {
+        res.status(404).send("address not found");
+      }
+      await Address.updateOne({
+        "address._id": addressId
+      }, {
+        $pull: {
+          address: {
+            _id: addressId
+          }
+        }
+      })
+      res.redirect("/profile")
+    } catch (error) {
+      console.error("Error in address deleting")
+      res.redirect("pageNotFound")
+    }
+  },
+  changeEmail: async (req, res) => {
+    try {
+      res.render("user/change-email")
+    } catch (error) {
+      res.redirect("/pageNotFound")
+    }
+
+  },
+  postChangeEmail: async (req, res) => {
+    try {
+
+      const email  = req.body.email;
+
+      const userExist = await User.findOne({email});
+      console.log(userExist);
+      if (userExist) {
+        const otp = generateOtp();
+        const emailSent = await sendVerificationEmail(email, otp);
+        if (emailSent) {
+          req.session.userOtp = otp;
+          req.session.userData = req.body;
+          req.session.email = email;
+          res.render("user/changeEmail-otp");
+          console.log("Email send : ", email);
+          console.log("OTP :", otp);
+
+
+        } else {
+          res.render("user/changeEmail", { message: "User with this email not exists" })
+        }
+      } else {
+        res.json("email - error")
+
+      }
+
+
+
+
+
+    } catch (error) {
+      console.error("Error:", error);
+      res.status(500).send("Internal Server Error");
+    }
+  },
+verifyEmailOtp: async (req, res) => {
+  try {
+    const enteredOtp = req.body.otp;
+    const sessionOtp = req.session.userOtp;
+    const userData = req.session.userData;
+
+    if (enteredOtp === sessionOtp) {
+      // OTP matches
+      return res.json({
+        success: true,
+        message: "OTP verified successfully",
+        redirectUrl: "/new-email-page" // or wherever you want
+      });
+    } else {
+      // OTP does not match
+      return res.json({
+        success: false,
+        message: "OTP not matching"
+      });
+    }
+  } catch (error) {
+    console.error("OTP verification error:", error);
+    return res.status(500).json({
+      success: false,
+      message: "Internal Server Error"
+    });
   }
+},
+getResetEmail: async (req, res) => {
+  try {
+    // Optional: check if OTP was verified
+    if (!req.session.userData) {
+      return res.redirect("/change-email-otp"); // or error page
+    }
+
+    // Render the email reset page with user data
+    return res.render("user/newEmail", {
+      userData: req.session.userData
+    });
+
+  } catch (error) {
+    console.error("Error rendering new email page:", error);
+    return res.redirect("/pageNotFound");
+  }
+},
+resetEmail : async (req,res)=>{
+  try {
+    const newEmail = req.body.newEmail;
+    const userId = req.session.user;
+    console.log("newEmail : ",newEmail,"userId : ",userId);
+    
+    await User.findByIdAndUpdate(userId,{email : newEmail})
+    res.redirect("/profile")
+  } catch (error) {
+    res.redirect("/pageNotFound") 
+  }
+
+},
+getChangePassword : async (req,res)=>{
+  try {
+    res.render("user/changePassword",{hideFooter: true})
+  } catch (error) {
+    res.redirect("/pageNotFOUND")
+  }
+}
+,
+changePasswordValid : async (req,res)=>{
+  try {
+    console.log(req.body);
+    
+    const {email} = req.body;
+    const userExist = await User.findOne({email});
+    console.log("existing user",userExist);
+    
+    if(userExist){
+      const otp = generateOtp();
+      const emailSent = await sendVerificationEmail(email,otp);
+      if(emailSent){
+        req.session.userOtp = otp;
+        req.session.userData = req.body;
+        req.session.email = email;
+        res.render("user/changePassword-otp");
+        console.log('OTP : ',otp);
+      }else{
+        res.json({success : false,message : "failed to send otp,please try again"})
+      }
+    }else{
+      res.render("user/changePassword",{message : "user with this email doesnot exist"})
+    }
+
+  } catch (error) {
+    console.error("Error in change password")
+    res.redirect("/pageNotFound")
+  }
+},
+verifychangePasswordotp :async (req,res)=>{
+
+  try {
+    const enteredOtp = req.body.otp;
+    if(enteredOtp === req.session.userOtp){
+      res.json({success : true,
+        redirectUrl : "/reset-password"
+      })
+    }else{
+      res.json({success : false,message : "error in entered otp"})
+    }
+  } catch (error) {
+    res.json({success : false,message : "An error occured plz try later"})
+  }
+  
+},
+uploadProfileImg : async (req,res)=>{
+  try {
+    const userId = req.session.user; // just the user _id
+
+    if (!userId) {
+      console.error("No user session found.");
+      return res.redirect("/login");
+    }
+
+    if (!req.file || !req.file.filename) {
+      console.error("No image file uploaded.");
+      return res.status(400).send("No image uploaded.");
+    }
+
+    // Construct the relative image path to store in DB
+    const imagePath = `/uploads/profile/${req.file.filename}`;
+
+    // Update user image in DB
+    const updatedUser = await User.findByIdAndUpdate(
+      userId,
+      { $set: { userImage: imagePath } },
+      { new: true }
+    );
+
+    if (!updatedUser) {
+      console.error("User not found.");
+      return res.status(404).send("User not found.");
+    }
+
+    res.redirect("/profile");
+  } catch (error) {
+    console.error("Image upload error:", error);
+    res.status(500).send("Image upload failed.");
+  }
+}
+
+
+
+
+
 };
