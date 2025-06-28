@@ -7,6 +7,9 @@ const passport = require("passport")
 const { userAuth } = require("../middlewares/auth")
 const multer = require("multer");
 const storage = require("../helpers/multer");
+const wishlistController = require("../controllers/user/wishlistController")
+const cartControllers = require("../controllers/user/cartControllers")
+const checkoutControllers = require("../controllers/user/checkoutControllers")
 const uploads = multer({ storage: storage })
 
 
@@ -21,15 +24,15 @@ router.get("/about",(req,res)=>{
 router.get("/contact",(req,res)=>{
     res.render("user/contact")
 })
-router.get("/wishlist",userAuth,(req,res)=>{
-    res.render("user/wishlist")
-})
-router.get("/cart",userAuth,(req,res)=>{
-    res.render("user/cart")
-})
-router.get("/checkout",(req,res)=>{
-    res.render("user/checkout")
-})
+//router.get("/wishlist",userAuth,(req,res)=>{
+    //res.render("user/wishlist")
+//})
+// router.get("/cart",userAuth,(req,res)=>{
+//     res.render("user/cart")
+// })
+// router.get("/checkout",(req,res)=>{
+//     res.render("user/userCheckout")
+// })
 
 
 
@@ -81,6 +84,21 @@ router.get("/filterPrice",userAuth,userController.filterByPrice)
 router.post("/search",userAuth,userController.searchProducts)
 router.get("/productDetails",userAuth,productController.productDetails)
 
+// wish list management
+
+router.get("/wishlist",userAuth,wishlistController.getWishlist)
+router.post("/addToWishlist",userAuth,wishlistController.addToWishlist)
+router.get("/removeFromWishlist",userAuth,wishlistController.removeFromWishlist)
+
+
+//cart mnagement
+router.get("/cart",userAuth,cartControllers.loadCart)
+router.post("/addToCart",userAuth,cartControllers.addToCart)
+router.delete("/cart/remove/:productId",userAuth,cartControllers.removeCartItem)
+
+//checkout management
+
+router.get("/checkout",userAuth,checkoutControllers.loadCheckout)
 
 
 

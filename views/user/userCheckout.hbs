@@ -1,0 +1,822 @@
+  <style>
+        /* Modal Background */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: flex-start;
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        /* Modal Content */
+        .modal-content {
+            background: #fff;
+            width: 100%;
+            max-width: 500px;
+            margin: 40px auto;
+            padding: 25px;
+            border-radius: 12px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            position: relative;
+        }
+
+        /* Close Button */
+        .close-btn {
+            position: absolute;
+            right: 20px;
+            top: 15px;
+            font-size: 24px;
+            font-weight: bold;
+            cursor: pointer;
+            color: #666;
+            transition: color 0.3s;
+        }
+
+        .close-btn:hover {
+            color: #000;
+        }
+
+        /* Form Title */
+        .modal-title {
+            font-size: 1.5rem;
+            color: #333;
+            margin-bottom: 25px;
+            padding-bottom: 15px;
+            border-bottom: 1px solid #eee;
+        }
+
+        /* Form Group */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        /* Input Fields */
+        .modal-content input {
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.3s;
+        }
+
+        .modal-content input:focus {
+            outline: none;
+            border-color: #4A90E2;
+            box-shadow: 0 0 0 2px rgba(74, 144, 226, 0.1);
+        }
+
+        .modal-content input::placeholder {
+            color: #999;
+        }
+
+        /* Save Button */
+        .save-btn {
+            width: 100%;
+            padding: 12px;
+            background: #4A90E2;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background-color 0.3s;
+            margin-top: 10px;
+        }
+
+        .save-btn:hover {
+            background: #357ABD;
+        }
+
+        .save-btn:active {
+            transform: translateY(1px);
+        }
+
+        /* Modal Background */
+        .addModal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            /* Ensures the modal is above other content */
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            /* Semi-transparent black background */
+            justify-content: center;
+            align-items: center;
+            /* Centers the modal vertically and horizontally */
+            padding: 20px;
+            overflow-y: auto;
+        }
+
+        /* Modal Content */
+        .addModal .modal-content {
+            background: #fff;
+            width: 100%;
+            max-width: 500px;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+            position: relative;
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        /* Close Button */
+        .addModal .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 24px;
+            cursor: pointer;
+            color: #333;
+        }
+
+        .addModal .close-btn:hover {
+            color: #000;
+        }
+
+        /* Modal Title */
+        .addModal .modal-title {
+            text-align: center;
+            font-size: 22px;
+            margin-bottom: 20px;
+            font-weight: bold;
+            color: #333;
+        }
+
+        /* Form Group */
+        .addModal .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        /* Input Fields */
+        .addModal .form-group input {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            border: 1px solid #ccc;
+            border-radius: 5px;
+            font-size: 16px;
+            transition: border-color 0.3s ease-in-out;
+        }
+
+        .addModal .form-group input:focus {
+            border-color: #007bff;
+            outline: none;
+        }
+
+        /* Save Button */
+        .addModal .save-btn {
+            width: 100%;
+            background: #007bff;
+            color: #fff;
+            padding: 12px;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            margin-top: 15px;
+            cursor: pointer;
+            transition: background 0.3s ease-in-out;
+        }
+
+        .addModal .save-btn:hover {
+            background: #0056b3;
+        }
+
+        .addModal .save-btn:active {
+            transform: translateY(1px);
+        }
+
+        /* Fade-in Animation */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.9);
+            }
+
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 600px) {
+            .addModal .modal-content {
+                width: 95%;
+                padding: 15px;
+            }
+
+            .addModal .modal-title {
+                font-size: 18px;
+            }
+
+            .addModal .form-group input {
+                font-size: 14px;
+                padding: 8px;
+            }
+
+            .addModal .save-btn {
+                font-size: 14px;
+                padding: 10px;
+            }
+
+        }
+
+        /* Fix header and body overflow */
+        body {
+            overflow-x: hidden;
+            width: 100%;
+            position: relative;
+        }
+
+        .header {
+            width: 100%;
+            overflow: visible;
+            position: relative;
+            z-index: 1000;
+        }
+
+        .header__top {
+            padding: 10px 0;
+        }
+
+        .header__menu {
+            padding: 10px 0;
+        }
+
+        .header__menu ul {
+            margin: 0;
+            padding: 15px 154px;
+            display: flex;
+            justify-content: space-between;
+            flex-direction: row;
+            row-gap: 10px;
+            flex-wrap: wrap;
+            text-decoration: none;
+
+        }
+
+        .header__menu ul li {
+            margin-right: 15px;
+        }
+
+        /* Fix container overflow */
+        .container {
+            max-width: 100%;
+            padding-right: 15px;
+            padding-left: 15px;
+            margin-right: auto;
+            margin-left: auto;
+        }
+
+        @media (min-width: 1200px) {
+            .container {
+                max-width: 1140px;
+            }
+        }
+
+        /* Fix checkout page specific issues */
+        .checkout__form {
+            padding: 20px 0;
+            overflow: hidden;
+        }
+
+        .shipping-address-section,
+        .additional-info,
+        .checkout__order {
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            margin-bottom: 20px;
+            overflow: hidden;
+        }
+
+        /* Fix table overflow */
+        .table-responsive {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        /* Fix footer */
+        .footer {
+            width: 100%;
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Fix modal */
+        .modal {
+            overflow-y: auto;
+        }
+
+        .modal-content {
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+
+        /* Responsive fixes */
+        @media (max-width: 768px) {
+            .header__menu {
+                padding: 5px 0;
+            }
+
+            .header__menu ul li {
+                margin-right: 10px;
+            }
+
+            .checkout__form {
+                padding: 10px 0;
+            }
+
+            .shipping-address-section,
+            .additional-info,
+            .checkout__order {
+                margin-bottom: 15px;
+            }
+        }
+
+        .coupon-wrapper {
+            perspective: 1000px;
+        }
+
+        .coupon-container {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            border-radius: 15px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            overflow: hidden;
+        }
+
+        .coupon-container:hover {
+            transform: scale(1.03);
+            /* Simple scale instead of 3D rotation */
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+        }
+
+        .coupon-content {
+            padding: 20px;
+            position: relative;
+        }
+
+        .coupon-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            border-bottom: 2px dashed #d1d8e0;
+            padding-bottom: 15px;
+        }
+
+        .coupon-code {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .code-text {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: #2c3e50;
+            letter-spacing: 2px;
+        }
+
+        .code-description {
+            font-size: 0.8rem;
+            color: #7f8c8d;
+        }
+
+        .coupon-discount {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            background: linear-gradient(45deg, #ffa500, #ffd700);
+            color: white;
+            padding: 10px;
+            border-radius: 10px;
+            width: 70px;
+        }
+
+        .btn-apply-coupon {
+            background-color: #000000;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            margin-top: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .btn-apply-coupon:hover {
+            background-color: #252424;
+            transform: translateY(-3px);
+        }
+
+        /* Additional hover effect for the entire coupon container */
+        .coupon-container {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .coupon-container:hover {
+            transform: scale(1.03);
+            box-shadow: 0 15px 35px rgba(0, 0, 0, 0.15);
+        }
+
+        .site-btn {
+            background-color: #000000;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            border-radius: 5px;
+            margin-top: 10px;
+            transition: all 0.3s ease;
+        }
+
+        .site-btn:hover {
+            background-color: #252424;
+            transform: translateY(-3px);
+        }
+
+
+
+
+        #removeCouponSection {
+            border-top: 1px dashed #dee2e6;
+            padding-top: 10px;
+            margin-top: 10px;
+        }
+
+        #appliedCouponText {
+            font-size: 0.9em;
+            color: #28a745;
+        }
+
+        #removeCouponBtn {
+            transition: all 0.3s ease;
+        }
+
+        #removeCouponBtn:hover {
+            background-color: #dc3545;
+            transform: translateY(-1px);
+        }
+
+        .product-image {
+            width: 50px;
+            height: 50px;
+            object-fit: cover;
+
+        }
+    </style>
+
+<section class="checkout py-5 bg-light">
+  <div class="container">
+    <div class="checkout__form">
+      <form action="/checkout" method="POST">
+        <div class="row">
+          <!-- Left Section: Address + Notes -->
+          <div class="col-lg-7 col-md-6">
+            <div class="shipping-address-section p-4 bg-light rounded mb-4" style="min-height: 800px;">
+              <h6 class="checkout__title mb-4">
+                <i class="fas fa-shipping-fast me-2"></i>Shipping Address
+              </h6>
+
+              <div class="saved-addresses mb-4">
+                {{#if userAddress.length}}
+                {{#each userAddress}}
+                <div class="saved-address-item mb-4 p-4 border rounded bg-white">
+                  <div class="form-check">
+                    <input class="form-check-input" type="radio" name="shipping_address" id="address_{{this._id}}"
+                      value="{{this._id}}" {{#if @first}}checked{{/if}}>
+                    <label class="form-check-label w-100" for="address_{{this._id}}">
+                      <div class="d-flex justify-content-between align-items-start">
+                        <div>
+                          <strong class="d-block mb-2">
+                            <i class="fas fa-map-marker-alt me-2"></i>
+                            {{this.addressType}} Address
+                          </strong>
+                          <div class="address-details ms-4">
+                            <p class="mb-2 text-dark">{{this.name}}</p>
+                            <p class="mb-2 text-muted">
+                              Landmark: {{this.landMark}}<br>
+                              Pincode: {{this.pincode}}
+                            </p>
+                            <p class="mb-2 text-dark">{{this.city}}, {{this.state}}</p>
+                            <p class="mb-1">
+                              <i class="fas fa-phone-alt me-2"></i>
+                              <span class="text-dark">{{this.phone}}</span>
+                            </p>
+                            {{#if this.altPhone}}
+                            <p class="mb-0">
+                              <i class="fas fa-phone me-2"></i>
+                              <span class="text-muted">{{this.altPhone}}</span>
+                            </p>
+                            {{/if}}
+                          </div>
+                        </div>
+                        <button type="button" class="btn btn-outline-dark"
+                          onclick="openEditAddressModal('{{this._id}}')">
+                          <i class="fas fa-edit me-2"></i>Edit
+                        </button>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+                {{/each}}
+                {{else}}
+                <div class="text-center py-4">
+                  <p class="mb-3">You haven't added any addresses yet.</p>
+                  <button type="button" onclick="openAddAddressModal()" class="btn btn-dark d-block w-100">
+                    <i class="fas fa-plus-circle me-2"></i>Add Another Address
+                  </button>
+                </div>
+                {{/if}}
+              </div>
+
+              {{#if userAddress.length}}
+              <button type="button" onclick="openAddAddressModal()" class="btn btn-dark d-block w-100">
+                <i class="fas fa-plus-circle me-2"></i>Add Another Address
+              </button>
+              {{/if}}
+            </div>
+
+
+            <!-- Additional Info -->
+            <div class="additional-info p-4 border rounded bg-white">
+              <h6 class="checkout__title mb-4">
+                <i class="fas fa-info-circle me-2"></i>Additional Information
+              </h6>
+              <div class="checkout__input">
+                <p>Order Notes (Optional)</p>
+                <input type="text" class="w-100 p-3" rows="4"
+                  style="resize: none; border: 1px solid #e1e1e1; border-radius: 4px;"
+                  placeholder="Special notes for delivery (e.g., delivery timing, specific instructions for delivery)">
+                </input>
+              </div>
+            </div>
+          </div>
+
+          <!-- Right Section: Order Summary -->
+          <div class="col-lg-5 col-md-6">
+            <div class="checkout__order p-4 bg-white rounded" style="min-height: 800px;">
+              <h4 class="mb-4"><i class="fas fa-shopping-cart me-2"></i>Your Order</h4>
+
+              <!-- Cart Products -->
+              <div class="table-responsive mb-4">
+                <table class="table">
+                  <thead>
+                    <tr>
+                      <th>Product</th>
+                      <th class="text-end">Price</th>
+                      <th class="text-center">Qty</th>
+                      <th class="text-end">Total</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {{#each cart.items}}
+                    <tr>
+                      <td>
+                        <img src="/uploads/product-images/{{this.productId.productImage.[0]}}" alt="Product" width="50"
+                          class="me-2">
+                        {{this.productId.productName}}
+                      </td>
+                      <td class="text-end">₹{{this.totalPrice}}</td>
+                      <td class="text-center">x{{this.quantity}}</td>
+                      <td class="text-end">₹{{multiply this.quantity this.totalPrice}}</td>
+                    </tr>
+                    {{/each}}
+                  </tbody>
+                </table>
+              </div>
+
+              <!-- Coupon Code Input -->
+              <div class="p-3 border rounded bg-light mb-4">
+                <h6 class="mb-3"><i class="fas fa-tag me-2"></i>Have a Coupon?</h6>
+                <div class="input-group">
+                  <input type="text" name="coupon_code" class="form-control" placeholder="Enter Coupon Code">
+                  <button type="submit" formaction="/applyCoupon" formmethod="POST" class="btn btn-dark">Apply</button>
+                </div>
+              </div>
+
+              <!-- Available Coupons -->
+              {{#if coupon.length}}
+              <div class="mb-4">
+                <h6 class="mb-3"><i class="fas fa-tag me-2"></i>Available Coupons</h6>
+                {{#each coupon}}
+                <div class="p-3 border rounded bg-white mb-3">
+                  <div class="d-flex justify-content-between">
+                    <span class="fw-bold">{{this.code}}</span>
+                    <span class="text-success">{{this.discountPercentage}}% OFF</span>
+                  </div>
+                  <p class="mb-1">Min Purchase: ₹{{this.couponMinAmount}}</p>
+                  <p class="mb-1">Valid Until: {{formatDate this.couponValidity}}</p>
+                  <button type="button" class="btn btn-outline-primary btn-sm mt-2"
+                    onclick="copyCoupon('{{this.code}}')">Copy Code</button>
+                </div>
+                {{/each}}
+              </div>
+              {{/if}}
+
+              <!-- Order Summary -->
+              <div class="p-3 border rounded bg-light mb-4">
+                <h6 class="mb-3"><i class="fas fa-calculator me-2"></i>Order Summary</h6>
+                <ul class="list-unstyled">
+                  <li class="d-flex justify-content-between mb-2">Subtotal <span>₹{{cart.cartTotal}}</span></li>
+                  <li class="d-flex justify-content-between mb-2">Shipping <span>₹40</span></li>
+                  <li class="d-flex justify-content-between mb-2">Tax <span>₹0</span></li>
+                  <li class="d-flex justify-content-between mb-2 text-success">Discount <span>-₹{{cart.discount}}</span>
+                  </li>
+                  <li class="d-flex justify-content-between fw-bold border-top pt-2">Total
+                    <span>₹{{cart.finalAmount}}</span>
+                  </li>
+                </ul>
+              </div>
+
+              <!-- Payment Method -->
+              <div class="p-3 border rounded bg-white mb-4">
+                <h6 class="mb-4"><i class="fas fa-credit-card me-2"></i>Payment Method</h6>
+                <div class="form-check mb-2">
+                  <input class="form-check-input" type="radio" name="payment_method" id="cod" value="cod" checked>
+                  <label class="form-check-label" for="cod">
+                    <i class="fas fa-money-bill me-2"></i>Cash on Delivery
+                    <span class="badge bg-success ms-2">No charges</span>
+                  </label>
+                </div>
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="payment_method" id="razorpay" value="razorpay">
+                  <label class="form-check-label" for="razorpay">
+                    <i class="fas fa-mobile-alt me-2"></i>Razorpay
+                  </label>
+                </div>
+              </div>
+
+              <!-- Submit Order -->
+              <button type="submit" class="btn btn-primary w-100">
+                <i class="fas fa-check-circle me-2"></i>Place Order
+              </button>
+            </div>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+</section>
+
+
+
+
+
+
+  <!-- Edit Address Modal -->
+    <div id="editAddressModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn" onclick="closeModal()">&times;</span>
+            <h2 class="modal-title">Edit Address</h2>
+            <form action="/editCheckoutAddress" method="POST">
+                <div class="form-group">
+                    <label for="addressType">Address Type</label>
+                    <input type="text" id="edit_addressType" name="addressType"
+                        placeholder="Address Type (e.g., Home, Office)" required>
+
+
+                    <label for="name">Place Name</label>
+                    <input type="text" id="edit_name" name="name" placeholder="Full Name" required>
+
+                    <label for="city">City</label>
+                    <input type="text" id="edit_city" name="city" placeholder="City" required>
+
+                    <label for="state">State</label>
+                    <input type="text" id="edit_state" name="state" placeholder="State" required>
+
+                    <label for="landMark">Landmark</label>
+                    <input type="text" id="edit_landMark" name="landMark" placeholder="Landmark" required>
+
+                    <label for="pincode">Pincode</label>
+                    <input type="text" id="edit_pincode" name="pincode" placeholder="Pincode" required>
+
+                    <label for="phone">Phone Number</label>
+                    <input type="tel" id="edit_phone" name="phone" placeholder="Phone Number" required>
+
+                    <label for="altPhone">Alternative Phone Number (Optional)</label>
+                    <input type="tel" id="edit_altPhone" name="altPhone"
+                        placeholder="Alternative Phone Number (Optional)">
+                </div>
+
+                <input type="hidden" id="edit_address_id" name="address_id">
+
+                <button type="submit" class="save-btn">Save Changes</button>
+            </form>
+        </div>
+    </div>
+
+
+<div id="addAddressModal" class="modal">
+  <div class="modal-content">
+    <span class="close-btn" onclick="closeModal()">&times;</span>
+    <h2 class="modal-title">Add Address</h2>
+    <form action="/addCheckoutAddress" method="POST">
+      <div class="form-group">
+        <label for="addressType">Address Type</label>
+        <input type="text" name="addressType" placeholder="Address Type (e.g., Home, Office)" required>
+
+        <label for="name">Place Name</label>
+        <input type="text" name="name" placeholder="Full Name" required>
+
+        <label for="city">City</label>
+        <input type="text" name="city" placeholder="City" required>
+
+        <label for="state">State</label>
+        <input type="text" name="state" placeholder="State" required>
+
+        <label for="landMark">Landmark</label>
+        <input type="text" name="landMark" placeholder="Landmark" required>
+
+        <label for="pincode">Pincode</label>
+        <input type="text" name="pincode" placeholder="Pincode" required>
+
+        <label for="phone">Phone Number</label>
+        <input type="tel" name="phone" placeholder="Phone Number" required>
+
+        <label for="altPhone">Alternative Phone Number (Optional)</label>
+        <input type="tel" name="altPhone" placeholder="Alternative Phone Number (Optional)">
+      </div>
+
+      <button type="submit" class="save-btn">Save Changes</button>
+
+    </form>
+  </div>
+</div>
+
+
+
+<script>
+
+  const sanitizeQuotes = (string) => {
+    if (typeof string !== 'string') return string;
+    return string.replace(/'/g, '"');
+  }
+  const userAddress = {{{json userAddress}}}; // `json` is a custom helper to inject raw JSON safely
+
+  function openEditAddressModal(addressId) {
+    const address = userAddress.find(addr => addr._id === addressId);
+
+    if (address) {
+      document.getElementById("edit_addressType").value = address.addressType || '';
+      document.getElementById("edit_name").value = address.name || '';
+      document.getElementById("edit_city").value = address.city || '';
+      document.getElementById("edit_state").value = address.state || '';
+      document.getElementById("edit_landMark").value = address.landMark || '';
+      document.getElementById("edit_pincode").value = address.pincode || '';
+      document.getElementById("edit_phone").value = address.phone || '';
+      document.getElementById("edit_altPhone").value = address.altPhone || '';
+      document.getElementById("edit_address_id").value = address._id;
+      document.getElementById("editAddressModal").style.display = "flex";
+      document.body.style.overflow = 'hidden';
+    }
+  }
+  function openAddAddressModal(event) {
+    if (event) {
+      event.preventDefault();
+    }
+    const modal = document.getElementById("addAddressModal");
+    if (modal) {
+      modal.style.display = "flex";
+      document.body.style.overflow = 'hidden';
+    }
+  }
+
+  function closeModal() {
+    const editModal = document.getElementById("editAddressModal");
+    const addModal = document.getElementById("addAddressModal");
+
+    if (editModal) editModal.style.display = "none";
+    if (addModal) addModal.style.display = "none";
+
+    document.body.style.overflow = '';
+  }
+
+  // Close modals when clicking outside
+  window.onclick = function (event) {
+    const editModal = document.getElementById("editAddressModal");
+    const addModal = document.getElementById("addAddressModal");
+
+    if (event.target === editModal || event.target === addModal) {
+      closeModal();
+    }
+  };
+
+
+
+
+
+</script>

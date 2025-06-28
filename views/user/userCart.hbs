@@ -1,0 +1,393 @@
+<div class="colorlib-loader"></div>
+
+<div id="page">
+
+    <div class="breadcrumbs">
+        <div class="container">
+            <div class="row">
+                <div class="col">
+                    <p class="bread"><span><a href="index.html">Home</a></span> / <span>Shopping Cart</span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <div class="colorlib-product">
+        <div class="container">
+            <div class="row row-pb-lg">
+                <div class="col-md-10 offset-md-1">
+                    <div class="process-wrap">
+                        <div class="process text-center active">
+                            <p><span>01</span></p>
+                            <h3>Shopping Cart</h3>
+                        </div>
+                        <div class="process text-center">
+                            <p><span>02</span></p>
+                            <h3>Checkout</h3>
+                        </div>
+                        <div class="process text-center">
+                            <p><span>03</span></p>
+                            <h3>Order Complete</h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <section class="shopping-cart spad">
+                <div class="container">
+                    <div class="col-md-12">
+                        <div class="total-wrap">
+                            <div class="row">
+
+                                <!-- Cart Items Section -->
+                                <div class="col-lg-8">
+                                    <div class="shopping__cart__table">
+                                        <table>
+                                            <thead>
+                                                <tr>
+                                                    <th>Product</th>
+                                                    <th>Quantity</th>
+                                                    <th>Total</th>
+                                                    <th></th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                {{#if cart.items.length}}
+                                                {{#each cart.items}}
+                                                <tr
+                                                    class="{{#unless this.productId.isListed}}unavailable-product{{/unless}}">
+                                                    <td class="product__cart__item">
+                                                        <div class="product__cart__item__pic">
+                                                            <img class="cart-img"
+                                                                src="/uploads/product-images/{{this.productId.productImage.[0]}}"
+                                                                alt="">
+                                                        </div>
+                                                        <div class="product__cart__item__text">
+                                                            <h6>
+                                                                {{this.productId.productName}}
+                                                                {{#if this.productId.isBlocked}}
+                                                                <span class="text-danger">(Product Unavailable)</span>
+                                                                {{else}}
+                                                                {{#if this.productId.category}}
+                                                                {{#unless this.productId.category.isListed}}
+                                                                <span class="text-danger">(Category Unavailable)</span>
+                                                                {{/unless}}
+                                                                {{/if}}
+                                                                {{/if}}
+                                                            </h6>
+                                                            <h5>₹{{this.productId.finalPrice}}</h5>
+                                                        </div>
+                                                    </td>
+                                                    <td class="quantity__item">
+                                                        <div class="custom-quantity-input">
+                                                            <button class="quantity-btn"
+                                                                onclick="updateItemQuantity('{{this.productId._id}}', 'decrease')">-</button>
+                                                            <input type="number" class="quantity-value"
+                                                                value="{{this.quantity}}" min="1"
+                                                                onchange="updateItemQuantity('{{this.productId._id}}', 'set', this.value)"
+                                                                readonly>
+                                                            <button class="quantity-btn"
+                                                                onclick="updateItemQuantity('{{this.productId._id}}', 'increase')">+</button>
+                                                        </div>
+                                                    </td>
+                                                    <td class="cart__price">₹{{this.totalPrice}}</td>
+                                                    <td class="cart__close">
+                                                        <a href="javascript:void(0);"
+                                                            onclick="confirmRemove('{{this.productId._id}}')">
+                                                            <i class="fa fa-close"></i>
+                                                        </a>
+                                                    </td>
+                                                </tr>
+                                                {{/each}}
+                                                {{else}}
+                                                <tr>
+                                                    <td colspan="4" class="text-center">No products in the cart</td>
+                                                </tr>
+                                                {{/if}}
+                                            </tbody>
+                                        </table>
+                                    </div>
+
+                                    <!-- Continue Shopping -->
+                                    <div class="row mt-3">
+                                        <div class="col-lg-6 col-md-6 col-sm-6">
+                                            <div class="continue__btn">
+                                                <a href="/shop">Continue Shopping</a>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Summary Section -->
+                                <div class="col-lg-4">
+                                    <div class="total">
+                                        <div class="cart__total">
+                                            <h6>Cart total</h6>
+                                            <ul>
+                                                <li>Subtotal <span>₹{{cart.cartTotal}}</span></li>
+                                                <br>
+                                                <li>Total <span id="cart-total">₹</span></li>
+                                            </ul>
+
+                                            {{#if cart.items.length}}
+                                            <a href="/checkout" id="checkout-btn" class="primary-btn">Proceed to
+                                                checkout</a>
+                                            {{/if}}
+                                        </div>
+
+                                    </div>
+                                </div>
+
+                            </div> <!-- /.row -->
+                        </div> <!-- /.total-wrap -->
+                    </div> <!-- /.col-md-12 -->
+                </div> <!-- /.container -->
+            </section>
+
+            <div class="row row-pb-lg">
+                <div class="col-md-12">
+                    <div class="total-wrap">
+                        <div class="row">
+                            <div class="col-sm-8">
+                                <form action="#">
+                                    <div class="row form-group">
+                                        <div class="col-sm-9">
+                                            <input type="text" name="quantity" class="form-control input-number"
+                                                placeholder="Your Coupon Number...">
+                                        </div>
+                                        <div class="col-sm-3">
+                                            <input type="submit" value="Apply Coupon" class="btn btn-primary">
+                                        </div>
+                                    </div>
+                                </form>
+                            </div>
+                            <div class="col-sm-4 text-center">
+                                <div class="total">
+                                    <div class="sub">
+                                        <p><span>Subtotal:</span> <span>$200.00</span></p>
+                                        <p><span>Delivery:</span> <span>$0.00</span></p>
+                                        <p><span>Discount:</span> <span>$45.00</span></p>
+                                    </div>
+                                    <div class="grand-total">
+                                        <p><span><strong>Total:</strong></span> <span>$450.00</span></p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="col-sm-8 offset-sm-2 text-center colorlib-heading colorlib-heading-sm">
+                    <h2>Related Products</h2>
+                </div>
+            </div>
+            <div class="row">
+                <div class="col-md-3 col-lg-3 mb-4 text-center">
+                    <div class="product-entry border">
+                        <a href="#" class="prod-img">
+                            <img src="images/item-1.jpg" class="img-fluid" alt="Free html5 bootstrap 4 template">
+                        </a>
+                        <div class="desc">
+                            <h2><a href="#">Women's Boots Shoes Maca</a></h2>
+                            <span class="price">$139.00</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-lg-3 mb-4 text-center">
+                    <div class="product-entry border">
+                        <a href="#" class="prod-img">
+                            <img src="images/item-2.jpg" class="img-fluid" alt="Free html5 bootstrap 4 template">
+                        </a>
+                        <div class="desc">
+                            <h2><a href="#">Women's Minam Meaghan</a></h2>
+                            <span class="price">$139.00</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-lg-3 mb-4 text-center">
+                    <div class="product-entry border">
+                        <a href="#" class="prod-img">
+                            <img src="images/item-3.jpg" class="img-fluid" alt="Free html5 bootstrap 4 template">
+                        </a>
+                        <div class="desc">
+                            <h2><a href="#">Men's Taja Commissioner</a></h2>
+                            <span class="price">$139.00</span>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 col-lg-3 mb-4 text-center">
+                    <div class="product-entry border">
+                        <a href="#" class="prod-img">
+                            <img src="images/item-4.jpg" class="img-fluid" alt="Free html5 bootstrap 4 template">
+                        </a>
+                        <div class="desc">
+                            <h2><a href="#">Russ Men's Sneakers</a></h2>
+                            <span class="price">$139.00</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", function () {
+            const checkoutBtn = document.getElementById("checkout-btn");
+            
+            function checkCartAvailability() {
+                const unavailableProductItems = document.querySelectorAll('tr .text-danger');
+
+                if (unavailableProductItems.length > 0) {
+                    checkoutBtn.addEventListener("click", function (event) {
+                        event.preventDefault();
+                        Swal.fire({
+                            title: "Some items are unavailable!",
+                            text: "Please remove unavailable products or products from unavailable categories from your cart before proceeding.",
+                            icon: "warning",
+                            confirmButtonText: "OK"
+                        });
+                    });
+
+                    checkoutBtn.classList.add("disabled");
+                    return false;
+                }
+                return true;
+            }
+
+            checkCartAvailability();
+        })
+
+
+
+    function confirmRemove(productId) {
+
+        const catRow = document.querySelector(`a[onclick="confirmRemove('${productId}')"]`).closest('tr');
+        Swal.fire({
+            title: 'Are you sure?',
+            text: "This item will be removed from your cart.",
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#3085d6',
+            cancelButtonColor: '#d33',
+            confirmButtonText: 'Yes, remove it!'
+        }).then((result) => {
+            if (result.isConfirmed) {
+                fetch(`/cart/remove/${productId}`, {
+                    method: "DELETE",
+                    headers: {
+                        "content-type": "application/json"
+                    }
+                })
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            catRow.remove();
+                            calculateTotalPrice();
+                            const remainingItems = document.querySelectorAll('tr').length;
+                            if (remainingItems <= 1) {
+                                location.reload(); // reload if cart becomes empty
+                            }
+                            Swal.fire('Removed!', 'Your item has been removed.', 'success');
+                        } else {
+                            Swal.fire('Error!', data.message, 'error');
+                        }
+                    })
+                    .catch(error => {
+                        console.error("Error:", error);
+                        Swal.fire('Error!', 'Something went wrong.', 'error');
+                    });
+
+
+            }
+        })
+    }
+
+
+
+
+    function calculateTotalPrice() {
+        const cartRows = document.querySelectorAll('tr');
+        let subtotal = 0;
+
+        cartRows.forEach(row => {
+            const priceElement = row.querySelector('.cart__price');
+            if (priceElement) {
+                const price = parseFloat(priceElement.textContent.replace('₹', ''));
+                if (!isNaN(price)) {
+                    subtotal += price;
+                }
+            }
+        });
+
+        document.querySelectorAll('ul li').forEach(li => {
+            const text = li.childNodes[0].textContent.trim();
+            if (text === 'Subtotal') {
+                li.querySelector('span').textContent = `₹${subtotal.toFixed(2)}`;
+            }
+            if (text === 'Total') {
+                li.querySelector('span').textContent = `₹${subtotal.toFixed(2)}`;
+            }
+        });
+
+        return subtotal;
+    }
+     document.addEventListener('DOMContentLoaded', calculateTotalPrice);
+
+        async function updateItemQuantity(productId, action, value = null) {
+            let quantityInput = event.target.parentElement.querySelector('.quantity-value');
+            let currentQuantity = parseInt(quantityInput.value);
+            let newQuantity = currentQuantity;
+            newQuantity = action === 'increase' ? currentQuantity + 1 : currentQuantity - 1 ;
+            if(newQuantity > 5){
+                Swal.fire({
+                    title:'Error!', 
+                    text:'You can only order up to 5 items.',
+                    icon:'error',
+                    showConfirmButton:false,
+                    timer:1500
+                }); 
+                return;
+            }
+            if(newQuantity < 1){
+                Swal.fire({
+                    title:'Error!', 
+                    text:'You can not order less than 1 item.',
+                    icon:'error',
+                    showConfirmButton:false,
+                    timer:1500
+                }); 
+                return;
+            }
+            const response = await fetch('/addToCart', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                    productId: productId,
+                    quantity: action === 'increase' ? 1 : -1
+                })
+            } )
+            const data = await response.json();
+            if(!response.ok){
+                Swal.fire('Error!', data.message, 'error');
+                return;
+            }
+
+
+            if (newQuantity !== currentQuantity) {  
+                quantityInput.value = newQuantity;
+                
+                const pricePerUnit = parseFloat(quantityInput.closest('tr').querySelector('.product__cart__item__text h5').textContent.replace('₹', ''));
+                const totalPriceElement = quantityInput.closest('tr').querySelector('.cart__price');
+                totalPriceElement.textContent = `₹${(pricePerUnit * newQuantity).toFixed(2)}`;
+
+                calculateTotalPrice()            
+            }
+        }
+</script>

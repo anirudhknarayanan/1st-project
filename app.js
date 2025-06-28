@@ -6,6 +6,7 @@ const dotenv = require("dotenv").config();
 const session = require("express-session");
 const passport = require("./config/passport");
 const db = require("./config/db");
+const flash = require('connect-flash');
 
 
 const userRouter = require("./routes/user");
@@ -26,6 +27,8 @@ app.use(session({
     maxAge: 72 * 60 * 60 * 1000, // 72 hours
   },
 }));
+
+app.use(flash());
 
 // Passport Setup
 app.use(passport.initialize());
@@ -57,6 +60,7 @@ app.engine(
       lt: (a, b) => a < b,
       gt: (a, b) => a > b,
       add: (a, b) => a + b,
+      multiply: (a, b) => a * b,
       subtract: (a, b) => a - b,
       range: function (start, end) {
         let arr = [];

@@ -114,7 +114,7 @@
 							</div>
 
 						</div>
-						
+
 						<div class="col-sm-12">
 							<div class="side border mb-1">
 								<h3>Filter By Price</h3>
@@ -127,7 +127,7 @@
 								</ul>
 							</div>
 						</div>
-						
+
 						<div class="col-sm-12">
 							<div class="side border mb-1">
 								<h3>Material</h3>
@@ -137,7 +137,7 @@
 								</ul>
 							</div>
 						</div>
-						
+
 					</div>
 				</div>
 
@@ -157,8 +157,16 @@
 										Price: {{formatINR salePrice}}
 										<span class="text-muted"><strike>{{formatINR regularPrice}}</strike></span>
 									</p>
-									<button class="add-to-cart-btn btn-dark" onclick="">Add To Cart</button>
+									<button class="add-to-cart-btn btn-dark" onclick="addToCart('{{this._id}}')">Add To
+										Cart</button>
 								</div>
+								<div class="text-center" style="margin-bottom: 15px;">
+									<a href="#" onclick="event.preventDefault(); addToWishlist('{{this._id}}')"
+										class="wishlist-btn">
+										<i class="fa fa-heart"></i> Add to wishlist
+									</a>
+								</div>
+
 							</div>
 						</div>
 						{{/each}}
@@ -226,3 +234,155 @@
 
 
 </div>
+
+<script>
+	async function addToCart(productId) {
+		try {
+			const response = await fetch('/addToCart', {
+				method: 'POST',
+				headers: {
+					'Content-Type': 'application/json',
+				},
+				body: JSON.stringify({
+					productId: productId,
+					quantity: 1
+				})
+			});
+			const data = await response.json();
+			if (data.success) {
+
+				Toastify({
+					text: "Success\nProduct added to cart ",
+					duration: 2000,
+					close: true,
+					gravity: "top",
+					position: "right",
+					stopOnFocus: true,
+					style: {
+						background: "#ffffff",
+						color: "#28a745",
+						boxShadow: "0px 5px 15px rgba(0, 0, 0, 0.2)",
+						padding: "12px 20px",
+						borderRadius: "10px",
+						borderLeft: "5px solid #28a745",
+						fontSize: "14px",
+						fontWeight: "bold",
+						textAlign: "left",
+						animation: "fadeInUp 0.5s ease-in-out"
+					},
+					avatar: "https://cdn-icons-png.flaticon.com/512/845/845646.png",
+				}).showToast();
+			} else {
+				Toastify({
+					text: "Error\n" + (data.message || 'Failed to add product to cart'),
+					duration: 2000,
+					close: true,
+					gravity: "top",
+					position: "right",
+					stopOnFocus: true,
+					style: {
+						background: "#ffffff",
+						color: "#dc3545",
+						boxShadow: "0px 5px 15px rgba(0, 0, 0, 0.2)",
+						padding: "12px 20px",
+						borderRadius: "10px",
+						borderLeft: "5px solid #dc3545",
+						fontSize: "14px",
+						fontWeight: "bold",
+						textAlign: "left",
+						animation: "fadeInUp 0.5s ease-in-out"
+					},
+					avatar: "https://cdn-icons-png.flaticon.com/512/190/190406.png",
+				}).showToast();
+			}
+
+		} catch (error) {
+			Toastify({
+				text: "Error\n" + (error.message || 'Failed to add product to cart'),
+				duration: 2000,
+				close: true,
+				gravity: "top",
+				position: "right",
+				stopOnFocus: true,
+				style: {
+					background: "#ffffff",
+					color: "#dc3545",
+					boxShadow: "0px 5px 15px rgba(0, 0, 0, 0.2)",
+					padding: "12px 20px",
+					borderRadius: "10px",
+					borderLeft: "5px solid #dc3545",
+					fontSize: "14px",
+					fontWeight: "bold",
+					textAlign: "left",
+					animation: "fadeInUp 0.5s ease-in-out"
+				},
+				avatar: "https://cdn-icons-png.flaticon.com/512/190/190406.png",
+			}).showToast();
+
+		}
+	}
+
+
+	async function addToWishlist(productId) {
+		try {
+			const response = await fetch("/addToWishlist", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ productId })
+			});
+
+			const data = await response.json();
+
+			if (data.success) {
+				Toastify({
+					text: "Success\nProduct added to wishlist successfully",
+					duration: 2000,
+					close: true,
+					gravity: "top",
+					position: "right",
+					stopOnFocus: true,
+					style: {
+						background: "#ffffff",
+						color: "#28a745",
+						boxShadow: "0px 5px 15px rgba(0, 0, 0, 0.2)",
+						padding: "12px 20px",
+						borderRadius: "10px",
+						borderLeft: "5px solid #28a745",
+						fontSize: "14px",
+						fontWeight: "bold",
+						textAlign: "left",
+						animation: "fadeInUp 0.5s ease-in-out"
+					},
+					avatar: "https://cdn-icons-png.flaticon.com/512/845/845646.png",
+				}).showToast();
+			} else {
+				throw new Error(data.message || 'Failed to add product to Wishlist');
+			}
+		} catch (error) {
+			console.error('Error:', error);
+
+			Toastify({
+				text: "Error\n" + (error.message || 'Failed to add product to Wishlist'),
+				duration: 2000,
+				close: true,
+				gravity: "top",
+				position: "right",
+				stopOnFocus: true,
+				style: {
+					background: "#ffffff",
+					color: "#dc3545",
+					boxShadow: "0px 5px 15px rgba(0, 0, 0, 0.2)",
+					padding: "12px 20px",
+					borderRadius: "10px",
+					borderLeft: "5px solid #dc3545",
+					fontSize: "14px",
+					fontWeight: "bold",
+					textAlign: "left",
+					animation: "fadeInUp 0.5s ease-in-out"
+				},
+				avatar: "https://cdn-icons-png.flaticon.com/512/190/190406.png",
+			}).showToast();
+		}
+	}
+
+</script>

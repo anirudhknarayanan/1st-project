@@ -8,7 +8,7 @@ const wishlistSchema = new Schema({
          ref : "User",
          required : true
     },
-    products : [ {
+    items : [ {
         productId : {
             type : Schema.Types.ObjectId,
             ref : "Product",

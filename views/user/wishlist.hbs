@@ -1,149 +1,106 @@
+<div class="colorlib-loader"></div>
 
-		
-	<div class="colorlib-loader"></div>
+<div id="page">
 
-	<div id="page">
-		
 
-		<div class="breadcrumbs">
-			<div class="container">
-				<div class="row">
-					<div class="col">
-						<p class="bread"><span><a href="index.html">Home</a></span> / <span>My Wishlist</span></p>
-					</div>
+	<div class="breadcrumbs">
+		<div class="container">
+			<div class="row">
+				<div class="col">
+					<p class="bread"><span><a href="index.html">Home</a></span> / <span>My Wishlist</span></p>
 				</div>
 			</div>
 		</div>
+	</div>
 
 
-		<div class="colorlib-product">
-			<div class="container">
-				<div class="row row-pb-lg">
-					<div class="col-md-10 offset-md-1">
-						<div class="process-wrap">
-							<div class="process text-center active">
-								<p><span>01</span></p>
-								<h3>Shopping Cart</h3>
-							</div>
-							<div class="process text-center">
-								<p><span>02</span></p>
-								<h3>Checkout</h3>
-							</div>
-							<div class="process text-center">
-								<p><span>03</span></p>
-								<h3>Order Complete</h3>
-							</div>
+	<div class="colorlib-product">
+		<div class="container">
+			<div class="row row-pb-lg">
+				<div class="col-md-10 offset-md-1">
+					<div class="process-wrap">
+						<div class="process text-center active">
+							<p><span>01</span></p>
+							<h3>Shopping Cart</h3>
+						</div>
+						<div class="process text-center">
+							<p><span>02</span></p>
+							<h3>Checkout</h3>
+						</div>
+						<div class="process text-center">
+							<p><span>03</span></p>
+							<h3>Order Complete</h3>
 						</div>
 					</div>
 				</div>
-				<div class="row row-pb-lg">
-					<div class="col-md-12">
-						<div class="product-name d-flex">
-							<div class="one-forth text-left px-4">
-								<span>Product Details</span>
+			</div>
+			<div class="row row-pb-lg">
+				<div class="col-md-12">
+					<div class="product-name d-flex">
+						<div class="one-forth text-left px-4">
+							<span>Product Details</span>
+						</div>
+						<div class="one-eight text-center">
+							<span>Price</span>
+						</div>
+						<div class="one-eight text-center">
+							<span>Quantity</span>
+						</div>
+						<div class="one-eight text-center">
+							<span>Total</span>
+						</div>
+						<div class="one-eight text-center px-4">
+							<span>Remove</span>
+						</div>
+						<div class="one-eight text-center px-4">
+							<span></span>
+						</div>
+					</div>
+					{{#each wishlist.items}}
+					<div class="product-cart d-flex">
+						<div class="one-forth">
+							<div class="product-img"
+								style="background-image: url('/uploads/product-images/{{this.productId.productImage.[0]}}');">
 							</div>
-							<div class="one-eight text-center">
-								<span>Price</span>
-							</div>
-							<div class="one-eight text-center">
-								<span>Quantity</span>
-							</div>
-							<div class="one-eight text-center">
-								<span>Total</span>
-							</div>
-							<div class="one-eight text-center px-4">
-								<span>Remove</span>
+							<div class="display-tc">
+								<h3>{{this.productId.productName}}</h3>
 							</div>
 						</div>
-						<div class="product-cart d-flex">
-							<div class="one-forth">
-								<div class="product-img" style="background-image: url(images/item-6.jpg);">
-								</div>
-								<div class="display-tc">
-									<h3>Product Name</h3>
-								</div>
-							</div>
-							<div class="one-eight text-center">
-								<div class="display-tc">
-									<span class="price">$68.00</span>
-								</div>
-							</div>
-							<div class="one-eight text-center">
-								<div class="display-tc">
-									<input type="text" id="quantity" name="quantity" class="form-control input-number text-center" value="1" min="1" max="100">
-								</div>
-							</div>
-							<div class="one-eight text-center">
-								<div class="display-tc">
-									<span class="price">$120.00</span>
-								</div>
-							</div>
-							<div class="one-eight text-center">
-								<div class="display-tc">
-									<a href="#" class="closed"></a>
-								</div>
+						<div class="one-eight text-center">
+							<div class="display-tc">
+								<span class="price">{{formatINR this.productId.salePrice}}</span><br>
+								<span class="text-muted"><strike>{{formatINR
+										this.productId.regularPrice}}</strike></span>
 							</div>
 						</div>
-						<div class="product-cart d-flex">
-							<div class="one-forth">
-								<div class="product-img" style="background-image: url(images/item-7.jpg);">
-								</div>
-								<div class="display-tc">
-									<h3>Product Name</h3>
-								</div>
-							</div>
-							<div class="one-eight text-center">
-								<div class="display-tc">
-									<span class="price">$68.00</span>
-								</div>
-							</div>
-							<div class="one-eight text-center">
-								<div class="display-tc">
-									<form action="#">
-										<input type="text" name="quantity" class="form-control input-number text-center" value="1" min="1" max="100">
-									</form>
-								</div>
-							</div>
-							<div class="one-eight text-center">
-								<div class="display-tc">
-									<span class="price">$120.00</span>
-								</div>
-							</div>
-							<div class="one-eight text-center">
-								<div class="display-tc">
-									<a href="#" class="closed"></a>
-								</div>
+						<div class="one-eight text-center">
+							<div class="display-tc">
+								<input type="text" id="quantity" name="quantity"
+									class="form-control input-number text-center" value="1" min="1" max="100">
 							</div>
 						</div>
-						<div class="product-cart d-flex">
-							<div class="one-forth">
-								<div class="product-img" style="background-image: url(images/item-8.jpg);">
-								</div>
-								<div class="display-tc">
-									<h3>Product Name</h3>
-								</div>
-							</div>
-							<div class="one-eight text-center">
-								<div class="display-tc">
-									<span class="price">$68.00</span>
-								</div>
-							</div>
-							<div class="one-eight text-center">
-								<div class="display-tc">
-									<input type="text" id="quantity" name="quantity" class="form-control input-number text-center" value="1" min="1" max="100">
-								</div>
-							</div>
-							<div class="one-eight text-center">
-								<div class="display-tc">
-									<span class="price">$120.00</span>
-								</div>
-							</div>
-							<div class="one-eight text-center">
-								<div class="display-tc">
-									<a href="#" class="closed"></a>
-								</div>
+						<div class="one-eight text-center">
+							<div class="display-tc">
+								<span class="price">{{formatINR this.productId.salePrice}}</span>
 							</div>
 						</div>
+						<div class="one-eight text-center">
+							<div class="display-tc">
+								<a href="#" class="closed" onclick="removeFromWishlist('{{this.productId._id}}')"
+									title="Remove from wishlist"></a>
+
+							</div>
+						</div>
+						<div class="one-eight text-center">
+							<div class="display-tc">
+								<button onclick="addToCart('{{this.productId._id}}')" class="add-to-cart-btn">
+									Add to Cart
+								</button>
+							</div>
+						</div>
+						{{/each}}
+
+
 					</div>
 				</div>
 				<div class="row">
@@ -200,8 +157,141 @@
 			</div>
 		</div>
 
-		
+
 	</div>
 
+	<script>
+		function removeFromWishlist(productId) {
+			Swal.fire({
+				title: "Are you sure?",
+				text: "This item will be removed from your wishlist. You won't be able to undo this action.",
+				icon: "warning",
+				showCancelButton: true,
+				confirmButtonColor: "#3085d6",
+				cancelButtonColor: "#d33",
+				confirmButtonText: "Yes, remove it",
+				cancelButtonText: "Cancel"
+			}).then((result) => {
+				if (result.isConfirmed) {
+					window.location.href = `/removeFromWishlist?productId=${productId}`;
+				} else {
+					Swal.fire({
+						title: "Cancelled",
+						text: "Your item was not removed from the wishlist.",
+						icon: "info",
+						timer: 2000,
+						showConfirmButton: false
+					});
+				}
+			});
+		}
 
-	
+		async function addToCart(productId) {
+			try {
+				// First add to cart
+				const response = await fetch('/addToCart', {
+					method: 'POST',
+					headers: {
+						'Content-Type': 'application/json',
+					},
+					body: JSON.stringify({
+						productId: productId,
+						quantity: 1
+					})
+				});
+
+				const data = await response.json();
+
+				if (data.success) {
+
+					const removeResponse = await fetch(`/removeFromWishlist?productId=${productId}`, {
+						method: 'GET',
+						headers: {
+							'Content-Type': 'application/json'
+						}
+					});
+
+					const removeData = await removeResponse.json();
+
+					if (removeData.success) {
+
+
+						Toastify({
+							text: "Success\nProduct added to cart ",
+							duration: 2000,
+							close: true,
+							gravity: "top",
+							position: "right",
+							stopOnFocus: true,
+							style: {
+								background: "#ffffff",
+								color: "#28a745",
+								boxShadow: "0px 5px 15px rgba(0, 0, 0, 0.2)",
+								padding: "12px 20px",
+								borderRadius: "10px",
+								borderLeft: "5px solid #28a745",
+								fontSize: "14px",
+								fontWeight: "bold",
+								textAlign: "left",
+								animation: "fadeInUp 0.5s ease-in-out"
+							},
+							avatar: "https://cdn-icons-png.flaticon.com/512/845/845646.png",
+						}).showToast();
+
+						setTimeout(() => {
+							window.location.href = "/wishlist";
+						}, 2000);
+					}
+
+				} else {
+					Toastify({
+						text: "Error\n" + (data.message || 'Failed to add product to cart'),
+						duration: 2000,
+						close: true,
+						gravity: "top",
+						position: "right",
+						stopOnFocus: true,
+						style: {
+							background: "#ffffff",
+							color: "#dc3545",
+							boxShadow: "0px 5px 15px rgba(0, 0, 0, 0.2)",
+							padding: "12px 20px",
+							borderRadius: "10px",
+							borderLeft: "5px solid #dc3545",
+							fontSize: "14px",
+							fontWeight: "bold",
+							textAlign: "left",
+							animation: "fadeInUp 0.5s ease-in-out"
+						},
+						avatar: "https://cdn-icons-png.flaticon.com/512/190/190406.png",
+					}).showToast();
+
+					// throw new Error(data.message || 'Failed to add product to cart');
+				}
+			} catch (error) {
+
+				Toastify({
+					text: "Error\n" + (error.message || 'Failed to add product to cart'),
+					duration: 2000,
+					close: true,
+					gravity: "top",
+					position: "right",
+					stopOnFocus: true,
+					style: {
+						background: "#ffffff",
+						color: "#dc3545",
+						boxShadow: "0px 5px 15px rgba(0, 0, 0, 0.2)",
+						padding: "12px 20px",
+						borderRadius: "10px",
+						borderLeft: "5px solid #dc3545",
+						fontSize: "14px",
+						fontWeight: "bold",
+						textAlign: "left",
+						animation: "fadeInUp 0.5s ease-in-out"
+					},
+					avatar: "https://cdn-icons-png.flaticon.com/512/190/190406.png",
+				}).showToast();
+			}
+		}
+
+	</script>
