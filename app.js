@@ -7,7 +7,10 @@ const session = require("express-session");
 const passport = require("./config/passport");
 const db = require("./config/db");
 const flash = require('connect-flash');
-
+app.use((req, res, next) => {
+  res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+  next();
+});
 
 const userRouter = require("./routes/user");
 const adminRouter = require("./routes/admin");
@@ -58,6 +61,7 @@ app.engine(
     helpers: {
       eq: (a, b) => a === b,
       lt: (a, b) => a < b,
+      ne: (a, b) => a != b,
       gt: (a, b) => a > b,
       add: (a, b) => a + b,
       multiply: (a, b) => a * b,
@@ -99,9 +103,27 @@ app.engine(
           default: return options.inverse(this);
         }
       },
+      or: function () {
+        const args = Array.from(arguments).slice(0, -1); // remove handlebars options object
+        return args.some(Boolean);
+      },
       formatINR: (value) => {
         if (typeof value !== 'number') value = Number(value);
         return value.toLocaleString('en-IN', { style: 'currency', currency: 'INR' });
+      },
+      and: function () {
+        const args = Array.from(arguments).slice(0, -1);
+        return args.every(Boolean);
+      },
+      formatDate: function (date) {
+        if (!date) return '';
+        return new Date(date).toLocaleString('en-IN', {
+          year: 'numeric',
+          month: 'short',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit'
+        });
       }
 
 
@@ -121,9 +143,12 @@ app.use("/", userRouter);
 app.use("/admin", adminRouter);
 
 
+
+
+
 const PORT = 3000;
-app.listen(PORT,()=>{
-    console.log(`server runnin on ${PORT}`);
-    
+app.listen(PORT, () => {
+  console.log(`server runnin on ${PORT}`);
+
 })
 module.exports = app

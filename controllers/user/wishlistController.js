@@ -2,7 +2,8 @@ const User = require("../../models/userSchema");
 const Product = require("../../models/productSchema")
 const Wishlist = require("../../models/wishlistSchema")
 const Cart = require("../../models/cartSchema")
-const { getDiscountPriceCart, getDiscountPrice } = require("../../helpers/offerHelpers")
+const { getDiscountPriceCart, getDiscountPrice } = require("../../helpers/offerHelpers");
+const Address = require("../../models/addressSchema");
 
 module.exports = {
   getWishlist: async (req, res) => {
@@ -120,7 +121,10 @@ module.exports = {
     console.error("Error removing from wishlist:", error);
     res.status(500).json({ success: false, message: "Internal server error" });
   }
+},
+
+
+
 }
 
 
-}

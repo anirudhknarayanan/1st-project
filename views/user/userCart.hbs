@@ -126,6 +126,10 @@
                                             <ul>
                                                 <li>Subtotal <span>₹{{cart.cartTotal}}</span></li>
                                                 <br>
+                                                {{#each cart.items}}
+                                                <li>Applied Offer <span>{{this.productId.appliedOffer}}%</span></li>
+                                                {{/each}}
+                                                <br>
                                                 <li>Total <span id="cart-total">₹</span></li>
                                             </ul>
 
@@ -237,30 +241,30 @@
 
 <script>
     document.addEventListener("DOMContentLoaded", function () {
-            const checkoutBtn = document.getElementById("checkout-btn");
-            
-            function checkCartAvailability() {
-                const unavailableProductItems = document.querySelectorAll('tr .text-danger');
+        const checkoutBtn = document.getElementById("checkout-btn");
 
-                if (unavailableProductItems.length > 0) {
-                    checkoutBtn.addEventListener("click", function (event) {
-                        event.preventDefault();
-                        Swal.fire({
-                            title: "Some items are unavailable!",
-                            text: "Please remove unavailable products or products from unavailable categories from your cart before proceeding.",
-                            icon: "warning",
-                            confirmButtonText: "OK"
-                        });
+        function checkCartAvailability() {
+            const unavailableProductItems = document.querySelectorAll('tr .text-danger');
+
+            if (unavailableProductItems.length > 0) {
+                checkoutBtn.addEventListener("click", function (event) {
+                    event.preventDefault();
+                    Swal.fire({
+                        title: "Some items are unavailable!",
+                        text: "Please remove unavailable products or products from unavailable categories from your cart before proceeding.",
+                        icon: "warning",
+                        confirmButtonText: "OK"
                     });
+                });
 
-                    checkoutBtn.classList.add("disabled");
-                    return false;
-                }
-                return true;
+                checkoutBtn.classList.add("disabled");
+                return false;
             }
+            return true;
+        }
 
-            checkCartAvailability();
-        })
+        checkCartAvailability();
+    })
 
 
 
@@ -336,58 +340,58 @@
 
         return subtotal;
     }
-     document.addEventListener('DOMContentLoaded', calculateTotalPrice);
+    document.addEventListener('DOMContentLoaded', calculateTotalPrice);
 
-        async function updateItemQuantity(productId, action, value = null) {
-            let quantityInput = event.target.parentElement.querySelector('.quantity-value');
-            let currentQuantity = parseInt(quantityInput.value);
-            let newQuantity = currentQuantity;
-            newQuantity = action === 'increase' ? currentQuantity + 1 : currentQuantity - 1 ;
-            if(newQuantity > 5){
-                Swal.fire({
-                    title:'Error!', 
-                    text:'You can only order up to 5 items.',
-                    icon:'error',
-                    showConfirmButton:false,
-                    timer:1500
-                }); 
-                return;
-            }
-            if(newQuantity < 1){
-                Swal.fire({
-                    title:'Error!', 
-                    text:'You can not order less than 1 item.',
-                    icon:'error',
-                    showConfirmButton:false,
-                    timer:1500
-                }); 
-                return;
-            }
-            const response = await fetch('/addToCart', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                    productId: productId,
-                    quantity: action === 'increase' ? 1 : -1
-                })
-            } )
-            const data = await response.json();
-            if(!response.ok){
-                Swal.fire('Error!', data.message, 'error');
-                return;
-            }
-
-
-            if (newQuantity !== currentQuantity) {  
-                quantityInput.value = newQuantity;
-                
-                const pricePerUnit = parseFloat(quantityInput.closest('tr').querySelector('.product__cart__item__text h5').textContent.replace('₹', ''));
-                const totalPriceElement = quantityInput.closest('tr').querySelector('.cart__price');
-                totalPriceElement.textContent = `₹${(pricePerUnit * newQuantity).toFixed(2)}`;
-
-                calculateTotalPrice()            
-            }
+    async function updateItemQuantity(productId, action, value = null) {
+        let quantityInput = event.target.parentElement.querySelector('.quantity-value');
+        let currentQuantity = parseInt(quantityInput.value);
+        let newQuantity = currentQuantity;
+        newQuantity = action === 'increase' ? currentQuantity + 1 : currentQuantity - 1;
+        if (newQuantity > 5) {
+            Swal.fire({
+                title: 'Error!',
+                text: 'You can only order up to 5 items.',
+                icon: 'error',
+                showConfirmButton: false,
+                timer: 1500
+            });
+            return;
         }
+        if (newQuantity < 1) {
+            Swal.fire({
+                title: 'Error!',
+                text: 'You can not order less than 1 item.',
+                icon: 'error',
+                showConfirmButton: false,
+                timer: 1500
+            });
+            return;
+        }
+        const response = await fetch('/addToCart', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+                productId: productId,
+                quantity: action === 'increase' ? 1 : -1
+            })
+        })
+        const data = await response.json();
+        if (!response.ok) {
+            Swal.fire('Error!', data.message, 'error');
+            return;
+        }
+
+
+        if (newQuantity !== currentQuantity) {
+            quantityInput.value = newQuantity;
+
+            const pricePerUnit = parseFloat(quantityInput.closest('tr').querySelector('.product__cart__item__text h5').textContent.replace('₹', ''));
+            const totalPriceElement = quantityInput.closest('tr').querySelector('.cart__price');
+            totalPriceElement.textContent = `₹${(pricePerUnit * newQuantity).toFixed(2)}`;
+
+            calculateTotalPrice()
+        }
+    }
 </script>

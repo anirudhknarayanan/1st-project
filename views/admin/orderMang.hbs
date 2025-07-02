@@ -1,0 +1,947 @@
+<style>
+    /* Existing table styles remain the same */
+    .main-content {
+        margin-left: var(--sidebar-width);
+        margin-top: var(--header-height);
+        padding: 2rem;
+        background: #f8f9fa;
+    }
+
+    .orders-table {
+        width: 100%;
+        background: white;
+        border-radius: 8px;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        margin-top: 1rem;
+    }
+
+    .orders-table th,
+    .orders-table td {
+        padding: 1rem;
+        text-align: left;
+        border-bottom: 1px solid #eee;
+    }
+
+    .orders-table th {
+        background: #000;
+        color: white;
+        font-weight: 500;
+    }
+
+    .orders-table th:first-child {
+        border-top-left-radius: 8px;
+    }
+
+    .orders-table th:last-child {
+        border-top-right-radius: 8px;
+    }
+
+    .orders-table tr:hover {
+        background: #f8f9fa;
+    }
+
+    .status-select {
+        padding: 0.5rem;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        background: white;
+    }
+
+    .btn {
+        padding: 0.5rem 1rem;
+        border-radius: 4px;
+        cursor: pointer;
+        border: none;
+        font-size: 14px;
+        transition: all 0.3s;
+    }
+
+    .btn-view {
+        background: linear-gradient(45deg, #ffa500, #ffd700);
+        color: white;
+        margin-right: 0.5rem;
+        margin-left: -50px;
+    }
+
+    .btn-cancel {
+        background: linear-gradient(45deg, #d30808, #ca1b1b);
+        color: white;
+        border: none;
+        padding: 7px 10px;
+        font-size: 15px;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: all 0.3s ease-in-out;
+    }
+
+    .btn-view:hover {
+        background: linear-gradient(45deg, #ff8c00, #ffc000);
+        transform: translateY(-1px);
+    }
+
+    .btn-cancel:hover {
+        background: linear-gradient(45deg, #b30000, #e60000);
+        transform: scale(1.05);
+    }
+
+    /* Updated Modal Styles */
+    .modal {
+        display: none;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        z-index: 1000;
+    }
+
+    .modal.show {
+        display: block;
+    }
+
+    .modal-content {
+        background: white;
+        width: 90%;
+        max-width: 900px;
+        margin: 2rem auto;
+        border-radius: 8px;
+        position: relative;
+        max-height: 90vh;
+        overflow-y: auto;
+    }
+
+    .modal-header {
+        padding: 1.5rem;
+        background: #000;
+        color: white;
+        border-radius: 8px 8px 0 0;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        position: sticky;
+        top: 0;
+    }
+
+    .modal-body {
+        padding: 1.5rem;
+    }
+
+    .close {
+        color: white;
+        font-size: 1.5rem;
+        cursor: pointer;
+        background: none;
+        border: none;
+    }
+
+    /* New Order Details Styles */
+    .order-info-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 2rem;
+        margin-bottom: 2rem;
+        padding: 1.5rem;
+        background: #f8f9fa;
+        border-radius: 8px;
+    }
+
+    .order-info-section h4 {
+        color: #2c3e50;
+        margin-bottom: 1rem;
+        font-size: 1.1rem;
+    }
+
+    .info-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.8rem;
+        padding-bottom: 0.8rem;
+        border-bottom: 1px solid #dee2e6;
+    }
+
+    .info-row:last-child {
+        border-bottom: none;
+    }
+
+    .info-label {
+        color: #6c757d;
+        font-weight: 500;
+    }
+
+    .info-value {
+        color: #2c3e50;
+        font-weight: 600;
+    }
+
+    .highlight-value {
+        color: #bc2b2b;
+        font-size: 1.2rem;
+        font-weight: 700;
+    }
+
+    .discount-tag {
+        background: #28a745;
+        color: white;
+        padding: 0.2rem 0.5rem;
+        border-radius: 4px;
+        font-size: 0.875rem;
+    }
+
+    /* Products Table Styles */
+    .products-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 1.5rem;
+        background: white;
+        border-radius: 8px;
+        overflow: hidden;
+    }
+
+    .products-table th {
+        background: #f8f9fa;
+        color: #2c3e50;
+        padding: 1rem;
+        text-align: left;
+        border-bottom: 2px solid #dee2e6;
+    }
+
+    .products-table td {
+        padding: 1rem;
+        border-bottom: 1px solid #dee2e6;
+        vertical-align: middle;
+    }
+
+    .product-img {
+        width: 80px;
+        height: 80px;
+        object-fit: cover;
+        border-radius: 4px;
+    }
+
+    .products-section {
+        margin-top: 2rem;
+    }
+
+    .products-section h4 {
+        color: #2c3e50;
+        margin-bottom: 1rem;
+        padding-bottom: 0.5rem;
+        border-bottom: 2px solid #dee2e6;
+    }
+
+    .option[value="cancelled"] {
+        color: red;
+        font-weight: bold;
+    }
+
+    /*  */
+    /*  */
+
+    .orders-pagination {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-top: 20px;
+    }
+
+    .pagination {
+        display: flex;
+        list-style: none;
+        padding: 0;
+        background: #f8f9fa;
+        border-radius: 10px;
+        box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
+        overflow: hidden;
+    }
+
+    .page-item {
+        margin: 0;
+    }
+
+    .page-link {
+        display: block;
+        padding: 10px 15px;
+        text-decoration: none;
+        color: #000000;
+        font-weight: bold;
+        border: 1px solid #ddd;
+        background: #fff;
+        transition: all 0.3s ease-in-out;
+    }
+
+    .page-link:hover {
+        background: #2b2d2f;
+        color: #fff;
+    }
+
+    .page-item.active .page-link {
+        background: #000000;
+        color: white;
+        border: 1px solid #000000;
+    }
+
+    .page-item:first-child .page-link,
+    .page-item:last-child .page-link {
+        font-size: 18px;
+        padding: 10px 18px;
+        font-weight: bold;
+    }
+
+
+    .status-badge {
+        display: inline-block;
+        background-color: #ffcc00;
+        color: #fff;
+        padding: 5px 10px;
+        border-radius: 5px;
+        font-size: 14px;
+        font-weight: bold;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+        background: #fff;
+    }
+
+    th,
+    td {
+        padding: 12px;
+        text-align: left;
+        border-bottom: 1px solid #ddd;
+    }
+
+    th {
+        background-color: #f1f1f1;
+    }
+
+    .view-reason {
+        color: #007bff;
+        text-decoration: none;
+    }
+
+    .view-reason:hover {
+        text-decoration: underline;
+    }
+
+    .status {
+        padding: 5px 10px;
+        border-radius: 5px;
+        font-size: 14px;
+        font-weight: bold;
+        display: inline-block;
+    }
+
+    .status.pending {
+        background-color: #ffcc00;
+        color: white;
+    }
+
+    button {
+        padding: 8px 12px;
+        border: none;
+        cursor: pointer;
+        border-radius: 5px;
+        font-size: 14px;
+        font-weight: bold;
+    }
+
+    .approve-btn {
+        background-color: #28a745;
+        color: white;
+        margin-right: 5px;
+    }
+
+    .reject-btn {
+        background-color: #dc3545;
+        color: white;
+    }
+
+    button:hover {
+        opacity: 0.8;
+    }
+</style>
+
+{{!-- views/admin/orderManagement.hbs --}}
+
+<main class="main-content">
+    <div class="container">
+        <h2>Order Management</h2>
+        <table class="orders-table">
+            <thead>
+                <tr>
+                    <th>Order ID</th>
+                    <th>Customer Name</th>
+                    <th>Order Date</th>
+                    <th>Status</th>
+                    <th>Payment Method</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{#each orders}}
+                <tr data-order-id="{{this._id}}">
+                    <td>#{{this._id}}</td>
+                    <td>{{this.user_id.name}}</td>
+                    <td>{{formatDate this.createdAt}}</td>
+                    <td>
+                        <select class="status-select" onchange="updateOrderStatus('{{this._id}}', this)"
+                            style="color: {{#ifEquals this.status 'pending'}}orange{{else ifEquals this.status 'shipped'}}blue{{else ifEquals this.status 'delivered'}}green{{else ifEquals this.status 'cancelled'}}red{{else ifEquals this.status 'Return requested'}}purple{{else ifEquals this.status 'Return approved'}}green{{else ifEquals this.status 'Return rejected'}}red{{else}}black{{/ifEquals}}"
+                            {{#if (or (eq this.status 'cancelled' ) (eq this.status 'delivered' ) (eq
+                            this.status 'Return requested' ) (eq this.status 'Return approved' ) (eq
+                            this.status 'Return rejected' ))}}disabled{{/if}}>
+                            <option value="pending" {{#ifEquals this.status 'pending' }}selected{{/ifEquals}}>Pending
+                            </option>
+                            <option value="shipped" {{#ifEquals this.status 'shipped' }}selected{{/ifEquals}}>Shipped
+                            </option>
+                            <option value="delivered" {{#ifEquals this.status 'delivered' }}selected{{/ifEquals}}>
+                                Delivered</option>
+                            <option value="cancelled" {{#ifEquals this.status 'cancelled' }}selected{{/ifEquals}}>
+                                Cancelled</option>
+                            {{#ifEquals this.status 'Return requested'}}
+                            <option value="Return requested" selected>Return requested</option>
+                            {{else ifEquals this.status 'Return approved'}}
+                            <option value="Return approved" selected>Return approved</option>
+                            {{else ifEquals this.status 'Return rejected'}}
+                            <option value="Return rejected" selected>Return rejected</option>
+                            {{/ifEquals}}
+                        </select>
+                    </td>
+                    <td>{{this.payment_method}}</td>
+                    <td>
+                        <button class="btn btn-view" onclick="openModal({{@index}})">View</button>
+                        {{#unless (or
+                        (eq this.status 'delivered')
+                        (eq this.status 'cancelled')
+                        (eq this.status 'Return requested')
+                        (eq this.status 'Return approved')
+                        (eq this.status 'Return rejected')
+                        )}}
+                        <button class="btn btn-cancel" onclick="cancelOrder('{{this._id}}')">Cancel Order</button>
+                        {{/unless}}
+                    </td>
+
+                </tr>
+                {{/each}}
+            </tbody>
+        </table>
+    </div>
+
+    {{#if returnRequests.length}}
+    <div class="container" style="margin-top: 23px;">
+        <h2>Return Requests</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Order ID</th>
+                    <th>Customer</th>
+                    <th>Return Date</th>
+                    <th>Reason</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{#each returnRequests}}
+                <tr>
+                    <td>#{{this._id}}</td>
+                    <td>{{this.user_id.name}}</td>
+                    <td>{{formatDate this.createdAt}}</td>
+                    <td><a href="#" class="view-reason">{{this.returnReason}}</a></td>
+                    <td><span class="status pending">{{this.status}}</span></td>
+                    <td>
+                        <button class="approve-btn" onclick="approveReturn('{{this._id}}')">Approve</button>
+                        <button class="reject-btn" onclick="openRejectModal('{{this._id}}')">Reject</button>
+                    </td>
+                </tr>
+                {{/each}}
+            </tbody>
+        </table>
+    </div>
+    {{/if}}
+
+    <div id="orderModal" class="modal">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h3 id="modalOrderId">Order Details</h3>
+                    <button class="close" onclick="closeModal()">&times;</button>
+                </div>
+                <div class="modal-body">
+                    <!-- Order Information Grid -->
+                    <div class="order-info-grid">
+                        <!-- Order Details Section -->
+                        <div class="order-info-section">
+                            <h4>Order Information</h4>
+                            <div class="info-row">
+                                <span class="info-label">Order ID:</span>
+                                <span class="info-value" id="modalOrderIdValue"></span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Order Date:</span>
+                                <span class="info-value" id="modalOrderDate"></span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Payment Method:</span>
+                                <span class="info-value" id="modalPaymentMethod"></span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Status:</span>
+                                <span class="info-value" id="modalOrderStatus"></span>
+                            </div>
+                        </div>
+
+                        <!-- Payment Summary Section -->
+                        <div class="order-info-section">
+                            <h4>Payment Summary</h4>
+                            <div class="info-row">
+                                <span class="info-label">Subtotal:</span>
+                                <span class="info-value" id="modalSubtotal"></span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Discount:</span>
+                                <span class="info-value">
+                                    <span class="discount-tag" id="modalDiscount">₹0</span>
+                                </span>
+                            </div>
+                            <!-- <div class="info-row"> 
+                                
+                                <span class="info-label">Coupon Applied:</span>
+                                <span class="info-value" id="modalCoupon">Nil</span>
+                            </div> -->
+                            <div class="info-row">
+                                <span class="info-label">Final Amount:</span>
+                                <span class="highlight-value" id="modalFinalAmount"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Products Section -->
+                    <div class="products-section">
+                        <h4>Ordered Products</h4>
+                        <table class="products-table">
+                            <thead>
+                                <tr>
+                                    <th>Product</th>
+                                    <th>Name</th>
+                                    <th>Quantity</th>
+                                    <th>Price</th>
+                                    <th>Total</th>
+                                </tr>
+                            </thead>
+                            <tbody id="modalProductsList">
+                                <!-- Products will be loaded here -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+
+
+    <div class="row">
+        <div class="col-12 d-flex justify-content-center">
+            <nav aria-label="Product pagination" class="orders-pagination">
+                <ul class="pagination">
+                    {{#if (gt currentPage 1)}}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{subtract currentPage 1}}" aria-label="Previous">
+                            <span aria-hidden="true">&laquo;</span>
+                        </a>
+                    </li>
+                    {{/if}}
+
+                    {{!-- Dynamic pagination logic --}}
+                    {{#each (range paginationStart paginationEnd)}}
+                    <li class="page-item {{#ifEquals this ../currentPage}}active{{/ifEquals}}">
+                        <a class="page-link" href="?page={{this}}">{{this}}</a>
+                    </li>
+                    {{/each}}
+
+                    {{#if (lt currentPage totalPages)}}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{add currentPage 1}}" aria-label="Next">
+                            <span aria-hidden="true">&raquo;</span>
+                        </a>
+                    </li>
+                    {{/if}}
+                </ul>
+            </nav>
+        </div>
+    </div>
+</main>
+
+
+<div id="rejectModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Reject Order</h2>
+            <button class="close-btn" onclick="closeRejectModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="rejectForm">
+                <input type="hidden" id="rejectOrderId">
+                <div class="form-group">
+                    <label for="rejectReason">Reason for Rejection:</label>
+                    <textarea id="rejectReason" required></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-cancel" onclick="closeRejectModal()">Cancel</button>
+                    <button type="submit" class="btn-confirm">Submit</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+<script>
+    const ordersData = {{{ json orders }}};
+
+
+    function openModal(index) {
+        const order = ordersData[index];
+
+        // Get the current status from the UI instead of using the cached data
+        const orderRow = document.querySelector(`tr[data-order-id="${order._id}"]`);
+        const statusSelect = orderRow.querySelector('.status-select');
+        const currentStatus = statusSelect.value;
+
+        // Update the order object with the current status
+        order.status = currentStatus;
+
+        document.getElementById('modalOrderId').textContent = `Order Details #${order._id}`;
+        document.getElementById('modalOrderIdValue').textContent = `#${order._id}`;
+        document.getElementById('modalOrderDate').textContent = new Date(order.createdAt).toLocaleDateString();
+        document.getElementById('modalPaymentMethod').textContent = order.payment_method;
+
+        const modalOrderStatus = document.getElementById('modalOrderStatus');
+        modalOrderStatus.textContent = currentStatus;
+        modalOrderStatus.style.color = {
+            pending: 'orange',
+            shipped: 'blue',
+            delivered: 'green',
+            cancelled: 'red',
+            'Return requested': 'purple',
+            'Return approved': 'green',
+            'Return rejected': 'red'
+        }[currentStatus] || 'black';
+
+        document.getElementById('modalSubtotal').textContent = `₹${order.total}`;
+        document.getElementById('modalFinalAmount').textContent = `₹${order.finalAmount}`;
+        document.getElementById('modalDiscount').textContent = `₹${order.discount}`;
+
+        const productsList = document.getElementById('modalProductsList');
+        productsList.innerHTML = '';
+
+        order.order_items.forEach(item => {
+            const row = document.createElement('tr');
+            const imageUrl = item.productId.productImage && item.productId.productImage.length > 0
+                ? `/uploads/product-images/${item.productId.productImage[0]}`
+                : '/uploads/product-images/default.jpg';
+
+            row.innerHTML = `
+        <td>
+            <img src="${imageUrl}" 
+                 alt="${item.productId.productName}" 
+                 class="product-img">
+        </td>
+        <td>${item.productId.productName}</td>
+        <td>${item.quantity}</td>
+        <td>₹${item.price}</td>
+        <td>₹${item.price * item.quantity}</td>
+    `;
+            productsList.appendChild(row);
+        });
+
+        document.getElementById('orderModal').classList.add('show');
+    }
+    function closeModal() {
+        document.getElementById('orderModal').classList.remove('show');
+    }
+
+
+
+
+    async function updateOrderStatus(orderId, selectElement) {
+        try {
+            const status = selectElement.value;
+
+            const response = await fetch('/admin/updateOrder', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ orderId, status })
+            });
+            const data = await response.json();
+
+            if (data.success) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Success!',
+                    text: 'Order status updated successfully',
+                    showConfirmButton: false,
+                    timer: 1500
+                });
+
+                // Update UI
+                selectElement.style.color = {
+                    pending: 'orange',
+                    shipped: 'blue',
+                    delivered: 'green',
+                    cancelled: 'red',
+                    'Return requested': 'purple',
+                    'Return approved': 'green',
+                    'Return rejected': 'red'
+                }[status] || 'black';
+
+                if (status.toLowerCase() === 'delivered' || status.toLowerCase() === 'cancelled') {
+                    selectElement.disabled = true;
+                }
+
+                const orderRow = document.querySelector(`tr[data-order-id="${orderId}"]`);
+                if (orderRow) {
+                    const statusSelect = orderRow.querySelector('.status-select');
+                    if (statusSelect) {
+                        statusSelect.value = status;
+
+                        if (status.toLowerCase() === 'shipped') {
+                            const pendingOption = statusSelect.querySelector('option[value="pending"]');
+                            if (pendingOption) {
+                                pendingOption.remove();
+                            }
+                        }
+                    }
+                    if (status.toLowerCase() === 'delivered' || status.toLowerCase() === 'cancelled') {
+                        const cancelButton = orderRow.querySelector('.btn-cancel');
+                        if (cancelButton) {
+                            cancelButton.remove();
+                        }
+                    }
+                }
+
+                // Update the corresponding order in ordersData
+                const orderIndex = ordersData.findIndex(order => order._id === orderId);
+                if (orderIndex !== -1) {
+                    ordersData[orderIndex].status = status;
+                }
+
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error!',
+                    text: data.message || 'Failed to update order status',
+                    showConfirmButton: false,
+                    timer: 1500
+                });
+            }
+        } catch (error) {
+            console.error(error);
+            Swal.fire({
+                icon: 'error',
+                title: 'Error!',
+                text: 'Something went wrong',
+                showConfirmButton: false,
+                timer: 1500
+            });
+        }
+    }
+
+    async function cancelOrder(orderId) {
+        try {
+            const result = await Swal.fire({
+                icon: 'warning',
+                title: 'Warning!',
+                text: 'Are you sure you want to cancel this order?',
+                showConfirmButton: true,
+                showCancelButton: true,
+                confirmButtonText: 'Yes',
+                cancelButtonText: 'No',
+                reverseButtons: true
+            });
+
+            if (!result.isConfirmed) {
+                return;
+            }
+
+            const response = await fetch('/admin/cancelOrder', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ orderId })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Success!',
+                    text: 'Order cancelled successfully',
+                    showConfirmButton: false,
+                    timer: 1500
+                });
+                const orderRow = document.querySelector(`tr[data-order-id="${orderId}"]`);
+                if (orderRow) {
+                    const statusSelect = orderRow.querySelector('.status-select');
+                    if (statusSelect) {
+                        statusSelect.value = 'cancelled';
+                        statusSelect.style.color = 'red';
+                        statusSelect.disabled = true;
+                    }
+                    const cancelButton = orderRow.querySelector('.btn-cancel');
+                    if (cancelButton) {
+                        cancelButton.remove();
+                    }
+                }
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error!',
+                    text: data.message || 'Failed to cancel order',
+                    showConfirmButton: false,
+                    timer: 1500
+                });
+            }
+        } catch (error) {
+            console.error(error);
+            Swal.fire({
+                icon: 'error',
+                title: 'Error!',
+                text: 'Something went wrong',
+                showConfirmButton: false,
+                timer: 1500
+            });
+        }
+    }
+
+    window.onclick = function (event) {
+        const modal = document.getElementById('orderModal');
+        if (event.target == modal) {
+            closeModal();
+        }
+    }
+
+    async function approveReturn(orderId) {
+        try {
+            const result = await Swal.fire({
+                icon: 'warning',
+                title: 'Warning!',
+                text: 'Are you sure you want to approve return for this order?',
+                showConfirmButton: true,
+                showCancelButton: true,
+                confirmButtonText: 'Yes',
+                cancelButtonText: 'No',
+                reverseButtons: true
+            });
+
+            if (!result.isConfirmed) {
+                return;
+            }
+            const response = await fetch('/admin/approveReturn', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ orderId })
+            })
+            const data = await response.json();
+            if (data.success) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Success!',
+                    toast: true,
+                    position: 'top-end',
+                    html: 'Return approved successfully',
+                    showConfirmButton: false,
+                    timer: 1500
+                })
+                setTimeout(() => {
+                    window.location.reload()
+                }, 1500)
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error!',
+                    toast: true,
+                    position: 'top-end',
+                    html: data.message || 'Failed to approve return',
+                    showConfirmButton: false,
+                    timer: 1500
+                })
+            }
+
+
+        } catch (error) {
+            console.log("error while approving return", error);
+            Swal.fire({
+                icon: 'error',
+                title: 'Error!',
+                text: 'Something went wrong',
+                showConfirmButton: false,
+                timer: 1500
+            })
+        }
+    }
+
+
+
+
+
+    function openRejectModal(orderId) {
+        document.getElementById("rejectOrderId").value = orderId;
+        document.getElementById("rejectModal").style.display = "block";
+    }
+
+    function closeRejectModal() {
+        document.getElementById("rejectModal").style.display = "none";
+    }
+
+     document.getElementById("rejectForm").addEventListener("submit", async (e) => {
+            e.preventDefault();
+            const orderId = document.getElementById("rejectOrderId").value;
+            const reason = document.getElementById("rejectReason").value;
+
+            const response = await fetch(`/admin/rejectReturn/${orderId}`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ reason })
+            });
+
+            console.log("Response status:", response.status); 
+
+            const data = await response.json()
+
+            if (data.success) {
+                Swal.fire({
+                    icon: 'success',
+                    title: 'Success',
+                    text: 'Order Rejected Successfully!',
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 1500
+                }).then(() => {
+                    location.reload();
+                })
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Something went wrong',
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 1500
+                })
+            }
+        });
+
+
+
+
+</script>

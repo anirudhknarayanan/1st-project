@@ -1,3 +1,6 @@
+<!-- Add this inside your <head> or before </body> -->
+
+
 <style>
     /* General card layout */
     .card {
@@ -254,6 +257,7 @@
     }
 </style>
 
+
 <section class="content-main">
     <div class="row">
         <div class="col-12">
@@ -265,7 +269,7 @@
                     <div class="card-body">
                         {{#if product}}
                         <form method="POST" action="/admin/editProduct/{{product._id}}" enctype="multipart/form-data"
-                            onsubmit="return validateForm()">
+                            onsubmit="return validateForm(event)">
                             <div class="mb-4" id="flexy">
                                 <label for="product_name" class="form-label">Product Name</label>
                                 <input type="text" placeholder="Type here" name="productName" class="form-control"
@@ -420,25 +424,38 @@
     let cropper;
     let croppedImagesCount = 0;
 
-    async function validateForm() {
+    async function validateForm(event) {
+        event.preventDefault(); // Stop default form submission
+
         const form = document.querySelector('form');
         const totalImages = existingImages.length - deletedImages.length + croppedImagesCount;
 
-        // 1. Check image count
+        // 1. Image count validation
         if (totalImages < 3 || totalImages > 4) {
-            Swal.fire({
+            await Swal.fire({
                 icon: 'error',
                 title: 'Invalid Image Count',
                 text: 'You must have between 3 and 4 images'
             });
-            return false;
+            return;
         }
 
-        // 2. Prepare FormData
+        // 2. Quantity validation (frontend)
+        const quantityInput = document.getElementById('quantity');
+        const quantity = parseInt(quantityInput?.value);
+        if (isNaN(quantity) || quantity <= 0) {
+            await Swal.fire({
+                icon: 'error',
+                title: 'Invalid Quantity',
+                text: 'Quantity must be a positive number'
+            });
+            return;
+        }
+
+        // 3. Prepare FormData
         const formData = new FormData(form);
         formData.set('deletedImages', JSON.stringify(deletedImages));
 
-        // 3. Re-append uploaded files (if any)
         const fileInput = document.getElementById('imageUpload');
         if (fileInput && fileInput.files.length > 0) {
             formData.delete('images');
@@ -447,7 +464,7 @@
             }
         }
 
-        // 4. Append cropped images as Files
+        // 4. Append cropped images
         const addedImagesContainer = document.getElementById('addedImagesContainer');
         const croppedImages = addedImagesContainer.getElementsByTagName('img');
 
@@ -455,9 +472,10 @@
             const arr = dataUrl.split(',');
             const mime = arr[0].match(/:(.*?);/)[1];
             const bstr = atob(arr[1]);
-            let n = bstr.length;
-            const u8arr = new Uint8Array(n);
-            while (n--) u8arr[n] = bstr.charCodeAt(n);
+            const u8arr = new Uint8Array(bstr.length);
+            for (let i = 0; i < bstr.length; i++) {
+                u8arr[i] = bstr.charCodeAt(i);
+            }
             return new File([u8arr], filename, { type: mime });
         };
 
@@ -466,47 +484,40 @@
             formData.append(`croppedImage${index + 1}`, file);
         });
 
-        // 5. Submit using Fetch with error handling
+        // 5. Submit form with Fetch and show alerts
         try {
             const response = await fetch(form.action, {
                 method: 'POST',
                 body: formData
             });
 
-            if (!response.ok) {
-                const htmlError = await response.text();
-                console.error('Server Error HTML:', htmlError);
-                throw new Error(`Server returned ${response.status}`);
-            }
+            const result = await response.json();
 
-            const data = await response.json();
-
-            if (data.success) {
+            if (!response.ok || !result.success) {
                 await Swal.fire({
-                    icon: 'success',
-                    title: 'Product Updated',
-                    text: 'Product has been updated successfully'
-                });
-                window.location.href = '/admin/products';
-            } else {
-                Swal.fire({
                     icon: 'error',
                     title: 'Update Failed',
-                    text: data.message || 'Failed to update product'
+                    text: result.message || 'Something went wrong during update.'
                 });
+                return;
             }
+
+            await Swal.fire({
+                icon: 'success',
+                title: 'Product Updated',
+                text: result.message || 'Product has been updated successfully'
+            });
+
+            window.location.href = '/admin/products';
         } catch (error) {
             console.error('Fetch Error:', error);
-            Swal.fire({
+            await Swal.fire({
                 icon: 'error',
                 title: 'Error',
-                text: 'An error occurred while updating the product'
+                text: 'An unexpected error occurred while updating the product.'
             });
         }
-
-        return false; // prevent default form submission
     }
-
 
 
 
@@ -680,421 +691,3 @@
         document.getElementById('imageUpload').value = '';
     }
 </script>
-<section class="content-main">
-    <div class="row">
-        <div class="col-12">
-            <div class="content-header">
-                <h2 class="content-title">Edit Product</h2>
-            </div>
-            <div class="col-lg-8 mx-auto">
-                <div class="card mb-4">
-                    <div class="card-body">
-                        {{#if product}}
-                        <form method="POST" action="/admin/editProduct/{{product._id}}" enctype="multipart/form-data"
-                            onsubmit="return validateForm()">
-                            <div class="mb-4" id="flexy">
-                                <label for="product_name" class="form-label">Product Name</label>
-                                <input type="text" placeholder="Type here" name="productName" class="form-control"
-                                    id="product_name" value="{{product.productName}}">
-                                <div id="productName-error" class="error-message"></div>
-                            </div>
-
-                            <div class="mb-4" id="flexy">
-                                <label for="description" class="form-label">Description</label>
-                                <textarea placeholder="Type here" name="description" class="form-control"
-                                    id="description" rows="4">{{product.description}}</textarea>
-                                <div id="description-error" class="error-message"></div>
-                            </div>
-
-                            <div class="row">
-                                <div class="col-lg-6 mb-4" id="flexy">
-                                    <label for="category" class="form-label">Category</label>
-                                    <select name="category" class="form-select" id="category">
-                                        {{#each category}}
-                                        <option value="{{this._id}}" {{#ifCond this._id '=='
-                                            ../product.category._id}}selected{{/ifCond}}>
-                                            {{this.name}}
-                                        </option>
-                                        {{/each}}
-                                    </select>
-
-                                    <div id="category-error" class="error-message"></div>
-                                </div>
-
-                                <div class="col-lg-6 mb-4" id="flexy">
-                                    <label for="quantity" class="form-label">Quantity</label>
-                                    <input type="number" placeholder="Enter quantity" name="quantity"
-                                        class="form-control" id="quantity" value="{{product.quantity}}" />
-                                </div>
-                            </div>
-
-                            <div class="row">
-                                <div class="col-lg-4 mb-4" id="flexy">
-                                    <label for="regularPrice" class="form-label">Regular Price</label>
-                                    <input type="number" placeholder="Enter regular price" name="regularPrice"
-                                        class="form-control" id="regularPrice" value="{{product.regularPrice}}" />
-                                </div>
-
-                                <div class="col-lg-4 mb-4" id="flexy">
-                                    <label for="salePrice" class="form-label">Sale Price</label>
-                                    <input type="number" placeholder="Enter sale price" name="salePrice"
-                                        class="form-control" id="salePrice" value="{{product.salePrice}}" />
-                                </div>
-
-                                <div class="col-lg-6 mb-4" id="flexy">
-                                    <label for="brand" class="form-label">Brand</label>
-                                    <select name="brand" class="form-select">
-                                        {{#each brand}}
-                                        <option value="{{this._id}}" {{#ifCond this._id '=='
-                                            ../product.brand._id}}selected{{/ifCond}} {{#ifCond this._id '=='
-                                            ../product.brand}}selected{{/ifCond}}>
-                                            {{this.brandName}}
-                                        </option>
-                                        {{/each}}
-                                    </select>
-
-
-
-                                </div>
-                            </div>
-
-
-
-
-                            <div class="card mb-4 image-upload-section">
-                                <div class="card-header">
-                                    <h4>Existing Images</h4>
-                                </div>
-                                <div class="card-body">
-                                    <div id="existingImagesContainer" class="thumbnails-container">
-                                        {{#each product.productImage}}
-                                        <div class="existing-image-container" id="existingImageContainer{{@index}}">
-                                            <img src="/uploads/product-images/{{this}}" alt="Product Image"
-                                                class="existing-image">
-                                            <button type="button" class="delete-image-btn"
-                                                onclick="deleteExistingImage('{{this}}', '{{../product._id}}')">Delete</button>
-                                        </div>
-                                        {{/each}}
-                                    </div>
-                                </div>
-                            </div>
-
-
-
-
-
-                            <div class="card mb-4 image-upload-section">
-                                <div class="card-header">
-                                    <h4>Add/Replace Images</h4>
-                                </div>
-                                <div class="card-body">
-                                    <div class="image-upload-container">
-                                        <label for="imageUpload" class="custom-upload-label">Choose Images</label>
-                                        <input type="file" id="imageUpload" name="images" accept="image/*"
-                                            onchange="openCropperModal(event)" style="display: none;" />
-                                        <div id="addedImagesContainer" class="mt-3"></div>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div class="mb-4">
-                                <label for="isListed" class="form-label">Product Status</label>
-                                <select name="isListed" class="form-select" id="isListed">
-                                    <option value="true" {{#if product.isBlocked}}selected{{/if}}>block
-                                    </option>
-                                    <option value="false" {{#unless product.isBlocked}}selected{{/unless}}>unblock
-                                    </option>
-                                </select>
-                            </div>
-
-                            <div class="d-grid">
-                                <button type="submit" class="btn btn-submit">Update Product</button>
-                            </div>
-                        </form>
-                        {{else}}
-                        <p>Product not found.</p>
-                        {{/if}}
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</section>
-
-
-<!-- Cropper Modal -->
-
-<div id="cropperModal">
-    <div class="crop-modal-content">
-        <img id="cropperImage" />
-        <div class="crop-modal-buttons">
-            <button class="btn btn-primary" onclick="saveCroppedImage()">Save Cropped</button>
-            <button class="btn btn-secondary" onclick="closeCropperModal()">Cancel</button>
-        </div>
-    </div>
-</div>
-
-
-<script>
-
-
-
-
-    // Inject product images array from server using EJS-style escape with Handlebars-compatible output
-    let existingImages = {{{ json product.productImage }}}; // or {{{json product.productImages}}}
-    let deletedImages = [];
-    let cropper;
-    let croppedImagesCount = 0;
-
-    async function validateForm() {
-        const form = document.querySelector('form');
-        const totalImages = existingImages.length - deletedImages.length + croppedImagesCount;
-
-        // 1. Check image count
-        if (totalImages < 3 || totalImages > 4) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Invalid Image Count',
-                text: 'You must have between 3 and 4 images'
-            });
-            return false;
-        }
-
-        // 2. Prepare FormData
-        const formData = new FormData(form);
-        formData.set('deletedImages', JSON.stringify(deletedImages));
-
-        // 3. Re-append uploaded files (if any)
-        const fileInput = document.getElementById('imageUpload');
-        if (fileInput && fileInput.files.length > 0) {
-            formData.delete('images');
-            for (let i = 0; i < fileInput.files.length; i++) {
-                formData.append('images', fileInput.files[i]);
-            }
-        }
-
-        // 4. Append cropped images as Files
-        const addedImagesContainer = document.getElementById('addedImagesContainer');
-        const croppedImages = addedImagesContainer.getElementsByTagName('img');
-
-        const dataURLtoFile = (dataUrl, filename) => {
-            const arr = dataUrl.split(',');
-            const mime = arr[0].match(/:(.*?);/)[1];
-            const bstr = atob(arr[1]);
-            let n = bstr.length;
-            const u8arr = new Uint8Array(n);
-            while (n--) u8arr[n] = bstr.charCodeAt(n);
-            return new File([u8arr], filename, { type: mime });
-        };
-
-        Array.from(croppedImages).forEach((img, index) => {
-            const file = dataURLtoFile(img.src, `croppedImage${index + 1}.jpg`);
-            formData.append(`croppedImage${index + 1}`, file);
-        });
-
-        // 5. Submit using Fetch with error handling
-        try {
-            const response = await fetch(form.action, {
-                method: 'POST',
-                body: formData
-            });
-
-            if (!response.ok) {
-                const htmlError = await response.text();
-                console.error('Server Error HTML:', htmlError);
-                throw new Error(`Server returned ${response.status}`);
-            }
-
-            const data = await response.json();
-
-            if (data.success) {
-                await Swal.fire({
-                    icon: 'success',
-                    title: 'Product Updated',
-                    text: 'Product has been updated successfully'
-                });
-                window.location.href = '/admin/products';
-            } else {
-                Swal.fire({
-                    icon: 'error',
-                    title: 'Update Failed',
-                    text: data.message || 'Failed to update product'
-                });
-            }
-        } catch (error) {
-            console.error('Fetch Error:', error);
-            Swal.fire({
-                icon: 'error',
-                title: 'Error',
-                text: 'An error occurred while updating the product'
-            });
-        }
-
-        return false; // prevent default form submission
-    }
-
-
-
-
-    function deleteExistingImage(imageId, productId) {
-        Swal.fire({
-            title: 'Remove Existing Image',
-            text: 'Are you sure you want to remove this image?',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#3085d6',
-            cancelButtonColor: '#d33',
-            confirmButtonText: 'Yes, remove it!'
-        }).then((result) => {
-            if (result.isConfirmed) {
-                $.ajax({
-                    url: "/admin/deleteImage",
-                    method: "POST",
-                    data: {
-                        imageNameToServer: imageId,
-                        productIdToServer: productId
-                    },
-                    success: (response) => {
-                        if (response.status === true) {
-                            Swal.fire({
-                                icon: 'success',
-                                title: 'Image Removed',
-                                toast: true,
-                                position: 'top-end',
-                                showConfirmButton: false,
-                                timer: 2000
-                            });
-                            window.location.reload();
-                        } else {
-                            Swal.fire({
-                                icon: 'error',
-                                title: 'Failed',
-                                text: response.message || 'Could not remove image'
-                            });
-                        }
-                    },
-                    error: (err) => {
-
-                        Swal.fire({
-                            icon: 'error',
-                            title: 'Error',
-                            text: 'Server error while removing image'
-                        });
-                    }
-                });
-            }
-        });
-    }
-
-
-
-
-
-    function openCropperModal(event) {
-        const file = event.target.files[0];
-        if (!file) return;
-
-        const reader = new FileReader();
-        reader.onload = function (e) {
-            console.log("Image loaded:", e.target.result); // ✅ Debug log
-
-            const cropperImage = document.getElementById('cropperImage');
-            cropperImage.src = e.target.result;
-
-            try {
-                if (cropper) cropper.destroy();
-
-                cropper = new Cropper(cropperImage, {
-                    aspectRatio: 1,
-                    viewMode: 1,
-                });
-            } catch (err) {
-                console.error("Cropper init error:", err); // ✅ Catch cropper issues
-            }
-
-            document.getElementById('cropperModal').classList.add('show');
-        };
-
-        reader.readAsDataURL(file);
-    }
-
-    function saveCroppedImage() {
-        console.log("clicked")
-        if (!cropper) return;
-
-        const totalImages = existingImages.length - deletedImages.length + croppedImagesCount;
-
-        if (totalImages >= 3) {
-            Swal.fire({
-                icon: 'error',
-                title: 'Image Limit',
-                text: 'Maximum 4 images allowed',
-                confirmButtonColor: '#3085d6',
-            });
-            closeCropperModal();
-            return;
-        }
-
-        const canvas = cropper.getCroppedCanvas();
-        const dataUrl = canvas.toDataURL('image/jpeg');
-
-        // Create thumbnail container
-        const container = document.createElement('div');
-        container.style.position = 'relative';
-
-        // Create thumbnail image
-        const img = document.createElement('img');
-        img.src = dataUrl;
-        img.classList.add('thumbnail');
-
-        // Create remove button
-        const removeBtn = document.createElement('button');
-        removeBtn.innerHTML = '&times;';
-        removeBtn.classList.add('remove-image-btn');
-        removeBtn.onclick = () => removeCroppedImage(container);
-
-        container.appendChild(img);
-        container.appendChild(removeBtn);
-
-        document.getElementById('addedImagesContainer').appendChild(container);
-
-        // Create hidden input for the cropped image
-        const hiddenInput = document.createElement('input');
-        hiddenInput.type = 'hidden';
-        hiddenInput.name = `croppedImage${croppedImagesCount + 1}`;
-        hiddenInput.value = dataUrl;
-
-        document.querySelector('form').appendChild(hiddenInput);
-
-        croppedImagesCount++;
-        document.getElementById('imageUpload').value = '';
-        closeCropperModal();
-    }
-
-    function removeCroppedImage(container) {
-        Swal.fire({
-            title: 'Remove Image',
-            text: 'Are you sure you want to remove this image?',
-            icon: 'warning',
-            showCancelButton: true,
-            confirmButtonColor: '#3085d6',
-            cancelButtonColor: '#d33',
-            confirmButtonText: 'Yes, remove it!',
-        }).then((result) => {
-            if (result.isConfirmed) {
-                container.remove();
-                croppedImagesCount--;
-
-                Swal.fire({
-                    icon: 'success',
-                    title: 'Removed',
-                    toast: true,
-                    position: 'top-end',
-                    showConfirmButton: false,
-                    timer: 2000,
-                });
-            }
-        });
-    }
-
-    function closeCropperModal() {

@@ -4,8 +4,9 @@ const Cart = require("../../models/cartSchema");
 const Product = require("../../models/productSchema")
 const Order = require('../../models/orderSchema')
 const Coupon = require('../../models/coupenSchema')
-//const Wallet = require('../../models/walletSchema')
+const Wallet = require('../../models/walletSchema')
 const { getDiscountPrice, getDiscountPriceCart } = require("../../helpers/offerHelpers");
+const PDFDocument = require('pdfkit');
 const fs = require('fs');
 const path = require('path');
 const { log } = require("console");
@@ -45,18 +46,18 @@ module.exports = {
                 total + item.quantity * item.price, 0
             );
 
-            
+
             // Fetch user and address
             const user = await User.findById(userId).lean();
             const addressDoc = await Address.findOne({ userId }).lean();
             const userAddress = addressDoc ? addressDoc.address : [];
 
             // Fetch valid coupons
-            
 
-              const cartTotal = cart.totalPrice;
-              console.log("cart :",cart);
-              
+
+            const cartTotal = cart.totalPrice;
+            console.log("cart :", cart);
+
             const date = new Date();
             // const coupon = await Coupon.find({
             //     couponMinAmount: { $lte: cartTotal },
@@ -70,17 +71,625 @@ module.exports = {
                 cart,
                 user,
                 userAddress,
-                
-
-
+                cartItemsJSON: JSON.stringify(
+                    cart.items.map(item => ({
+                        productId: item.productId._id.toString(),
+                        quantity: item.quantity,
+                        price: item.productId.salePrice
+                    }))
+                ),
                 messages: req.flash()
             });
+
 
         } catch (error) {
             console.log("Error in checkout:", error);
             res.redirect("/pageNotFound");
         }
+    },
+
+
+    editCheckoutAddress: async (req, res) => {
+
+        try {
+            const userId = req.session.user;
+
+            const {
+                address_id,
+                name,
+                addressType,
+                city,
+                state,
+                landMark,
+                pincode,
+                phone,
+                altPhone
+            } = req.body;
+
+            if (!address_id) {
+                console.log("Invalid Address ID:", address_id);
+                return res.status(400).json({ error: "Invalid address ID" });
+            }
+            const address = await Address.findOne({ userId: userId, "address._id": address_id })
+
+            console.log(address);
+
+
+            if (!address) {
+                return res.status(404).json({ error: "Address not found" });
+            }
+
+            const addressIndex = address.address.findIndex(addr => addr._id.toString() === address_id);
+            if (addressIndex === -1) {
+                return res.status(404).json({ error: "Address not found in array" });
+            }
+
+            address.address[addressIndex] = {
+                ...address.address[addressIndex],
+                name,
+                addressType,
+                city,
+                state,
+                landMark,
+                pincode,
+                phone,
+                altPhone
+            };
+
+            await address.save();
+            res.redirect('/checkout');
+        } catch (error) {
+            console.log("error in editCheckoutAddress", error);
+            res.status(500).json({ error: "Internal server error" });
+        }
+
+
+
+
+    },
+
+    addCheckoutAddress: async (req, res) => {
+        try {
+            const userId = req.session.user;
+            const {
+                name,
+                addressType,
+                city,
+                state,
+                landMark,
+                pincode,
+                phone,
+                altPhone
+            } = req.body;
+
+
+            let addressDoc = await Address.findOne({ userId });
+
+            if (addressDoc) {
+                addressDoc.address.push({
+                    name,
+                    addressType,
+                    city,
+                    state,
+                    landMark,
+                    pincode,
+                    phone,
+                    altPhone
+                });
+                await addressDoc.save();
+            } else {
+                addressDoc = new Address({
+                    userId,
+                    address: [{
+                        name,
+                        addressType,
+                        city,
+                        state,
+                        landMark,
+                        pincode,
+                        phone,
+                        altPhone
+                    }]
+                });
+                await addressDoc.save();
+            }
+
+            res.redirect('/checkout');
+
+
+
+
+        } catch (error) {
+
+            console.log("error in addCheckoutAddress", error);
+            res.status(500).json({ error: "Internal server error" });
+
+        }
+    },
+    placeOrder: async (req, res) => {
+        try {
+            const userId = req.session.user;
+            const { shippingAddress, paymentMethod, totalAmount } = req.body;
+
+            // Validate totalAmount
+            if (totalAmount < 0) {
+                return res.status(400).json({
+                    success: false,
+                    error: "Some products are not available and have been removed from your cart."
+                });
+            }
+
+            // Validate address
+            const address = await Address.findOne({
+                userId,
+                "address._id": shippingAddress,
+            });
+
+            if (!address) {
+                return res.status(400).json({
+                    success: false,
+                    message: "Invalid shipping address"
+                });
+            }
+
+            const orderAddress = address.address.find(
+                addr => addr._id.toString() === shippingAddress
+            );
+
+            const orderedItems = JSON.parse(JSON.stringify(req.body.orderedItems));
+            const unavailableItems = [];
+
+            // Check product availability
+            for (const item of orderedItems) {
+                const productId = item.productId;
+                console.log("🔍 Checking productId:", productId);
+
+                const product = await Product.findById(productId).populate("category");
+                console.log("📦 Found product:", product ? product.productName : "❌ Not found");
+
+                if (!product || product.isBlocked) {
+                    console.log("❌ Blocked or Not Found:", productId);
+                    unavailableItems.push({
+                        id: productId,
+                        name: "Unknown product",
+                        reason: "Product is no longer available"
+                    });
+                    continue;
+                }
+
+                if (!product.category || !product.category.isListed) {
+                    console.log("❌ Category Unlisted or Missing for:", product.productName);
+                    unavailableItems.push({
+                        id: productId,
+                        name: product.productName,
+                        reason: "Product category is no longer available"
+                    });
+                    continue;
+                }
+
+                if (product.quantity < item.quantity) {
+                    console.log("❌ Not enough stock for:", product.productName);
+                    unavailableItems.push({
+                        id: productId,
+                        name: product.productName,
+                        reason: "Insufficient stock available"
+                    });
+                }
+            }
+
+
+
+            if (unavailableItems.length > 0) {
+                return res.status(400).json({
+                    success: false,
+                    error: "Some products have become unavailable since you added them to your cart",
+                    unavailableItems
+                });
+            }
+
+            const cleanedTotal = parseFloat(totalAmount);
+
+            if (isNaN(cleanedTotal)) {
+                return res.status(400).json({
+                    success: false,
+                    error: "Invalid total amount"
+                });
+            }
+
+            if (!userId || !shippingAddress || !paymentMethod || !totalAmount || !orderedItems) {
+                return res.status(400).json({
+                    success: false,
+                    error: "Please fill all the fields"
+                });
+            }
+
+            // Re-confirm product data from DB
+            const orderedItemsWithDetails = await Promise.all(
+                orderedItems.map(async (item) => {
+                    const product = await Product.findById(item.productId);
+
+                    if (!product) {
+                        throw new Error(`Product not found for ID: ${item.productId}`);
+                    }
+
+                    return {
+                        productId: product._id,
+                        quantity: item.quantity,
+                        price: product.salePrice,
+                        productName: product.productName
+                    };
+                })
+            );
+
+            const formattedItems = orderedItemsWithDetails.map(item => ({
+                productId: item.productId,
+                quantity: item.quantity,
+                price: item.price,
+                productName: item.productName
+            }));
+
+            // Create new order
+            const newOrder = new Order({
+                user_id: userId,
+                address_id: shippingAddress,
+                shippingAddress: {
+                    addressType: orderAddress.addressType,
+                    name: orderAddress.name,
+                    city: orderAddress.city,
+                    landMark: orderAddress.landMark,
+                    state: orderAddress.state,
+                    pincode: orderAddress.pincode,
+                    phone: orderAddress.phone,
+                    altPhone: orderAddress.altPhone
+                },
+                payment_method: paymentMethod,
+                finalAmount: cleanedTotal,
+                order_items: formattedItems,
+                status: "pending",
+                total: cleanedTotal
+            });
+
+            await newOrder.save();
+
+            // Reduce stock
+            for (const item of formattedItems) {
+                await Product.updateOne(
+                    { _id: item.productId },
+                    { $inc: { quantity: -item.quantity } }
+                );
+            }
+
+            // Clear cart
+            await Cart.findOneAndUpdate(
+                { userId },
+                { $set: { items: [] } }
+            );
+
+            return res.status(200).json({
+                success: true,
+                orderId: newOrder._id,
+                message: "Order placed successfully"
+            });
+
+        } catch (error) {
+            console.error("Order placement error:", error);
+            res.status(500).json({
+                success: false,
+                error: "Failed to place order. Please try again."
+            });
+        }
+    },
+    viewOrder: async (req, res) => {
+        try {
+            const userId = req.session.user;
+            const orderId = req.params.id;
+
+            if (!orderId || !userId) {
+                console.warn("Missing order ID or user session.");
+                return res.redirect('/profile');
+            }
+
+            const order = await Order.findById(orderId).populate({
+                path: "order_items.productId",
+                select: "productName productImage price"
+            });
+
+            if (!order) {
+                console.warn("Order not found.");
+                return res.redirect('/userProfile');
+            }
+
+            if (!order.user_id || order.user_id.toString() !== userId.toString()) {
+                console.warn("Unauthorized access to order.");
+                return res.redirect('/profile');
+            }
+
+            const orderData = {
+                ...order.toObject(),
+                address: order.shippingAddress || null,
+                totalAmount: order.finalAmount || order.total || 0,
+                orderStatus: order.status
+            };
+
+            console.log("order", order);
+
+
+            return res.render("user/order", {
+                order: orderData,
+                user: req.session.userData
+            });
+
+        } catch (error) {
+            console.error("❌ viewOrder Error:", error);
+            return res.redirect('/profile');
+        }
+    },
+    cancelOrder: async (req, res) => {
+        try {
+            const orderId = req.params.orderId;
+            const userId = req.session.user;
+            const orderReason = req.body.reason;
+
+
+            if (!userId) {
+                return res.status(401).json({ success: false, message: 'Unauthorised' });
+            }
+
+            const order = await Order.findById(orderId);
+
+            if (!orderReason) {
+                return res.status(400).json({ success: false, message: 'Reason is required' });
+            }
+            if (!order) {
+                return res.status(404).json({ success: false, message: 'Order not found' });
+            }
+
+            for (let item of order.order_items) {
+                const updatedProduct = await Product.findByIdAndUpdate(item.productId,
+                    { $inc: { quantity: item.quantity } },
+                    { new: true }
+                )
+            }
+
+            order.status = 'cancelled';
+            await order.save();
+
+             let wallet = await Wallet.findOne({ userId })
+        if (!wallet) {
+            wallet = new Wallet({
+                userId,
+                balance: 0,
+                transactions: []
+            })
+        }
+        console.log("Paymentmethod", order.payment_method)
+        console.log("Status", order.status)
+
+        if (order.payment_method !== "cod" && order.status === "cancelled") {
+            wallet.balance += order.total;
+            wallet.transactions.push({
+                type: 'credit',
+                amount: order.total,
+                description: "Refund for cancelled order",
+                status: 'completed'
+            });
+
+            await wallet.save();
+        }
+
+
+
+
+            return res.status(200).json({ success: true, message: 'Order cancelled successfully' });
+
+
+        } catch (error) {
+            console.error('Error cancelling order:', error);
+            return res.status(500).json({ success: false, message: 'Internal server error' });
+        }
+    },
+
+    generateInvoice: async (req, res) => {
+        try {
+            const orderId = req.params.id;
+            console.log(orderId)
+
+            if (!orderId) {
+                return res.status(400).send('Invalid Order ID');
+            }
+            const order = await Order.findById(orderId)
+                .populate({
+                    path: 'order_items.productId',
+                    select: 'name price'
+                })
+                .populate('user_id', 'name email mobile')
+            console.log(order)
+
+            const customerName = order.user_id ?
+                (order.user_id.name || 'Customer') :
+                'Customer';
+
+
+
+            if (!order) {
+                return res.status(404).send('Order not found');
+            }
+
+            const invoiceDir = path.join(__dirname, '../../publics/invoices');
+            if (!fs.existsSync(invoiceDir)) {
+                fs.mkdirSync(invoiceDir, { recursive: true });
+            }
+
+            const invoicePath = path.join(invoiceDir, `invoice-${orderId}.pdf`);
+            const writeStream = fs.createWriteStream(invoicePath);
+
+            const doc = new PDFDocument({
+                size: 'A4',
+                margins: {
+                    top: 50,
+                    bottom: 50,
+                    left: 50,
+                    right: 50
+                }
+            });
+
+            doc.pipe(writeStream);
+
+            doc.font('Helvetica-Bold')
+                .fontSize(25)
+                .text('Timeless Aura', { align: 'center' })
+                .fontSize(16)
+                .text('Tax Invoice', { align: 'center' })
+                .moveDown(1.5);
+
+            doc.font('Helvetica')
+                .fontSize(10)
+                .text(`Invoice Number: ${order._id}`, { align: 'left' })
+                .text(`Date of Issue: ${order.createdAt.toLocaleDateString()}`, { align: 'left' })
+                .moveDown(1);
+
+            doc.font('Helvetica-Bold')
+                .text('Billing Details:', { underline: false })
+                .moveDown(0.5)
+                .font('Helvetica')
+                .text(`Customer Name: ${customerName}`, { align: 'left' })
+                .moveDown(1);
+            doc.font('Helvetica-Bold')
+                .text('Payment Details:', { underline: false })
+                .moveDown(1)
+                .font('Helvetica')
+                .text(`Payment Method: ${order.payment_method}`, { align: 'left' })
+                .moveDown(0.5)
+                .font('Helvetica')
+                .text(`Payment Status: ${order.status}`, { align: 'left' })
+                .moveDown(1);
+
+            doc.font('Helvetica-Bold')
+                .fontSize(12)
+                .text('Order Summary', { underline: false });
+
+            const startX = 50;
+            const columnWidths = { product: 250, quantity: 80, price: 80, total: 80 };
+            let y = doc.y + 10;
+
+            doc.font('Helvetica-Bold')
+                .text('Product', startX, y, { width: columnWidths.product })
+                .text('Quantity', startX + columnWidths.product, y, { width: columnWidths.quantity, align: 'right' })
+                .text('Price', startX + columnWidths.product + columnWidths.quantity, y, { width: columnWidths.price, align: 'right' })
+                .text('Total', startX + columnWidths.product + columnWidths.quantity + columnWidths.price, y, { width: columnWidths.total, align: 'right' })
+                .moveDown(0.5)
+                .moveTo(startX, doc.y)
+                .lineTo(550, doc.y)
+                .stroke();
+
+            let runningTotal = 0;
+            order.order_items.forEach((item) => {
+                y = doc.y + 5;
+                const itemTotal = item.price * item.quantity;
+                runningTotal += itemTotal;
+
+                doc.font('Helvetica')
+                    .text(item.productName, startX, y, { width: columnWidths.product })
+                    .text(`${item.quantity}`, startX + columnWidths.product, y, { width: columnWidths.quantity, align: 'right' })
+                    .text(`RS.${item.price.toFixed(2)}`, startX + columnWidths.product + columnWidths.quantity, y, { width: columnWidths.price, align: 'right' })
+                    .text(`RS.${itemTotal.toFixed(2)}`, startX + columnWidths.product + columnWidths.quantity + columnWidths.price, y, { width: columnWidths.total, align: 'right' })
+                    .moveDown(0.5);
+            });
+
+
+            doc.moveDown(1)
+                .moveTo(startX, doc.y)
+                .lineTo(550, doc.y)
+                .stroke()
+                .moveDown(0.5);
+
+            const summaryStartY = doc.y;
+            const lineHeight = 15;
+
+            doc.font('Helvetica-Bold').text('Subtotal', 400, summaryStartY, { width: 100, align: 'right' });
+            doc.font('Helvetica').text(`RS.${runningTotal.toFixed(2)}`, 500, summaryStartY, { width: 50, align: 'right' });
+
+            doc.font('Helvetica-Bold').text('Discount', 400, summaryStartY + lineHeight, { width: 100, align: 'right' });
+            doc.font('Helvetica').text(`RS.${order.discount.toFixed(2)}`, 500, summaryStartY + lineHeight, { width: 50, align: 'right' });
+
+            doc.font('Helvetica-Bold').text('Delivery Charge', 400, summaryStartY + lineHeight * 2, { width: 100, align: 'right' });
+            doc.font('Helvetica').text('RS.40.00', 500, summaryStartY + lineHeight * 2, { width: 50, align: 'right' });
+
+            doc.font('Helvetica-Bold').text('Grand Total', 400, summaryStartY + lineHeight * 3, { width: 100, align: 'right' });
+            doc.font('Helvetica-Bold').text(`RS.${(runningTotal - order.discount + 40)}`, 500, summaryStartY + lineHeight * 3, { width: 50, align: 'right' });
+
+
+
+
+            doc.moveDown(3)
+                .font('Helvetica')
+                .text('Thanks for choosing Timeless Aura', 50, null, { width: 550, align: 'center' })
+                .text('Return & Exchange Policy: www.timelessaura.com/return-policy', 50, null, { width: 550, align: 'center' })
+                .moveDown(1)
+                .font('Helvetica-Bold')
+                .text('Contact Us: 7994102605', 50, null, { width: 550, align: 'center' })
+                .text('Email: contact@timelessaura.com', 50, null, { width: 550, align: 'center' })
+                .moveDown(1)
+                .font('Helvetica')
+                .text('Visit Us: www.timelessaura.com', 50, null, { width: 550, align: 'center' })
+
+            doc.end();
+
+            writeStream.on('finish', () => {
+                res.download(invoicePath, `invoice-${orderId}.pdf`, (err) => {
+                    if (err) {
+                        console.error('Download error:', err);
+                        res.status(500).send('Error downloading invoice');
+                    }
+                });
+            });
+
+
+
+        } catch (error) {
+             console.error('Invoice Generation Error:', error);
+        res.status(500).send('Error generating invoice');
+
+        }
+    },
+
+    returnOrder :async (req,res) =>{
+        try {
+            const {reason} = req.body;
+            const userId = req.session.user;
+            const orderId  = req.params.orderId;
+
+              if (!userId) {
+            return res.status(401).json({ success: false, message: 'Unauthorized' });
+        }
+        if (!reason) {
+            return res.status(400).json({ success: false, message: 'Return reason is required' });
+        }
+
+         const order = await Order.findById(orderId);
+        if (!order || order.status !== "delivered") {
+            return res.status(404).json({ success: false, message: 'invalid Order' });
+        }
+
+        if (order.status !== "delivered") {
+            return res.status(400).json({ success: false, message: 'Only delivered orders can be returned' });
+        }
+
+         order.status = 'Return requested';
+        order.returnReason = reason;
+        await order.save();
+
+                return res.status(200).json({ success: true, message: 'Product return request sended update status later....' })
+
+
+
+
+        } catch (error) {
+            console.log("error in return order", error)
+        return res.status(500).json({ success:false,message: 'Internal Server Error' });
+        }
     }
+
 
 
 }

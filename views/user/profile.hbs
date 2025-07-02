@@ -138,13 +138,11 @@
         <!-- Profile Upload Form -->
         <form action="/uploadProfileImage" method="POST" enctype="multipart/form-data">
           <label for="profileImage" class="position-relative d-inline-block">
-            <div id="uploadAvatar" class="rounded-circle border bg-light d-flex justify-content-center align-items-center"
+            <div id="uploadAvatar"
+              class="rounded-circle border bg-light d-flex justify-content-center align-items-center"
               style="width: 150px; height: 150px; cursor: pointer; overflow: hidden;">
-              <img id="profilePreview"
-                src="{{#if user.userImage}}{{user.userImage}}{{else}}/default-avatar.png{{/if}}"
-                alt="Profile Preview"
-                class="w-100 h-100 object-fit-cover"
-                style="border-radius: 50%;">
+              <img id="profilePreview" src="{{#if user.userImage}}{{user.userImage}}{{else}}/default-avatar.png{{/if}}"
+                alt="Profile Preview" class="w-100 h-100 object-fit-cover" style="border-radius: 50%;">
             </div>
             <input class="d-none" type="file" id="profileImage" name="profileImage" accept="image/*"
               onchange="this.form.submit()">
@@ -194,29 +192,29 @@
 
       <!-- Address List -->
       {{#if addressData.address}}
-        {{#each addressData.address}}
-        <div class="detail-item">
-          <i class="icon">📍</i>
-          <div>
-            <label>{{addressType}}</label>
-            <p>{{name}}, {{city}}, {{landMark}}, {{state}} - {{pincode}}</p>
-            <p>Phone: {{phone}}, Alt: {{altPhone}}</p>
-            <div class="mt-2">
-              <a href="/editAddress/{{_id}}" class="btn btn-success btn-sm me-2">✏️ Edit</a>
-              <a href="/deleteAddress/{{_id}}" class="btn btn-danger btn-sm"
-                onclick="return confirm('Are you sure you want to delete?')">🗑️ Delete</a>
-            </div>
+      {{#each addressData.address}}
+      <div class="detail-item">
+        <i class="icon">📍</i>
+        <div>
+          <label>{{addressType}}</label>
+          <p>{{name}}, {{city}}, {{landMark}}, {{state}} - {{pincode}}</p>
+          <p>Phone: {{phone}}, Alt: {{altPhone}}</p>
+          <div class="mt-2">
+            <a href="/editAddress/{{_id}}" class="btn btn-success btn-sm me-2">✏️ Edit</a>
+            <a href="/deleteAddress/{{_id}}" class="btn btn-danger btn-sm"
+              onclick="return confirm('Are you sure you want to delete?')">🗑️ Delete</a>
           </div>
         </div>
-        {{/each}}
+      </div>
+      {{/each}}
       {{else}}
-        <div class="detail-item">
-          <i class="icon">📍</i>
-          <div>
-            <label>Address</label>
-            <p>No default address set.</p>
-          </div>
+      <div class="detail-item">
+        <i class="icon">📍</i>
+        <div>
+          <label>Address</label>
+          <p>No default address set.</p>
         </div>
+      </div>
       {{/if}}
     </div>
 
@@ -228,6 +226,174 @@
   {{/if}}
 </div>
 
+<div class="tab-pane fade show active" id="orders" role="tabpanel" aria-labelledby="orders-tab">
+
+  <div class="card">
+    <div class="card-header">
+      <h5 class="mb-0">Your Orders</h5>
+    </div>
+    <div class="card-body">
+      <div class="table-responsive">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Image</th>
+              <th>OrderId</th>
+              <th>Status</th>
+              <th>Total</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {{#if orders.length}}
+            {{#each orders}}
+            <tr>
+              <td>
+                <div class="cart-img-container">
+                  {{#if (eq this.order_items.length 1)}}
+                  <img class="cart-img single"
+                    src="/uploads/product-images/{{this.order_items.[0].productId.productImage.[0]}}" alt="">
+                  {{else}}
+                  {{#each this.order_items}}
+                  <img class="cart-img" src="/uploads/product-images/{{this.productId.productImage.[0]}}" alt="">
+                  {{/each}}
+                  {{/if}}
+                </div>
+              </td>
+              <td class="order-id">
+                #{{this.orderId}}
+              </td>
+              <td>
+                {{#if (eq this.status "pending")}}
+                Pending
+                {{else if (eq this.status "delivered")}}
+                Delivered
+                {{else if (eq this.status "cancelled")}}
+                Cancelled
+                {{else if (eq this.status "Return rejected")}}
+                Return Rejected
+                {{else}}
+                Unknown
+                {{/if}}
+              </td>
+
+              <td>₹{{this.total}}</td>
+              <td>
+                <a href="/viewOrder/{{this._id}}" class="btn btn-sm btn-success">View</a>
+              </td>
+            </tr>
+            {{/each}}
+            {{else}}
+            <tr>
+              <td colspan="5">No orders found.</td>
+            </tr>
+            {{/if}}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="d-flex justify-content-center mt-3">
+        {{!-- Previous Button --}}
+        {{#if (gt currentPage 1)}}
+        <a href="?page={{subtract currentPage 1}}" class="btn btn-outline-primary me-2">Previous</a>
+        {{/if}}
+
+        {{!-- Page Numbers --}}
+        {{#each (range 1 totalPages)}}
+        <a href="?page={{this}}"
+          class="btn {{#if (eq this ../currentPage)}}btn-primary{{else}}btn-outline-primary{{/if}} me-1">
+          {{this}}
+        </a>
+        {{/each}}
+
+        {{!-- Next Button --}}
+        {{#if (lt currentPage totalPages)}}
+        <a href="?page={{add currentPage 1}}" class="btn btn-outline-primary ms-2">Next</a>
+        {{/if}}
+      </div>
+
+      <div class="tab-pane fade show active" id="wallet" role="tabpanel" aria-labelledby="wallet-tab">
+        <div class="card">
+          <div class="card-header">
+            <h5 class="mb-0">Wallet</h5>
+          </div>
+          <div class="card-body contact-from-area">
+            <div class="row">
+              <div class="col-lg-8 mx-auto text-center mt-3">
+                <h2>My Wallet</h2>
+                <p><strong>Wallet Balance:</strong> ₹{{#if wallet}}{{wallet.balance}}{{else}}0{{/if}}</p>
+
+                <h3>Add Money to Wallet</h3>
+                <form onsubmit="addMoney(event)">
+                  <div class="form-group">
+                    <input type="number" name="amount" class="form-control" placeholder="Enter amount" required>
+                  </div>
+                  <button type="submit" class="btn btn-success">ADD MONEY</button>
+                </form>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="tab-pane fade show active" id="walletHistory" role="tabpanel" aria-labelledby="walletHistory-tab">
+    <div class="card">
+        <div class="card-header">
+            <h5 class="mb-0">Wallet History</h5>
+        </div>
+        <div class="card-body">
+            <div class="table-responsive">
+                <table class="table">
+                    <thead>
+                        <tr>
+                            <th>Date</th>
+                            <th>Status</th>
+                            <th>Amount</th>
+                            <th>Description</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{#if wallet.transactions.length}}
+                            {{#each wallet.transactions}}
+                                <tr>
+                                    <td>
+                                        {{formatDate this.createdAt}}
+                                    </td>
+                                    {{#if (eq this.type "credit")}}
+                                        <td style="color:green">Credit</td>
+                                    {{else}}
+                                        <td style="color:red">Debit</td>
+                                    {{/if}}
+                                    <td style="color:black; font-weight:bold;">
+                                        {{this.amount}}
+                                    </td>
+                                    <td>
+                                        {{this.description}}
+                                    </td>
+                                </tr>
+                            {{/each}}
+                        {{else}}
+                            <tr>
+                                <td colspan="4">No transactions found.</td>
+                            </tr>
+                        {{/if}}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+
+
+
+
+    </div>
+  </div>
+</div>
+
+
 <script>
   // Optional: preview image on select (before upload)
   document.getElementById('profileImage')?.addEventListener('change', function (event) {
@@ -238,4 +404,51 @@
       preview.onload = () => URL.revokeObjectURL(preview.src);
     }
   });
+
+
+    function addMoney(event) {
+            event.preventDefault();
+
+            const amount = document.querySelector('input[name="amount"]').value;
+
+            fetch('/addMoney', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ amount: amount }),
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        Swal.fire({
+                            icon: 'success',
+                            title: 'Success',
+                            text: data.message,
+                            showConfirmButton: false,
+                            timer: 1500
+                        }).then(() => {
+                            window.location.reload();
+                        });
+                    } else {
+                        Swal.fire(
+                            'Error!',
+                            data.message,
+                            'error'
+                        )
+                    }
+                })
+                .catch((error) => {
+                    console.error('Error:', error);
+                    Swal.fire(
+                        'Error!',
+                        'Something went wrong. Please try again later.',
+                        'error'
+                    )
+                });
+        }
+
+
+
+
 </script>

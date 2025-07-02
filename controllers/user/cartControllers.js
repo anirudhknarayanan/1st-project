@@ -42,7 +42,7 @@ module.exports = {
                 return total + (item.productId.isAvailable ? item.totalPrice : 0);
             }, 0);
 
-            console.log("your cart detailes", cart);
+            console.log("your cart detailes", cart.items);
 
 
 
@@ -124,7 +124,8 @@ module.exports = {
                     productId,
                     quantity: itemQuantity,
                     price: finalPrice,
-                    totalPrice: finalPrice * itemQuantity
+                    totalPrice: finalPrice * itemQuantity,
+                    appliedOffer : appliedOffer
                 });
 
 

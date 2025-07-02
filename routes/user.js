@@ -3,6 +3,7 @@ const router = express.Router()
 const userController =require("../controllers/user/userController")
 const profileController = require("../controllers/user/profileController")
 const productController = require("../controllers/user/productController")
+const walletController = require("../controllers/user/walletControllers")
 const passport = require("passport")
 const { userAuth } = require("../middlewares/auth")
 const multer = require("multer");
@@ -91,6 +92,7 @@ router.post("/addToWishlist",userAuth,wishlistController.addToWishlist)
 router.get("/removeFromWishlist",userAuth,wishlistController.removeFromWishlist)
 
 
+
 //cart mnagement
 router.get("/cart",userAuth,cartControllers.loadCart)
 router.post("/addToCart",userAuth,cartControllers.addToCart)
@@ -99,6 +101,17 @@ router.delete("/cart/remove/:productId",userAuth,cartControllers.removeCartItem)
 //checkout management
 
 router.get("/checkout",userAuth,checkoutControllers.loadCheckout)
+router.post("/checkout",userAuth,checkoutControllers.placeOrder)
+router.post("/editCheckoutAddress",userAuth,checkoutControllers.editCheckoutAddress)
+router.post("/addCheckoutAddress",userAuth,checkoutControllers.addCheckoutAddress)
+router.get("/vieworder/:id",userAuth,checkoutControllers.viewOrder)
+router.patch("/cancelOrder/:orderId",userAuth,checkoutControllers.cancelOrder)
+router.get("/invoice/:id",userAuth,checkoutControllers.generateInvoice)
+
+
+router.post("/returnOrder/:orderId",userAuth,checkoutControllers.returnOrder)
+router.post("/addMoney",userAuth,walletController.addMoney)
+
 
 
 

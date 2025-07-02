@@ -1,5 +1,7 @@
 const User = require("../../models/userSchema");
 const Address = require("../../models/addressSchema")
+const Order = require("../../models/orderSchema")
+const Wallet  =require("../../models/walletSchema");
 const nodemailer = require("nodemailer");
 const path = require("path")
 const bcrypt = require("bcrypt");
@@ -137,8 +139,8 @@ module.exports = {
   postNewPassword: async (req, res) => {
     try {
       const { newpass1, newpass2 } = req.body;
-      console.log(newpass1,newpass2);
-      
+      console.log(newpass1, newpass2);
+
       const email = req.session.email;
       if (newpass1 === newpass2) {
         const passwordHash = await securePassword(newpass1)
@@ -152,30 +154,54 @@ module.exports = {
       res.redirect("/pageNotFound")
     }
   },
+
   showProfile: async (req, res) => {
     try {
       const user = req.session.user;
-      console.log(user);
 
       if (user) {
         const userData = await User.findOne({ _id: user }).lean();
-        console.log("hello : ", userData);
         const addressData = await Address.findOne({ userId: user }).lean();
-        console.log("addressData", addressData);
+        const walletData = await Wallet.findOne({userId : user}).lean() || {transactions : []};
+
+        console.log("wallet data:",walletData)
+
+        walletData.transactions = walletData.transactions.sort((a,b)=> b.createdAt - a.createdAt);
 
 
 
-        res.render("user/profile", { user: userData, addressData: addressData || { address: [] } })
+        const page = parseInt(req.query.page) || 1;
+        const limit = 5;
+        const skip = (page - 1) * limit;
+        const totalOrders = await Order.countDocuments({ user_id: user });
+        const totalPages = Math.ceil(totalOrders / limit);
+
+
+        const orders = await Order.find({ user_id: user })
+          .populate("order_items.productId")
+          .sort({ createdAt: -1 })
+          .skip(skip)
+          .limit(limit)
+          .lean();
+
+        res.render("user/profile", {
+          user: userData,
+          addressData: addressData || { address: [] },
+          orders,
+          totalPages,
+          currentPage: page,
+          wallet: walletData,
+        });
       } else {
-        res.redirect("/login")
+        res.redirect("/login");
       }
-
-
     } catch (error) {
-
+      console.log("Error in showProfile:", error);
+      res.status(500).send("Internal Server Error");
     }
+  }
 
-  },
+  ,
   addAddress: async (req, res) => {
     try {
       const user = req.session.user;
@@ -325,9 +351,9 @@ module.exports = {
   postChangeEmail: async (req, res) => {
     try {
 
-      const email  = req.body.email;
+      const email = req.body.email;
 
-      const userExist = await User.findOne({email});
+      const userExist = await User.findOne({ email });
       console.log(userExist);
       if (userExist) {
         const otp = generateOtp();
@@ -358,152 +384,153 @@ module.exports = {
       res.status(500).send("Internal Server Error");
     }
   },
-verifyEmailOtp: async (req, res) => {
-  try {
-    const enteredOtp = req.body.otp;
-    const sessionOtp = req.session.userOtp;
-    const userData = req.session.userData;
+  verifyEmailOtp: async (req, res) => {
+    try {
+      const enteredOtp = req.body.otp;
+      const sessionOtp = req.session.userOtp;
+      const userData = req.session.userData;
 
-    if (enteredOtp === sessionOtp) {
-      // OTP matches
-      return res.json({
-        success: true,
-        message: "OTP verified successfully",
-        redirectUrl: "/new-email-page" // or wherever you want
-      });
-    } else {
-      // OTP does not match
-      return res.json({
-        success: false,
-        message: "OTP not matching"
-      });
-    }
-  } catch (error) {
-    console.error("OTP verification error:", error);
-    return res.status(500).json({
-      success: false,
-      message: "Internal Server Error"
-    });
-  }
-},
-getResetEmail: async (req, res) => {
-  try {
-    // Optional: check if OTP was verified
-    if (!req.session.userData) {
-      return res.redirect("/change-email-otp"); // or error page
-    }
-
-    // Render the email reset page with user data
-    return res.render("user/newEmail", {
-      userData: req.session.userData
-    });
-
-  } catch (error) {
-    console.error("Error rendering new email page:", error);
-    return res.redirect("/pageNotFound");
-  }
-},
-resetEmail : async (req,res)=>{
-  try {
-    const newEmail = req.body.newEmail;
-    const userId = req.session.user;
-    console.log("newEmail : ",newEmail,"userId : ",userId);
-    
-    await User.findByIdAndUpdate(userId,{email : newEmail})
-    res.redirect("/profile")
-  } catch (error) {
-    res.redirect("/pageNotFound") 
-  }
-
-},
-getChangePassword : async (req,res)=>{
-  try {
-    res.render("user/changePassword",{hideFooter: true})
-  } catch (error) {
-    res.redirect("/pageNotFOUND")
-  }
-}
-,
-changePasswordValid : async (req,res)=>{
-  try {
-    console.log(req.body);
-    
-    const {email} = req.body;
-    const userExist = await User.findOne({email});
-    console.log("existing user",userExist);
-    
-    if(userExist){
-      const otp = generateOtp();
-      const emailSent = await sendVerificationEmail(email,otp);
-      if(emailSent){
-        req.session.userOtp = otp;
-        req.session.userData = req.body;
-        req.session.email = email;
-        res.render("user/changePassword-otp");
-        console.log('OTP : ',otp);
-      }else{
-        res.json({success : false,message : "failed to send otp,please try again"})
+      if (enteredOtp === sessionOtp) {
+        // OTP matches
+        return res.json({
+          success: true,
+          message: "OTP verified successfully",
+          redirectUrl: "/new-email-page" // or wherever you want
+        });
+      } else {
+        // OTP does not match
+        return res.json({
+          success: false,
+          message: "OTP not matching"
+        });
       }
-    }else{
-      res.render("user/changePassword",{message : "user with this email doesnot exist"})
+    } catch (error) {
+      console.error("OTP verification error:", error);
+      return res.status(500).json({
+        success: false,
+        message: "Internal Server Error"
+      });
+    }
+  },
+  getResetEmail: async (req, res) => {
+    try {
+      // Optional: check if OTP was verified
+      if (!req.session.userData) {
+        return res.redirect("/change-email-otp"); // or error page
+      }
+
+      // Render the email reset page with user data
+      return res.render("user/newEmail", {
+        userData: req.session.userData
+      });
+
+    } catch (error) {
+      console.error("Error rendering new email page:", error);
+      return res.redirect("/pageNotFound");
+    }
+  },
+  resetEmail: async (req, res) => {
+    try {
+      const newEmail = req.body.newEmail;
+      const userId = req.session.user;
+      console.log("newEmail : ", newEmail, "userId : ", userId);
+
+      await User.findByIdAndUpdate(userId, { email: newEmail })
+      res.redirect("/profile")
+    } catch (error) {
+      res.redirect("/pageNotFound")
     }
 
-  } catch (error) {
-    console.error("Error in change password")
-    res.redirect("/pageNotFound")
+  },
+  getChangePassword: async (req, res) => {
+    try {
+      res.render("user/changePassword", { hideFooter: true })
+    } catch (error) {
+      res.redirect("/pageNotFOUND")
+    }
   }
-},
-verifychangePasswordotp :async (req,res)=>{
+  ,
+  changePasswordValid: async (req, res) => {
+    try {
+      console.log(req.body);
 
-  try {
-    const enteredOtp = req.body.otp;
-    if(enteredOtp === req.session.userOtp){
-      res.json({success : true,
-        redirectUrl : "/reset-password"
-      })
-    }else{
-      res.json({success : false,message : "error in entered otp"})
+      const { email } = req.body;
+      const userExist = await User.findOne({ email });
+      console.log("existing user", userExist);
+
+      if (userExist) {
+        const otp = generateOtp();
+        const emailSent = await sendVerificationEmail(email, otp);
+        if (emailSent) {
+          req.session.userOtp = otp;
+          req.session.userData = req.body;
+          req.session.email = email;
+          res.render("user/changePassword-otp");
+          console.log('OTP : ', otp);
+        } else {
+          res.json({ success: false, message: "failed to send otp,please try again" })
+        }
+      } else {
+        res.render("user/changePassword", { message: "user with this email doesnot exist" })
+      }
+
+    } catch (error) {
+      console.error("Error in change password")
+      res.redirect("/pageNotFound")
     }
-  } catch (error) {
-    res.json({success : false,message : "An error occured plz try later"})
+  },
+  verifychangePasswordotp: async (req, res) => {
+
+    try {
+      const enteredOtp = req.body.otp;
+      if (enteredOtp === req.session.userOtp) {
+        res.json({
+          success: true,
+          redirectUrl: "/reset-password"
+        })
+      } else {
+        res.json({ success: false, message: "error in entered otp" })
+      }
+    } catch (error) {
+      res.json({ success: false, message: "An error occured plz try later" })
+    }
+
+  },
+  uploadProfileImg: async (req, res) => {
+    try {
+      const userId = req.session.user; // just the user _id
+
+      if (!userId) {
+        console.error("No user session found.");
+        return res.redirect("/login");
+      }
+
+      if (!req.file || !req.file.filename) {
+        console.error("No image file uploaded.");
+        return res.status(400).send("No image uploaded.");
+      }
+
+      // Construct the relative image path to store in DB
+      const imagePath = `/uploads/profile/${req.file.filename}`;
+
+      // Update user image in DB
+      const updatedUser = await User.findByIdAndUpdate(
+        userId,
+        { $set: { userImage: imagePath } },
+        { new: true }
+      );
+
+      if (!updatedUser) {
+        console.error("User not found.");
+        return res.status(404).send("User not found.");
+      }
+
+      res.redirect("/profile");
+    } catch (error) {
+      console.error("Image upload error:", error);
+      res.status(500).send("Image upload failed.");
+    }
   }
-  
-},
-uploadProfileImg : async (req,res)=>{
-  try {
-    const userId = req.session.user; // just the user _id
-
-    if (!userId) {
-      console.error("No user session found.");
-      return res.redirect("/login");
-    }
-
-    if (!req.file || !req.file.filename) {
-      console.error("No image file uploaded.");
-      return res.status(400).send("No image uploaded.");
-    }
-
-    // Construct the relative image path to store in DB
-    const imagePath = `/uploads/profile/${req.file.filename}`;
-
-    // Update user image in DB
-    const updatedUser = await User.findByIdAndUpdate(
-      userId,
-      { $set: { userImage: imagePath } },
-      { new: true }
-    );
-
-    if (!updatedUser) {
-      console.error("User not found.");
-      return res.status(404).send("User not found.");
-    }
-
-    res.redirect("/profile");
-  } catch (error) {
-    console.error("Image upload error:", error);
-    res.status(500).send("Image upload failed.");
-  }
-}
 
 
 

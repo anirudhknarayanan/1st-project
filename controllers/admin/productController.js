@@ -24,6 +24,15 @@ module.exports = {
         try {
             const product = req.body;
 
+
+            if (product.quantity <= 0) {
+                return res.status(400).json({
+                    success: false,
+                    message: "invalid quantity"
+                })
+            }
+
+
             // Check if product already exists
             const productExists = await Product.findOne({ productName: product.productName });
             if (productExists) {
@@ -77,11 +86,17 @@ module.exports = {
             });
 
             await newProduct.save();
-            return res.redirect("/admin/products");
+            return res.status(200).json({
+                success: true,
+                message: 'Product added successfully'
+            });
 
         } catch (error) {
             console.error("Error adding product:", error);
-            return res.redirect("/admin/pageerror");
+            return res.status(500).json({
+                success: false,
+                message: 'Internal server error'
+            });
         }
     },
 
@@ -268,12 +283,12 @@ module.exports = {
                     message: 'Invalid price values'
                 });
             }
-            console.log("this is your existing quantity",data.quantity);
-            
-            if(data.quantity <=0){
+            console.log("this is your existing quantity", data.quantity);
+
+            if (data.quantity <= 0) {
                 return res.status(400).json({
-                    success : false,
-                    message : "invalid quantity"
+                    success: false,
+                    message: "invalid quantity"
                 })
             }
 
@@ -401,36 +416,36 @@ module.exports = {
     },
     deleteProduct: async (req, res) => {
         try {
-        const { productId } = req.body;
+            const { productId } = req.body;
 
-        const product = await Product.findById(productId);
+            const product = await Product.findById(productId);
 
-        if (!product) {
-            return res.status(404).json({ status: false, message: "Product not found" });
-        }
-
-        // Get product images array
-        const productImages = product.productImage;
-
-        // Construct directory path
-        const imageDir = path.join(__dirname, '..', '..', 'public', 'uploads', 'product-images');
-
-        // Loop and delete each image
-        for (let image of productImages) {
-            const imagePath = path.join(imageDir, image);
-            if (fs.existsSync(imagePath)) {
-                fs.unlinkSync(imagePath);
+            if (!product) {
+                return res.status(404).json({ status: false, message: "Product not found" });
             }
+
+            // Get product images array
+            const productImages = product.productImage;
+
+            // Construct directory path
+            const imageDir = path.join(__dirname, '..', '..', 'public', 'uploads', 'product-images');
+
+            // Loop and delete each image
+            for (let image of productImages) {
+                const imagePath = path.join(imageDir, image);
+                if (fs.existsSync(imagePath)) {
+                    fs.unlinkSync(imagePath);
+                }
+            }
+
+            // Delete product document
+            await Product.deleteOne({ _id: productId });
+
+            return res.status(200).json({ status: true, message: "Product and images deleted successfully" });
+        } catch (error) {
+            console.error("Error deleting product:", error);
+            return res.status(500).json({ status: false, message: "Something went wrong. Please try again." });
         }
-
-        // Delete product document
-        await Product.deleteOne({ _id: productId });
-
-        return res.status(200).json({ status: true, message: "Product and images deleted successfully" });
-    } catch (error) {
-        console.error("Error deleting product:", error);
-        return res.status(500).json({ status: false, message: "Something went wrong. Please try again." });
     }
-}
 
 }

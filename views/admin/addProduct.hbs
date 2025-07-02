@@ -506,18 +506,45 @@
                     confirmButtonColor: '#3085d6',
                     cancelButtonColor: '#d33',
                     confirmButtonText: 'Yes, add it!'
-                }).then(result => {
+                }).then(async result => {
                     if (result.isConfirmed) {
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Product Added',
-                            text: 'Product has been added successfully',
-                            toast: true,
-                            position: 'top-end',
-                            showConfirmButton: false,
-                            timer: 2000
-                        });
-                        document.getElementById('addProductForm').submit();
+                        const form = document.getElementById('addProductForm');
+                        const formData = new FormData(form);
+
+                        try {
+                            const response = await fetch(form.action, {
+                                method: 'POST',
+                                body: formData
+                            });
+
+                            const result = await response.json();
+
+                            if (response.ok && result.success) {
+                                await Swal.fire({
+                                    icon: 'success',
+                                    title: 'Product Added',
+                                    text: result.message || 'Product has been added successfully',
+                                    toast: true,
+                                    position: 'top-end',
+                                    showConfirmButton: false,
+                                    timer: 2000
+                                });
+                                window.location.href = '/admin/products';
+                            } else {
+                                await Swal.fire({
+                                    icon: 'error',
+                                    title: 'Failed to Add',
+                                    text: result.message || 'Something went wrong!'
+                                });
+                            }
+                        } catch (err) {
+                            console.error('Fetch error:', err);
+                            await Swal.fire({
+                                icon: 'error',
+                                title: 'Server Error',
+                                text: 'An unexpected error occurred. Please try again.'
+                            });
+                        }
                     }
                 });
             }

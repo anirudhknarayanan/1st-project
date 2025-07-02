@@ -1,0 +1,777 @@
+<style>
+    * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    }
+
+    body {
+        background-color: #f5f5f5;
+        padding: 0rem;
+    }
+
+    .container {
+        max-width: 1200px;
+        margin: 0 auto;
+    }
+
+    .card {
+        background: white;
+        border-radius: 10px;
+        padding: 2rem;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        margin-bottom: 2rem;
+        margin-top: 51px;
+    }
+
+    .section-title {
+        color: #333;
+        margin-bottom: 1.5rem;
+        font-size: 1.5rem;
+        border-bottom: 2px solid #eee;
+        padding-bottom: 0.5rem;
+    }
+
+    .info-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        /* Responsive two-column layout */
+        gap: 10px;
+    }
+
+    .info-item {
+        background: #ffffff;
+        padding: 10px;
+        border-radius: 5px;
+        /* box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1); */
+        text-align: center;
+        /* Centers content */
+    }
+
+    /* Mobile responsiveness */
+    @media (max-width: 600px) {
+        .info-grid {
+            grid-template-columns: repeat(2, 1fr);
+            /* Stack items in a single column for smaller screens */
+        }
+    }
+
+
+    .info-label {
+        color: #666;
+        font-size: 0.9rem;
+        margin-bottom: 0.3rem;
+    }
+
+    .info-value {
+        color: #333;
+        font-weight: 500;
+    }
+
+    .status {
+        display: inline-block;
+        padding: 0.3rem 1rem;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        font-weight: 500;
+    }
+
+    .status-paid {
+        background: #e3f9e5;
+        color: #1b4332;
+    }
+
+    .status-delivered {
+        background: #e0f2fe;
+        color: #075985;
+    }
+
+    .status-pending {
+        background: #fff3dc;
+        color: #945d0c;
+    }
+
+    .status-cancelled {
+        background: #fee2e2;
+        color: #991b1b;
+    }
+
+    .products-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 1rem;
+    }
+
+    .products-table th {
+        background: #f8f9fa;
+        padding: 1rem;
+        text-align: left;
+        font-weight: 600;
+        color: #444;
+    }
+
+    .products-table td {
+        padding: 1rem;
+        border-bottom: 1px solid #eee;
+    }
+
+    .product-image {
+        width: 80px;
+        height: 80px;
+        object-fit: cover;
+        border-radius: 5px;
+    }
+
+    .product-name {
+        color: #2563eb;
+        font-weight: 500;
+    }
+
+    .total-row {
+        font-weight: 600;
+        background: #f8f9fa;
+    }
+
+    .btn-cancel {
+        background-color: #dc3545;
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 14px;
+        margin-top: 20px;
+        transition: background-color 0.3s;
+    }
+
+    .btn-cancel:hover {
+        background-color: #c82333;
+    }
+
+    .action-row {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-top: 20px;
+        padding: 15px;
+        border-top: 1px solid #dee2e6;
+    }
+
+    /* Modal styles */
+    .modal {
+        display: none;
+        position: fixed;
+        z-index: 1000;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.5);
+        backdrop-filter: blur(5px);
+        animation: fadeIn 0.3s ease-out;
+    }
+
+    @keyframes fadeIn {
+        from {
+            opacity: 0;
+        }
+
+        to {
+            opacity: 1;
+        }
+    }
+
+    /* Modal Content */
+    .modal-content {
+        position: relative;
+        background-color: #fff;
+        margin: 15vh auto;
+        padding: 0;
+        width: 90%;
+        max-width: 450px;
+        border-radius: 12px;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.2);
+        transform-origin: top;
+        animation: slideIn 0.4s ease-out;
+    }
+
+    @keyframes slideIn {
+        from {
+            transform: translateY(-30px);
+            opacity: 0;
+        }
+
+        to {
+            transform: translateY(0);
+            opacity: 1;
+        }
+    }
+
+    /* Modal Header */
+    .modal-header {
+        padding: 1rem;
+        border-bottom: 1px solid #edf2f7;
+        position: relative;
+    }
+
+    .modal-header h2 {
+        margin: 0;
+        color: #2d3748;
+        font-size: 1.25rem;
+        font-weight: 600;
+    }
+
+    /* Close Button */
+    .close-btn {
+        position: absolute;
+        right: 1rem;
+        top: 0.75rem;
+        width: 24px;
+        height: 24px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        font-size: 1.5rem;
+        color: #718096;
+        transition: color 0.2s;
+        background: none;
+        border: none;
+        padding: 0;
+        z-index: 1001;
+    }
+
+    .close-btn:hover {
+        color: #2d3748;
+    }
+
+    /* Modal Body */
+    .modal-body {
+        padding: 1rem;
+    }
+
+    .modal-body p {
+        color: #4a5568;
+        margin-bottom: 1rem;
+        line-height: 1.5;
+        font-size: 0.95rem;
+    }
+
+    /* Form Elements */
+    .form-group {
+        margin-bottom: 1rem;
+    }
+
+    .form-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        color: #4a5568;
+        font-weight: 500;
+        font-size: 0.95rem;
+    }
+
+    #cancelReason {
+        width: 100%;
+        padding: 0.5rem 0.75rem;
+        border: 2px solid #e2e8f0;
+        border-radius: 6px;
+        font-size: 0.95rem;
+        color: #2d3748;
+        background-color: #fff;
+        transition: all 0.2s;
+        appearance: none;
+        background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='%234a5568' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+        background-repeat: no-repeat;
+        background-position: right 0.75rem center;
+        background-size: 1em;
+    }
+
+    #cancelReason:focus {
+        outline: none;
+        border-color: #4299e1;
+        box-shadow: 0 0 0 3px rgba(66, 153, 225, 0.15);
+    }
+
+    /* Modal Footer */
+    .modal-footer {
+        padding: 1rem;
+        border-top: 1px solid #edf2f7;
+        display: flex;
+        justify-content: flex-end;
+        gap: 0.75rem;
+    }
+
+    /* Buttons */
+    .btn-cancel,
+    .btn-confirm {
+        min-width: 100px;
+        padding: 0.5rem 1rem;
+        border-radius: 6px;
+        font-size: 0.875rem;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.2s;
+    }
+
+    .btn-cancel {
+        background-color: #e53e3e;
+        color: #fff;
+        border: 2px solid #e53e3e;
+    }
+
+    .btn-cancel:hover {
+        background-color: #c53030;
+        border-color: #c53030;
+    }
+
+    .btn-confirm {
+        background-color: #fff;
+        color: #4a5568;
+        border: 2px solid #e2e8f0;
+    }
+
+    .btn-confirm:hover {
+        background-color: #f7fafc;
+        border-color: #cbd5e0;
+    }
+
+    @media (max-width: 640px) {
+        .modal-content {
+            margin: 10vh auto;
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .modal-footer {
+            padding: 1rem;
+        }
+
+        .btn-cancel,
+        .btn-confirm {
+            min-width: 120px;
+        }
+    }
+
+    @media (max-width: 768px) {
+        body {
+            padding: 1rem;
+        }
+
+        .card {
+            padding: 1rem;
+        }
+
+        .products-table {
+            display: block;
+            overflow-x: auto;
+        }
+    }
+
+    .invoice-btn {
+        background-color: black;
+        color: white;
+        border: none;
+        padding: 6px 15px;
+        font-size: 16px;
+        font-weight: bold;
+        text-transform: uppercase;
+        border-radius: 5px;
+        transition: all 0.3sease;
+        height: 38px;
+    }
+
+    .invoice-btn:hover {
+        background-color: #333;
+        color: #f1c40f;
+        /* Optional golden effect */
+        transform: scale(1.05);
+    }
+
+    /* .retry-btn{
+    background-color: #e53e3e;
+    color: white;
+    border: none;
+    padding: 6px 15px;
+    font-size: 16px;
+    font-weight: bold;
+    text-transform: uppercase;
+    border-radius: 5px;
+    transition: all 0.3sease;
+    height: 38px;
+}
+.retry-btn:hover {
+    background-color: #cc1313;
+    color: #f1c40f; optionla golden
+    transform: scale(1.05);
+} */
+    .retry-btn {
+        background-color: lightgreen;
+        color: rgb(5, 75, 0);
+        border: none;
+        padding: 6px 15px;
+        font-size: 16px;
+        font-weight: bold;
+        text-transform: uppercase;
+        border-radius: 5px;
+        transition: all 0.3s ease;
+        height: 38px;
+        cursor: pointer;
+        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+    }
+
+    .retry-btn:hover {
+        background-color: rgb(119, 238, 119);
+        color: rgb(5, 75, 0);
+        transform: scale(1.05);
+        box-shadow: 0 4px 10px rgba(0, 0, 0, 0.3);
+    }
+
+    .retry-btn:active {
+        background-color: rgb(100, 220, 100);
+        transform: scale(0.98);
+        transition: all 0.1s ease;
+    }
+</style>
+
+
+{{!-- Order Details Page --}}
+<div class="container">
+    {{#if order}}
+    <!-- Order Information -->
+    <div class="card">
+        <div style="display: flex; justify-content: space-between;">
+            <h2 class="section-title">Order Information</h2>
+            {{#if (or (eq order.orderStatus 'delivered') (eq order.orderStatus 'Return rejected') (eq order.orderStatus
+            'Return approved') (eq order.orderStatus 'Return requested'))}}
+            <a href="/invoice/{{order._id}}" class="btn btn-dark invoice-btn">Invoice</a>
+            {{/if}}
+        </div>
+
+        <div class="info-grid">
+            <div class="info-item">
+                <div class="info-label">Order ID</div>
+                <div class="info-value">#{{order._id}}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Order Date</div>
+                <div class="info-value">{{formatDate order.createdAt}}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Order Status</div>
+                <div class="info-value">
+                    {{#if (eq order.orderStatus 'failed')}}
+                    <span class="status status-failed">----</span>
+                    {{else}}
+                    <span class="status status-{{order.orderStatus}}">{{order.orderStatus}}</span>
+                    {{/if}}
+                </div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Payment Method</div>
+                <div class="info-value">{{order.payment_method}}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Payment Status</div>
+                <div class="info-value">
+                    {{#if (and (eq order.payment_method 'razorpay') (eq order.orderStatus 'cancelled'))}}
+                    <span class="status status-delivered">Refunded</span>
+                    {{else if (and (eq order.payment_method 'razorpay') (or (eq order.orderStatus 'pending') (eq
+                    order.orderStatus 'shipped') (eq order.orderStatus 'delivered')))}}
+                    <span class="status status-delivered">Paid</span>
+                    {{else if (eq order.orderStatus 'cancelled')}}
+                    <span class="status status-cancelled">Cancelled</span>
+                    {{else if (or (eq order.orderStatus 'delivered') (eq order.orderStatus 'Return rejected') (eq
+                    order.orderStatus 'Return approved') (eq order.orderStatus 'Return requested'))}}
+                    <span class="status status-delivered">Paid</span>
+                    {{else if (eq order.orderStatus 'failed')}}
+                    <span class="status status-cancelled">Failed</span>
+                    <button class="retry-btn" onclick="retryPayment('{{order._id}}')">Retry</button>
+                    {{else}}
+                    <span class="status status-pending">Pending</span>
+                    {{/if}}
+                </div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Total Amount</div>
+                <div class="info-value">₹{{order.totalAmount}}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Discount</div>
+                <div class="info-value" style="color: green;">₹{{order.discount}}</div>
+            </div>
+
+            {{#if (eq order.orderStatus 'Return rejected')}}
+            <div class="info-item">
+                <div class="info-label">Reason for rejecting order</div>
+                <div class="info-value">{{order.adminReturnStatus}}</div>
+            </div>
+            {{/if}}
+        </div>
+    </div>
+
+    <!-- Delivery Address -->
+    <div class="card">
+        <h2 class="section-title">Delivery Address</h2>
+        <div class="info-grid">
+            {{#if order.address}}
+            <div class="info-item">
+                <div class="info-label">Delivery Place</div>
+                <div class="info-value">{{order.address.name}}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Phone Number</div>
+                <div class="info-value">
+                    {{order.address.phone}}
+                    {{#if order.address.altPhone}}<br>Alt: {{order.address.altPhone}}{{/if}}
+                </div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Address Type</div>
+                <div class="info-value">{{order.address.addressType}}</div>
+            </div>
+            <div class="info-item">
+                <div class="info-label">Address</div>
+                <div class="info-value">
+                    {{order.address.name}}<br>
+                    {{#if order.address.landMark}}LandMark: {{order.address.landMark}}<br>{{/if}}
+                    {{order.address.city}}, {{order.address.state}} - {{order.address.pincode}}
+                </div>
+            </div>
+            {{else}}
+            <div class="info-item">
+                <div class="info-value">Address information not available</div>
+            </div>
+            {{/if}}
+        </div>
+    </div>
+
+    <!-- Ordered Items -->
+    <div class="card">
+        <h2 class="section-title">Ordered Items</h2>
+        <table class="products-table">
+            <thead>
+                <tr>
+                    <th>Product</th>
+                    <th>Name</th>
+                    <th>Price</th>
+                    <th>Quantity</th>
+                    <th>Total</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{#if order.order_items.length}}
+                {{#each order.order_items}}
+                {{#if this.productId}}
+                <tr>
+                    <td>
+                        <img src="/uploads/product-images/{{this.productId.productImage.[0]}}"
+                            alt="{{this.productId.productName}}" class="product-image">
+                    </td>
+                    <td>{{this.productId.productName}}</td>
+                    <td>₹{{this.price}}</td>
+                    <td>{{this.quantity}}</td>
+                    <td>₹{{multiply this.price this.quantity}}</td>
+                </tr>
+                {{/if}}
+                {{/each}}
+                <tr class="total-row">
+                    <td colspan="4" style="text-align: right;">Total Amount:</td>
+                    <td>₹{{order.totalAmount}}</td>
+                </tr>
+                {{else}}
+                <tr>
+                    <td colspan="5" class="text-center">No items found in this order.</td>
+                </tr>
+                {{/if}}
+            </tbody>
+        </table>
+
+        <div class="action-row">
+            {{#if (and (ne order.status 'cancelled') (ne order.status 'delivered') (ne order.status 'returned') (ne
+            order.status 'Return requested') (ne order.status 'Return approved') (ne order.status 'Return rejected'))}}
+            <button class="btn-cancel" onclick="openModal()">
+                <i class="fas fa-times-circle"></i> Cancel Order
+            </button>
+            {{else if (eq order.status 'delivered')}}
+            <button class="btn-cancel" onclick="openReturnModal('{{order._id}}')">Return Order</button>
+            {{/if}}
+
+            <div class="continue__btn">
+                <a href="/profile">Go To Profile</a>
+            </div>
+        </div>
+    </div>
+
+    {{else}}
+    <div class="card">
+        <div class="text-center">
+            <h2>Order not found</h2>
+            <p>The requested order could not be found.</p>
+            <a href="/profile" class="btn btn-primary">Back to Profile</a>
+        </div>
+    </div>
+    {{/if}}
+</div>
+
+
+
+<div id="cancelOrderModal" class="modal">
+    <div class="modal-content">
+        <span class="close-btn" onclick="closeModal()">&times;</span>
+        <div class="modal-header">
+            <h2>Cancel Order</h2>
+        </div>
+        <div class="modal-body">
+            <p>Are you sure you want to cancel this order? This action cannot be undone.</p>
+            <div class="form-group">
+                <label for="cancelReason">Reason for cancellation:</label>
+                <select id="cancelReason">
+                    <option value="">Select a reason</option>
+                    <option value="changed_mind">Changed my mind</option>
+                    <option value="wrong_item">Ordered wrong item</option>
+                    <option value="shipping_time">Shipping time too long</option>
+                    <option value="price_issue">Found better price elsewhere</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn-cancel" onclick="closeModal()">Cancel</button>
+            <button type="button" class="btn-confirm" onclick="confirmCancel()">Confirm</button>
+        </div>
+    </div>
+</div>
+
+<div id="returnModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Return Order</h2>
+            <button class="close-btn" onclick="closeReturnModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="returnForm">
+                <input type="hidden" id="orderId">
+                <div class="form-group">
+                    <label for="returnReason">Reason for Return:</label>
+                    <textarea id="returnReason" required></textarea>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn-cancel" onclick="closeReturnModal()">Cancel</button>
+                    <button type="submit" class="btn-confirm">Submit Request</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+<script>
+
+    function openReturnModal(orderId) {
+        document.getElementById("orderId").value = orderId;
+        document.getElementById("returnModal").style.display = "block";
+    }
+
+    function closeReturnModal() {
+        document.getElementById("returnModal").style.display = "none";
+    }
+
+    document.getElementById("returnForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const orderId = document.getElementById("orderId").value;
+        const reason = document.getElementById("returnReason").value;
+
+        const response = await fetch(`/returnOrder/${orderId}`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ reason })
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            Swal.fire("Success", "Return request submitted!", "success").then(() => {
+                location.reload();
+            });
+        } else {
+            Swal.fire("Error", "Something went wrong!", "error");
+        }
+    });
+
+    function openModal(event) {
+        if (event) {
+            event.preventDefault();
+        }
+        const modal = document.getElementById("cancelOrderModal");
+        if (modal) {
+            modal.style.display = "flex";
+            document.body.style.overflow = 'hidden';
+        }
+    }
+
+
+    function closeModal() {
+        document.getElementById('cancelOrderModal').style.display = 'none';
+    }
+
+    // Close modal when clicking outside
+    window.onclick = function (event) {
+        const modal = document.getElementById('cancelOrderModal');
+        if (event.target === modal) {
+            closeModal();
+        }
+    }
+
+    async function confirmCancel() {
+        const reason = document.getElementById('cancelReason').value;
+        if (!reason) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Please select a reason'
+            });
+            return;
+        }
+        try {
+            const orderId = "{{order._id}}"
+            const response = await fetch(`/cancelOrder/${orderId}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ reason })
+            });
+            const data = await response.json();
+
+            if (data.success) {
+                await Swal.fire({
+                    icon: 'success',
+                    title: 'Success',
+                    text: 'Order cancelled successfully',
+                    showConfirmButton: false,
+                    timer: 1500
+                })
+                window.location.replace('/viewOrder/' + orderId);
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Failed to cancel order',
+                    showConfirmButton: false,
+                    timer: 1500
+                })
+            }
+        } catch (error) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Failed to cancel order',
+                showConfirmButton: false,
+                timer: 1500
+            })
+        }
+        closeModal();
+        // location.reload();
+
+    }
+</script>

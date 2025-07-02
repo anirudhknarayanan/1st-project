@@ -8,6 +8,7 @@ const productController = require("../controllers/admin/productController")
 const { userAuth, adminAuth } = require("../middlewares/auth");
 const multer = require("multer");
 const storage = require("../helpers/multer");
+const orderController = require("../controllers/admin/orderController");
 const uploads = multer({ storage: storage })
 
 
@@ -35,6 +36,12 @@ router.post("/addBrand", adminAuth, uploads.single("image"), brandController.add
 router.get("/blockBrand", adminAuth, brandController.blockBrand)
 router.get("/unblockBrand", adminAuth, brandController.unblockBrand)
 router.get("/deleteBrand", adminAuth, brandController.deleteBrand)
+
+router.get("/orders",adminAuth,orderController.getOrderPage)
+router.post("/updateOrder",adminAuth,orderController.updateOrder)
+router.post("/cancelOrder",adminAuth,orderController.cancelOrder)
+router.post("/approveReturn",adminAuth,orderController.approveReturn)
+router.post("/rejectReturn/:orderId",adminAuth,orderController.rejectReturn)
 
 
 
