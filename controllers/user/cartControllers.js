@@ -125,7 +125,7 @@ module.exports = {
                     quantity: itemQuantity,
                     price: finalPrice,
                     totalPrice: finalPrice * itemQuantity,
-                    appliedOffer : appliedOffer
+                    appliedOffer: appliedOffer
                 });
 
 
@@ -161,8 +161,8 @@ module.exports = {
     removeCartItem: async (req, res) => {
         try {
             const productId = req.params.productId;
-            console.log("productID : ",productId);
-            
+            console.log("productID : ", productId);
+
             const userId = req.session.user;
             const cart = await Cart.findOne({ userId })
             if (!cart) {

@@ -93,35 +93,35 @@ module.exports = {
       res.status(500).json({ success: false, message: "Internal server error" })
     }
   },
- removeFromWishlist: async (req, res) => {
-  try {
-    const { productId } = req.query;
-    const userId = req.session.user;
+  removeFromWishlist: async (req, res) => {
+    try {
+      const { productId } = req.query;
+      const userId = req.session.user;
 
-    const wishlist = await Wishlist.findOne({ userId });
+      const wishlist = await Wishlist.findOne({ userId });
 
-    if (wishlist) {
-      const index = wishlist.items.findIndex(
-        item => item.productId.toString() === productId
-      );
+      if (wishlist) {
+        const index = wishlist.items.findIndex(
+          item => item.productId.toString() === productId
+        );
 
-      if (index !== -1) {
-        wishlist.items.splice(index, 1);
-        await wishlist.save();
+        if (index !== -1) {
+          wishlist.items.splice(index, 1);
+          await wishlist.save();
 
-        // ✅ Return success response
-        return res.json({ success: true, message: "Item removed from wishlist." });
+          // ✅ Return success response
+          return res.json({ success: true, message: "Item removed from wishlist." });
+        }
       }
+
+      // ✅ Even if item not found, return JSON
+      return res.json({ success: false, message: "Item not found in wishlist." });
+
+    } catch (error) {
+      console.error("Error removing from wishlist:", error);
+      res.status(500).json({ success: false, message: "Internal server error" });
     }
-
-    // ✅ Even if item not found, return JSON
-    return res.json({ success: false, message: "Item not found in wishlist." });
-
-  } catch (error) {
-    console.error("Error removing from wishlist:", error);
-    res.status(500).json({ success: false, message: "Internal server error" });
-  }
-},
+  },
 
 
 

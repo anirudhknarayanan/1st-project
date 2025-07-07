@@ -51,7 +51,7 @@ module.exports = {
                     const originalImagePath = file.path;
                     const resizedImagePath = path.join(productImagesPath, file.filename);
                     await sharp(originalImagePath)
-                        .resize({ width: 440, height: 440 })
+                         .resize({ width: 440, height: 440 })
                         .toFile(resizedImagePath);
                     images.push(file.filename);
                 }
@@ -106,7 +106,8 @@ module.exports = {
             const page = parseInt(req.query.page) || 1;
             const limit = 4;
 
-            const productData = await Product.find({
+            const productData = await Product.find
+            ({
                 $or: [
                     { productName: { $regex: new RegExp(".*" + search + ".*", "i") } },
                     { brand: { $regex: new RegExp(".*" + search + ".*", "i") } },
@@ -114,6 +115,7 @@ module.exports = {
                 ],
 
             }).populate("category")
+            .sort({ createdAt: -1 })
                 .limit(limit)
                 .skip((page - 1) * limit)
                 .lean();

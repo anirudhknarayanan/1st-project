@@ -52,7 +52,6 @@ module.exports = {
     },
     loadDashBoard: async (req, res) => {
 
-
         try {
 
             console.log("admin is there");

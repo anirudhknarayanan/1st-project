@@ -4,9 +4,9 @@ const path = require("path")
 const fs = require("fs")
 const { countDocuments } = require("../../models/userSchema");
 
-
 module.exports = {
     getBrandPage: async (req, res) => {
+
         try {
             const page = parseInt(req.query.page) || 1;
             const limit = 4;
@@ -22,11 +22,13 @@ module.exports = {
                 totalPages: totalPages,
                 totalBrand: totalBrand
             })
+
         } catch (error) {
             res.redirect("/pageerror")
         }
     },
     addBrand: async (req, res) => {
+
         try {
             const brand = req.body.name;
             console.log(brand);
@@ -62,12 +64,14 @@ module.exports = {
 
 
         } catch (error) {
+
             console.log(error);
             return res.status(500).json({ success: false, message: "Something went wrong. Please try again." });
 
         }
     },
     blockBrand: async (req, res) => {
+
         try {
             const id = req.query.id
             console.log(id);
@@ -81,6 +85,7 @@ module.exports = {
 
     },
     unblockBrand: async (req, res) => {
+
         try {
             const id = req.query.id
             await Brand.updateOne({ _id: id }, { $set: { isBlocked: false } })
@@ -90,7 +95,9 @@ module.exports = {
             return res.status(500).json({ success: false, message: "Something went wrong. Please try again." });
         }
     },
+
     deleteBrand: async (req, res) => {
+
         try {
             const { id } = req.query
             if (!id) {
@@ -102,7 +109,7 @@ module.exports = {
             }
             const brandImage = Array.isArray(brand.brandImage) ? brand.brandImage[0] : brand.brandImage;
             console.log(brandImage);
-            
+
             const imagePath = path.join(__dirname, '..', '..', 'public', 'uploads', 'brands', brandImage);
 
             if (fs.existsSync(imagePath)) {
@@ -110,9 +117,12 @@ module.exports = {
             }
             await Brand.deleteOne({ _id: id })
             return res.status(200).json({ success: true, message: "Brand deleted successfully" });
+
         } catch (error) {
+
             console.log("error in delete brand", error)
             return res.status(500).json({ success: false, message: "Something went wrong. Please try again." });
+
         }
 
     }

@@ -7675,7 +7675,7 @@ h1, h2, h3, h4, h5,
 .colorlib-partner,
 .colorlib-intro,
 .colorlib-product {
-  padding: 7em 0;
+  padding: 4em 0;
   clear: both; }
 
 .colorlib-intro {
@@ -9049,4 +9049,27 @@ input[type="text"] {
 
     .add-to-cart-btn:hover {
         background: #333;
+    }
+
+      /* Search bar */
+    .search-container {
+        margin-bottom: 20px;
+    }
+
+    .search-container .form-control {
+        border-radius: 10px 0 0 10px;
+        border-right: none;
+    }
+
+    .search-container .searchbtn {
+        border-radius: 0 10px 10px 0;
+        background-color: #8BCAC3;
+        border: none;
+        padding: 10px 20px;
+        color: white;
+        font-weight: bold;
+    }
+
+    .search-container .searchbtn:hover {
+        background-color: #76b1ab;
     }

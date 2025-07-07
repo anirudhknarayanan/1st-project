@@ -30,7 +30,7 @@ module.exports = {
 
 
             res.render('admin/orderMang', {
-                admin : true,
+                admin: true,
                 orders,
                 returnRequests,
                 currentPage: page,
@@ -140,23 +140,23 @@ module.exports = {
             }
 
             let wallet = await Wallet.findOne({ userId });
-        if (!wallet) {
-            wallet = new Wallet({
-                userId,
-                balance: 0,
-                transactions: []
+            if (!wallet) {
+                wallet = new Wallet({
+                    userId,
+                    balance: 0,
+                    transactions: []
+                });
+            }
+
+            wallet.balance += order.total;
+            wallet.transactions.push({
+                type: 'credit',
+                amount: order.total,
+                description: `Refund for returned order`,
+                status: 'completed'
             });
-        }
 
-        wallet.balance += order.total;
-        wallet.transactions.push({
-            type: 'credit',
-            amount: order.total,
-            description: `Refund for returned order`,
-            status: 'completed'
-        });
-
-        await wallet.save();
+            await wallet.save();
 
 
             res.status(200).json({ success: true, message: "Return approved" })

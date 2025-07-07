@@ -1,6 +1,8 @@
 const Category = require("../../models/categorySchema")
 const Product = require("../../models/productSchema")
+
 module.exports = {
+
     categoryInfo: async (req, res) => {
 
         try {
@@ -17,6 +19,7 @@ module.exports = {
 
             const totalCategories = await Category.countDocuments()
             const totalPages = Math.ceil(totalCategories / limit);
+
             res.render("admin/category", {
                 admin: true,
                 cat: categoryData,
@@ -26,14 +29,15 @@ module.exports = {
             });
 
         } catch (error) {
+
             console.error(error);
             res.redirect("/pageerror")
-
-
         }
 
     },
+
     addCategory: async (req, res) => {
+
         const { name, description, categoryOffer } = req.body; // ✅ Include categoryOffer
 
         try {
@@ -50,31 +54,40 @@ module.exports = {
 
             await newCategory.save();
             return res.json({ success: true, message: "Category added successfully" }); // ✅ consistent success response
+
         } catch (error) {
+
             console.error("Error adding category:", error); // ✅ Optional: log for debugging
             return res.status(500).json({ error: "Internal server error" });
         }
     },
     addCategoryOffer: async (req, res) => {
+
         try {
             const percentage = parseInt(req.body.percentage)
             const categoryId = req.body.categoryId;
             const category = await Category.findById(categoryId)
+
             if (!category) {
                 return res.status(404).json({ status: false, message: "Category Not Found" })
             }
+
             const products = await Product.find({ category: category._id })
             const hasProductOffer = products.some((product) => product.productOffer > percentage);
+
             if (hasProductOffer) {
                 return res.json({ status: false, message: "products with in this category have product offer" })
             }
+
             await Category.updateOne({ _id: categoryId }, { $set: { categoryOffer: percentage } })
+
             for (const product of products) {
                 product.productOffer = 0;
                 product.salePrice = product.regularPrice;
                 await product.save();
 
             }
+
             res.json({ status: true })
 
         } catch (error) {
@@ -82,6 +95,7 @@ module.exports = {
 
         }
     },
+
     removeCategoryOffer: async (req, res) => {
         try {
             const categoryId = req.body.categoryId;
@@ -103,30 +117,36 @@ module.exports = {
             category.categoryOffer = 0;
             await category.save()
             res.json({ status: true })
+
         } catch (error) {
             res.status(500).json({ status: false, message: "internal server error" })
         }
     },
+
     toggleCategoryStatus: async (req, res) => {
         const { isListed } = req.body;
         const categoryId = req.params.id;
+
         try {
             const category = await Category.findByIdAndUpdate(
                 categoryId,
                 { isListed },
                 { new: true }
             );
+
             if (!category) {
                 return res.status(404).json({
                     success: false,
                     message: "Category not found"
                 });
             }
+
             return res.status(200).json({
                 success: true,
                 message: `Category ${isListed ? "listed" : "unlisted"} successfully`,
                 updatedCategory: category,
             });
+
         } catch (error) {
             return res.status(500).json({
                 success: false,
@@ -135,7 +155,9 @@ module.exports = {
         }
     },
     // Edit Category Page - GET
+
     getEditCategory: async (req, res) => {
+
         try {
             const id = req.params.id;
 
@@ -160,6 +182,7 @@ module.exports = {
 
 
     updateCategory: async (req, res) => {
+
         try {
             const id = req.params.id;
             const { name, description } = req.body
@@ -174,6 +197,7 @@ module.exports = {
             console.error("Error updating category:", error);
             res.status(500).send("Server error");
         }
+
     }
 
 }

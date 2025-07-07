@@ -454,28 +454,28 @@ module.exports = {
             order.status = 'cancelled';
             await order.save();
 
-             let wallet = await Wallet.findOne({ userId })
-        if (!wallet) {
-            wallet = new Wallet({
-                userId,
-                balance: 0,
-                transactions: []
-            })
-        }
-        console.log("Paymentmethod", order.payment_method)
-        console.log("Status", order.status)
+            let wallet = await Wallet.findOne({ userId })
+            if (!wallet) {
+                wallet = new Wallet({
+                    userId,
+                    balance: 0,
+                    transactions: []
+                })
+            }
+            console.log("Paymentmethod", order.payment_method)
+            console.log("Status", order.status)
 
-        if (order.payment_method !== "cod" && order.status === "cancelled") {
-            wallet.balance += order.total;
-            wallet.transactions.push({
-                type: 'credit',
-                amount: order.total,
-                description: "Refund for cancelled order",
-                status: 'completed'
-            });
+            if (order.payment_method !== "cod" && order.status === "cancelled") {
+                wallet.balance += order.total;
+                wallet.transactions.push({
+                    type: 'credit',
+                    amount: order.total,
+                    description: "Refund for cancelled order",
+                    status: 'completed'
+                });
 
-            await wallet.save();
-        }
+                await wallet.save();
+            }
 
 
 
@@ -647,46 +647,46 @@ module.exports = {
 
 
         } catch (error) {
-             console.error('Invoice Generation Error:', error);
-        res.status(500).send('Error generating invoice');
+            console.error('Invoice Generation Error:', error);
+            res.status(500).send('Error generating invoice');
 
         }
     },
 
-    returnOrder :async (req,res) =>{
+    returnOrder: async (req, res) => {
         try {
-            const {reason} = req.body;
+            const { reason } = req.body;
             const userId = req.session.user;
-            const orderId  = req.params.orderId;
+            const orderId = req.params.orderId;
 
-              if (!userId) {
-            return res.status(401).json({ success: false, message: 'Unauthorized' });
-        }
-        if (!reason) {
-            return res.status(400).json({ success: false, message: 'Return reason is required' });
-        }
+            if (!userId) {
+                return res.status(401).json({ success: false, message: 'Unauthorized' });
+            }
+            if (!reason) {
+                return res.status(400).json({ success: false, message: 'Return reason is required' });
+            }
 
-         const order = await Order.findById(orderId);
-        if (!order || order.status !== "delivered") {
-            return res.status(404).json({ success: false, message: 'invalid Order' });
-        }
+            const order = await Order.findById(orderId);
+            if (!order || order.status !== "delivered") {
+                return res.status(404).json({ success: false, message: 'invalid Order' });
+            }
 
-        if (order.status !== "delivered") {
-            return res.status(400).json({ success: false, message: 'Only delivered orders can be returned' });
-        }
+            if (order.status !== "delivered") {
+                return res.status(400).json({ success: false, message: 'Only delivered orders can be returned' });
+            }
 
-         order.status = 'Return requested';
-        order.returnReason = reason;
-        await order.save();
+            order.status = 'Return requested';
+            order.returnReason = reason;
+            await order.save();
 
-                return res.status(200).json({ success: true, message: 'Product return request sended update status later....' })
+            return res.status(200).json({ success: true, message: 'Product return request sended update status later....' })
 
 
 
 
         } catch (error) {
             console.log("error in return order", error)
-        return res.status(500).json({ success:false,message: 'Internal Server Error' });
+            return res.status(500).json({ success: false, message: 'Internal Server Error' });
         }
     }
 

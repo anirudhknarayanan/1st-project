@@ -17,7 +17,7 @@
 		<div class="container">
 			<div class="row">
 				<div class="col">
-					<div class="breadcrumbs-img" style="background-image: url(images/img_bg_3.jpg);">
+					<div class="breadcrumbs-img" style="background-image: url(images/img_bg_3.jpg)">
 						<h2 class="text-white">SHOP</h2>
 					</div>
 					<div class="menu text-center">
@@ -81,16 +81,17 @@
 
 	<div class="container">
 		<div class="row">
-			<div class="col-sm-5 col-md-3">
-				<form action="/search" method="post" class="search-wrap">
-					<div class="form-group">
-						<input type="search" name="query" class="form-control search" placeholder="Search">
-
-						<button class="btn btn-primary submit-search text-center" type="submit"><i
-								class="icon-search"></i></button>
+			
+			<div class="search-container">
+				<form action="/search" method="post" class="w-100">
+					<div class="input-group">
+						<input type="text" style="padding-left: 68px;" class="form-control"
+							placeholder="Search products" name="query" value="">
+						<button class="searchbtn" type="submit">Search</button>
 					</div>
 				</form>
 			</div>
+
 		</div>
 	</div>
 
@@ -130,10 +131,11 @@
 
 						<div class="col-sm-12">
 							<div class="side border mb-1">
-								<h3>Material</h3>
+								<h3>Categories</h3>
 								<ul>
-									<li><a href="#">Leather</a></li>
-									<li><a href="#">Suede</a></li>
+									{{#each category}}
+									<li><a href="/filter?category={{this._id}}">{{this.name}}</a></li>
+									{{/each}}
 								</ul>
 							</div>
 						</div>

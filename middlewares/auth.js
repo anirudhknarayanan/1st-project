@@ -41,6 +41,18 @@ module.exports = {
     } else {
       res.redirect("/admin/login");
     }
+  },
+   checkUserBlocked : async (req, res, next) => {
+  if (!req.session.user) return next();
+
+  const user = await User.findById(req.session.user);
+  if (!user || user.status === 'blocked') {
+    req.session.destroy(() => {
+      return res.redirect('user/login'); // or send 403 JSON if it's an API
+    });
+  } else {
+    next();
   }
+}
 
 }

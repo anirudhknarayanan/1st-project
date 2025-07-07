@@ -5,8 +5,10 @@ const path = require("path");
 const dotenv = require("dotenv").config();
 const session = require("express-session");
 const passport = require("./config/passport");
+const middleware = require("./middlewares/auth")
 const db = require("./config/db");
 const flash = require('connect-flash');
+
 app.use((req, res, next) => {
   res.set('Cache-Control', 'no-store, no-cache, must-revalidate, private');
   next();
@@ -30,6 +32,10 @@ app.use(session({
     maxAge: 72 * 60 * 60 * 1000, // 72 hours
   },
 }));
+
+
+app.use(middleware.checkUserBlocked);
+
 
 app.use(flash());
 
@@ -70,6 +76,9 @@ app.engine(
         let arr = [];
         for (let i = start; i <= end; i++) arr.push(i);
         return arr;
+      },
+      isGreaterThanZero: function (value, options) {
+        return Number(value) > 0 ? options.fn(this) : options.inverse(this);
       },
 
       json: function (context) {
@@ -141,9 +150,6 @@ app.set("views", path.join(__dirname, "views"));
 // Routes
 app.use("/", userRouter);
 app.use("/admin", adminRouter);
-
-
-
 
 
 const PORT = 3000;

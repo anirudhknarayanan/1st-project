@@ -1,7 +1,7 @@
 const User = require("../../models/userSchema");
 const Address = require("../../models/addressSchema")
 const Order = require("../../models/orderSchema")
-const Wallet  =require("../../models/walletSchema");
+const Wallet = require("../../models/walletSchema");
 const nodemailer = require("nodemailer");
 const path = require("path")
 const bcrypt = require("bcrypt");
@@ -162,11 +162,11 @@ module.exports = {
       if (user) {
         const userData = await User.findOne({ _id: user }).lean();
         const addressData = await Address.findOne({ userId: user }).lean();
-        const walletData = await Wallet.findOne({userId : user}).lean() || {transactions : []};
+        const walletData = await Wallet.findOne({ userId: user }).lean() || { transactions: [] };
 
-        console.log("wallet data:",walletData)
+        console.log("wallet data:", walletData)
 
-        walletData.transactions = walletData.transactions.sort((a,b)=> b.createdAt - a.createdAt);
+        walletData.transactions = walletData.transactions.sort((a, b) => b.createdAt - a.createdAt);
 
 
 
