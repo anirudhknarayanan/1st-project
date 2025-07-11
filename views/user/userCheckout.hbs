@@ -991,7 +991,7 @@
             timer: 1500,
             showConfirmButton: false
           });
-          window.location.href = `/viewOrder/${data.orderId}`;
+          window.location.href = `/viewOrder/${data._id}`;
         } else {
           if (data.unavailableItems && data.unavailableItems.length > 0) {
             let unavailableMessage = 'The Some items are no longer available:<br><ul>';

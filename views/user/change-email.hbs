@@ -20,6 +20,9 @@
             <!-- Current Email Input -->
             <div class="mb-3">
               <label for="currentEmail" class="form-label">Current Email</label>
+              {{#if message}}
+              <p class="text-danger">{{message}}</p>
+              {{/if}}
               <input type="email" class="form-control" id="currentEmail" placeholder="Enter your current email" name="email" required>
               <div class="invalid-feedback">Please enter a valid email address.</div>
             </div>

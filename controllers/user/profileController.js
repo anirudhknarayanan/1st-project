@@ -356,52 +356,45 @@ module.exports = {
       const userExist = await User.findOne({ email });
       console.log(userExist);
       if (userExist) {
-        const otp = generateOtp();
-        const emailSent = await sendVerificationEmail(email, otp);
-        if (emailSent) {
-          req.session.userOtp = otp;
-          req.session.userData = req.body;
-          req.session.email = email;
-          res.render("user/changeEmail-otp");
-          console.log("Email send : ", email);
-          console.log("OTP :", otp);
-
-
-        } else {
-          res.render("user/changeEmail", { message: "User with this email not exists" })
-        }
+        res.render("user/newEmail")
       } else {
-        res.json("email - error")
-
+        res.render("user/change-email", { message: "User with this email not exists" })
       }
-
-
-
-
-
     } catch (error) {
       console.error("Error:", error);
       res.status(500).send("Internal Server Error");
     }
   },
+
+
+
+
   verifyEmailOtp: async (req, res) => {
     try {
       const enteredOtp = req.body.otp;
       const sessionOtp = req.session.userOtp;
-      const userData = req.session.userData;
+      const newEmail = req.session.email;
+      const userId = req.session.user;
 
       if (enteredOtp === sessionOtp) {
-        // OTP matches
+        // ✅ OTP matches: Update user's email
+        await User.findByIdAndUpdate(userId, { email: newEmail });
+
+        // ✅ Clear OTP and temp email from session
+        delete req.session.userOtp;
+        delete req.session.email;
+
+        // ✅ Send success response with redirect URL
         return res.json({
           success: true,
-          message: "OTP verified successfully",
-          redirectUrl: "/new-email-page" // or wherever you want
+          message: "Email updated successfully",
+          redirectUrl: "/profile"
         });
       } else {
-        // OTP does not match
+        // ❌ OTP does not match
         return res.json({
           success: false,
-          message: "OTP not matching"
+          message: "OTP does not match"
         });
       }
     } catch (error) {
@@ -411,37 +404,87 @@ module.exports = {
         message: "Internal Server Error"
       });
     }
-  },
-  getResetEmail: async (req, res) => {
-    try {
-      // Optional: check if OTP was verified
-      if (!req.session.userData) {
-        return res.redirect("/change-email-otp"); // or error page
-      }
+  }
+  ,
 
-      // Render the email reset page with user data
-      return res.render("user/newEmail", {
-        userData: req.session.userData
-      });
-
-    } catch (error) {
-      console.error("Error rendering new email page:", error);
-      return res.redirect("/pageNotFound");
-    }
-  },
   resetEmail: async (req, res) => {
     try {
+
+
       const newEmail = req.body.newEmail;
       const userId = req.session.user;
       console.log("newEmail : ", newEmail, "userId : ", userId);
 
-      await User.findByIdAndUpdate(userId, { email: newEmail })
-      res.redirect("/profile")
+      const otp = generateOtp();
+      const emailSent = await sendVerificationEmail(newEmail, otp);
+
+      if (emailSent) {
+        req.session.userOtp = otp;
+        req.session.email = newEmail;
+        console.log("Email send : ", newEmail);
+        console.log("OTP :", otp);
+        res.render("user/changeEmail-otp");
+      } else {
+        res.render("user/newEmail", { message: "new email have problem" })
+      }
+
+
+
+
+      // await User.findByIdAndUpdate(userId, { email: newEmail })
+      // res.redirect("/profile")
     } catch (error) {
       res.redirect("/pageNotFound")
     }
 
   },
+
+  updateUserName: async (req, res) => {
+    try {
+      const userId = req.session.user; // assuming session contains user ID
+      const newName = req.body.name;
+
+      console.log("Updating name for user:", userId, "to:", newName);
+
+      if (!newName || newName.trim() === '') {
+        return res.status(400).json({ success: false, message: 'Name cannot be empty.' });
+      }
+
+      await User.findByIdAndUpdate(userId, { name: newName });
+
+      res.json({ success: true, message: 'Name updated successfully!' });
+    } catch (error) {
+      console.error("Name update error:", error);
+      res.status(500).json({ success: false, message: 'Update failed.' });
+    }
+  },
+
+  updateUserPhone: async (req, res) => {
+    try {
+      const userId = req.session.user;
+      const newPhone = req.body.phone;
+
+      if (!userId) {
+        return res.status(401).json({ success: false, message: 'Unauthorized' });
+      }
+
+      if (!newPhone || newPhone.trim() === '' || !/^\d{10}$/.test(newPhone)) {
+        return res.status(400).json({ success: false, message: 'Enter a valid 10-digit phone number.' });
+      }
+
+      await User.findByIdAndUpdate(userId, { phone: newPhone })
+      res.json({ success: true, message: 'Phone number updated successfully!' });
+
+
+
+    } catch (error) {
+
+      console.error("Phone update error:", error);
+      res.status(500).json({ success: false, message: 'Update failed.' });
+
+    }
+  },
+
   getChangePassword: async (req, res) => {
     try {
       res.render("user/changePassword", { hideFooter: true })
@@ -466,7 +509,8 @@ module.exports = {
           req.session.userData = req.body;
           req.session.email = email;
           res.render("user/changePassword-otp");
-          console.log('OTP : ', otp);
+          console.log("Email send to : ",email)
+          console.log('OTP has: ', otp);
         } else {
           res.json({ success: false, message: "failed to send otp,please try again" })
         }

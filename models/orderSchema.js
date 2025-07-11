@@ -1,12 +1,12 @@
 const mongoose = require('mongoose');
-const { Schema } = mongoose
+const { Schema } = mongoose;
 const { v4: uuidv4 } = require('uuid');
 const Product = require('./productSchema');
 
 const orderSchema = new Schema({
    orderId: {
       type: String,
-      default: () => uuidv4(),
+      default: () => `ORD-${uuidv4().split('-')[0]}`,
       unique: true
    },
    user_id: {
@@ -20,44 +20,21 @@ const orderSchema = new Schema({
       required: true
    },
    shippingAddress: {
-      addressType: {
-          type: String,
-          required: true
-      },
-      name: {
-          type: String,
-          required: true
-      },
-      city: {
-          type: String,
-          required: true
-      },
-      landMark: {
-          type: String,
-          required: true
-      },
-      state: {
-          type: String,
-          required: true
-      },
-      pincode: {
-          type: Number,
-          required: true
-      },
-      phone: {
-          type: Number,
-          required: true
-      },
-      altPhone: { 
-          type: Number,
-          required: false
-      }
-  },
+      addressType: { type: String, required: true },
+      name: { type: String, required: true },
+      city: { type: String, required: true },
+      landMark: { type: String, required: true },
+      state: { type: String, required: true },
+      pincode: { type: Number, required: true },
+      phone: { type: Number, required: true },
+      altPhone: { type: Number }
+   },
    payment_method: {
       type: String,
       enum: ["cod", "razorpay"],
       required: true
    },
+
    order_items: [{
       productId: {
          type: Schema.Types.ObjectId,
@@ -66,7 +43,7 @@ const orderSchema = new Schema({
       },
       productName: {
          type: String,
-         required: true,
+         required: true
       },
       price: {
          type: Number,
@@ -75,15 +52,47 @@ const orderSchema = new Schema({
       quantity: {
          type: Number,
          required: true
+      },
+      status: {
+         type: String,
+         enum: [
+            "active",           // default for normal item
+            "cancelled",        // fully cancelled
+            "returned",         // fully returned
+            "return requested", // user requests return
+            "return approved",  // admin approves
+            "return rejected"   // admin rejects
+         ],
+         default: "active"
       }
-   }],
+      ,
+      cancel_reason: {
+         type: String,
+         default: null
+      },
+      cancelled_at: {
+         type: Date,
+         default: null
+      },
+      cancelled_quantity: {
+         type: Number,
+         default: 0
+      },
+      return_reason: {
+         type: String,
+         default: null
+      },
+      returned_at: {
+         type: Date,
+         default: null
+      }
+   }]
+   ,
+
+
    total: {
       type: Number,
       required: true
-   },
-   createdAt: {
-      type: Date,
-      default: Date.now
    },
    discount: {
       type: Number,
@@ -95,7 +104,11 @@ const orderSchema = new Schema({
    },
    status: {
       type: String,
-      enum: ["pending", "processing", "shipped", "delivered", "cancelled","Return requested", "Return approved","Return rejected", "refunded","failed"],
+      enum: [
+         "pending", "processing", "shipped", "delivered", "cancelled",
+         "Return requested", "Return approved", "Return rejected",
+         "refunded", "failed"
+      ],
       default: "pending"
    },
    paymentStatus: {
@@ -103,27 +116,23 @@ const orderSchema = new Schema({
       enum: ["pending", "success", "failed"],
       default: "pending"
    },
-   
-   returnReason:{
-      type:String,
-      default:null   
+   returnReason: {
+      type: String,
+      default: null
    },
-   adminReturnStatus:{
-      type:String,
-      default:null
+   adminReturnStatus: {
+      type: String,
+      default: null
+   },
+   coupenApplied: {
+      type: String,
+      default: "false"
    },
    invoiceDate: {
       type: Date,
       default: Date.now
-   },
-   coupenApplied: {
-      type: String,
-      default: false
-   },
-   
+   }
 }, { timestamps: true });
-
-
 
 const Order = mongoose.model('Order', orderSchema);
 module.exports = Order;

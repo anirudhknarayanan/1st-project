@@ -28,11 +28,35 @@ module.exports = {
             console.log("your orders : ", orders)
             console.log("return : requests", returnRequests)
 
+            // Extract item-level return requests
+            const itemReturnRequests = [];
+
+            orders.forEach(order => {
+                order.order_items.forEach(item => {
+                    if (item.status === "return requested") {
+                        itemReturnRequests.push({
+                            orderId: order._id,
+                            orderUniqueId: order.orderId,
+                            user: order.user_id,
+                            return_reason: item.return_reason,
+                            product: item.productId,
+                            productName: item.productName,
+                            status: item.status,
+                            returnDate: item.returned_at,
+                            productId: item.productId._id
+                        });
+                    }
+                });
+            });
+            console.log("itemReturnRequests : ", itemReturnRequests)
+
+
 
             res.render('admin/orderMang', {
                 admin: true,
                 orders,
                 returnRequests,
+                itemReturnRequests,
                 currentPage: page,
                 totalPages
             })
@@ -205,6 +229,125 @@ module.exports = {
             res.status(500).json({ success: false, message: "internal server error" })
 
         }
+    },
+
+
+
+    approveItemReturn: async (req, res) => {
+        try {
+            const { orderId, productId } = req.body;
+
+            console.log(orderId,productId);
+            
+
+            if (!orderId || !productId) {
+                return res.status(400).json({ success: false, message: "Missing orderId or productId" });
+            }
+
+
+            const order = await Order.findById(orderId);
+
+            console.log("return item order : ",order)
+        if (!order) {
+            return res.status(404).json({ success: false, message: "Order not found" });
+        }
+
+          // Find the item to approve
+        const item = order.order_items.find(item => item.productId.toString() === productId);
+        if (!item || item.status !== 'return requested') {
+            return res.status(400).json({ success: false, message: "Item not eligible for return" });
+        }
+
+         // Update product stock
+        await Product.findByIdAndUpdate(productId, {
+            $inc: { quantity: item.quantity }
+        });
+
+         item.status = 'returned';
+        item.returned_at = new Date();
+
+        await order.save();
+
+                // Credit to wallet
+        const userId = order.user_id;
+        let wallet = await Wallet.findOne({ userId });
+        if (!wallet) {
+            wallet = new Wallet({
+                userId,
+                balance: 0,
+                transactions: []
+            });
+        }
+
+        wallet.balance += item.price * item.quantity;
+        wallet.transactions.push({
+            type: 'credit',
+            amount: item.price * item.quantity,
+            description: `Refund for returned item (${item.productName})`,
+            status: 'completed'
+        });
+
+        await wallet.save();
+
+        return res.status(200).json({ success: true, message: "Item return approved" });
+
+
+
+
+
+
+        } catch (error) {
+
+
+            console.error("Error approving item return", error);
+        return res.status(500).json({ success: false, message: "Internal Server Error" });
+
+        }
+    },
+
+    rejectItemReturn : async (req,res)=>{
+
+
+         try {
+        const { orderId, productId, reason } = req.body;
+
+        console.log("Rejecting item return: ", { orderId, productId, reason });
+
+        if (!orderId || !productId || !reason) {
+            return res.status(400).json({ success: false, message: "Missing required data" });
+        }
+
+        const order = await Order.findById(orderId);
+
+        if (!order) {
+            return res.status(404).json({ success: false, message: "Order not found" });
+        }
+
+        // Find the item in order_items
+        const item = order.order_items.find(item =>
+            item.productId.toString() === productId.toString() &&
+            item.status === 'return requested'
+        );
+
+        if (!item) {
+            return res.status(404).json({ success: false, message: "Item with return request not found" });
+        }
+
+        item.status = "return rejected";
+        item.return_reason = reason;
+        item.returned_at = new Date();
+
+        await order.save();
+
+        return res.status(200).json({ success: true, message: "Item return rejected successfully" });
+
+    } catch (error) {
+        console.error("Error in rejectItemReturn:", error);
+        return res.status(500).json({ success: false, message: "Internal server error" });
     }
+}
+
+
+    
 
 }

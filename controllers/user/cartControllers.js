@@ -76,6 +76,19 @@ module.exports = {
                     message: "Product not found"
                 });
             }
+
+              // ✅ CHECK FOR OUT-OF-STOCK
+        if (product.quantity === 0) {
+            return res.status(400).json({
+                success: false,
+                message: "This item is out of stock. You can't add it to the cart."
+            });
+        }
+
+        
+
+
+
             const itemQuantity = parseInt(quantity) || 1;
             const { finalPrice, appliedOffer, regularPrice } = getDiscountPrice(product);
             console.log("this is your final price : ", finalPrice);

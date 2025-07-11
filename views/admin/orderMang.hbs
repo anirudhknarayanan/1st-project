@@ -395,7 +395,7 @@
             <tbody>
                 {{#each orders}}
                 <tr data-order-id="{{this._id}}">
-                    <td>#{{this._id}}</td>
+                    <td>#{{this.orderId}}</td>
                     <td>{{this.user_id.name}}</td>
                     <td>{{formatDate this.createdAt}}</td>
                     <td>
@@ -443,7 +443,7 @@
 
     {{#if returnRequests.length}}
     <div class="container" style="margin-top: 23px;">
-        <h2>Return Requests</h2>
+        <h2>Order Return Requests</h2>
         <table>
             <thead>
                 <tr>
@@ -473,6 +473,55 @@
         </table>
     </div>
     {{/if}}
+
+
+    {{#if itemReturnRequests.length}}
+    <div class="container" style="margin-top: 30px;">
+        <h2>Item-Level Return Requests</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Order ID</th>
+                    <th>Product</th>
+                    <th>Customer</th>
+                    <th>Return Date</th>
+                    <th>Reason</th>
+                    <th>Status</th>
+                    <th>Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{#each itemReturnRequests}}
+                <tr>
+                    <td>#{{this.orderUniqueId}}</td>
+                    <td>
+                        <img src="/uploads/product-images/{{this.product.productImage.[0]}}"
+                            alt="{{this.product.productName}}" style="width: 60px; height: 60px; object-fit: cover;">
+                        <div>{{this.product.productName}}</div>
+                    </td>
+                    <td>{{this.user.name}}</td>
+                    <td>{{formatDate this.returnDate}}</td>
+                    <td><a href="#" class="view-reason">{{this.return_reason}}</a></td>
+                    <td><span class="status pending">{{this.status}}</span></td>
+                    <td>
+                        <button class="approve-btn"
+                            onclick="approveItemReturn('{{this.orderId}}', '{{this.productId}}')">Approve</button>
+                        <button class="reject-btn"
+                            onclick="rejectItemReturn('{{this.orderId}}', '{{this.productId}}')">Reject</button>
+                    </td>
+                </tr>
+                {{/each}}
+            </tbody>
+        </table>
+    </div>
+    {{/if}}
+
+
+
+
+
+
+
 
     <div id="orderModal" class="modal">
         <div class="modal-content">
@@ -624,8 +673,8 @@
         // Update the order object with the current status
         order.status = currentStatus;
 
-        document.getElementById('modalOrderId').textContent = `Order Details #${order._id}`;
-        document.getElementById('modalOrderIdValue').textContent = `#${order._id}`;
+        document.getElementById('modalOrderId').textContent = `Order Details #${order.orderId}`;
+        document.getElementById('modalOrderIdValue').textContent = `#${order.orderId}`;
         document.getElementById('modalOrderDate').textContent = new Date(order.createdAt).toLocaleDateString();
         document.getElementById('modalPaymentMethod').textContent = order.payment_method;
 
@@ -661,9 +710,23 @@
                  class="product-img">
         </td>
         <td>${item.productId.productName}</td>
-        <td>${item.quantity}</td>
+        <td>
+         ${item.quantity}
+              ${item.cancelled_quantity && item.cancelled_quantity > 0
+                    ? `<br><span style="color: red; font-size: 12px;">Cancelled: ${item.cancelled_quantity}</span>`
+                    : ''
+                }
+                </td>
         <td>₹${item.price}</td>
         <td>₹${item.price * item.quantity}</td>
+        <td>
+          ${item.status}
+    ${item.status === 'cancelled'
+                    ? `<br><span style="color: red; font-size: 12px;">${item.cancel_reason || ''}</span>`
+                    : ''
+                }
+        
+        </td>
     `;
             productsList.appendChild(row);
         });
@@ -952,6 +1015,101 @@
             })
         }
     });
+
+
+///approve item return
+
+async function approveItemReturn(orderId, productId) {
+    const result = await Swal.fire({
+        icon: 'warning',
+        title: 'Approve Return?',
+        text: 'Do you want to approve this item return?',
+        showConfirmButton: true,
+        showCancelButton: true,
+        confirmButtonText: 'Yes',
+        cancelButtonText: 'No',
+        reverseButtons: true
+    });
+
+    if (!result.isConfirmed) return;
+
+    const response = await fetch('/admin/approveItemReturn', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId, productId })
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+        Swal.fire({
+            icon: 'success',
+            title: 'Return Approved',
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 1500
+        });
+        setTimeout(() => location.reload(), 1500);
+    } else {
+        Swal.fire({
+            icon: 'error',
+            title: 'Failed',
+            text: data.message || 'Approval failed',
+            showConfirmButton: false,
+            timer: 1500
+        });
+    }
+}
+
+
+
+//reject item return
+
+
+async function rejectItemReturn(orderId, productId) {
+    const { value: reason } = await Swal.fire({
+        title: 'Reject Return',
+        input: 'textarea',
+        inputLabel: 'Reason for rejection',
+        inputPlaceholder: 'Type your reason here...',
+        inputAttributes: {
+            'aria-label': 'Reason for rejection'
+        },
+        showCancelButton: true
+    });
+
+    if (!reason) return;
+
+    const response = await fetch('/admin/rejectItemReturn', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ orderId, productId, reason })
+    });
+
+    const data = await response.json();
+
+    if (data.success) {
+        Swal.fire({
+            icon: 'success',
+            title: 'Return Rejected',
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 1500
+        });
+        setTimeout(() => location.reload(), 1500);
+    } else {
+        Swal.fire({
+            icon: 'error',
+            title: 'Failed',
+            text: data.message || 'Rejection failed',
+            showConfirmButton: false,
+            timer: 1500
+        });
+    }
+}
+
 
 
 

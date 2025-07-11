@@ -57,9 +57,10 @@ router.get("/deleteAddress/:id", userAuth, profileController.deleteAddress)
 
 router.get("/changeEmail", userAuth, profileController.changeEmail)
 router.post("/changeEmail", userAuth, profileController.postChangeEmail)
-router.post("/verify-email-otp", userAuth, profileController.verifyEmailOtp)
-router.get("/new-email-page", userAuth, profileController.getResetEmail)
 router.post("/resetEmail", userAuth, profileController.resetEmail)
+router.post("/verify-email-otp", userAuth, profileController.verifyEmailOtp)
+
+
 
 //in profile change password
 
@@ -68,6 +69,8 @@ router.post("/changePassword", userAuth, profileController.changePasswordValid)
 router.post("/verify-changePassword-otp", userAuth, profileController.verifychangePasswordotp)
 
 router.post("/uploadProfileImage", userAuth, uploads.single("profileImage"), profileController.uploadProfileImg)
+router.post("/updateName",userAuth,profileController.updateUserName)
+router.post("/updatePhone",userAuth,profileController.updateUserPhone)
 
 //forget password 
 
@@ -113,6 +116,12 @@ router.get("/invoice/:id", userAuth, checkoutControllers.generateInvoice)
 
 router.post("/returnOrder/:orderId", userAuth, checkoutControllers.returnOrder)
 router.post("/addMoney", userAuth, walletController.addMoney)
+
+
+router.patch("/cancelOrderItem/:orderId/:productId",userAuth,checkoutControllers.cancelOrderItem)
+router.patch("/returnOrderItem/:orderId/:productId", userAuth, checkoutControllers.returnOrderItem)
+
+
 
 
 

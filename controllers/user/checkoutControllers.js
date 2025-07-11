@@ -7,9 +7,12 @@ const Coupon = require('../../models/coupenSchema')
 const Wallet = require('../../models/walletSchema')
 const { getDiscountPrice, getDiscountPriceCart } = require("../../helpers/offerHelpers");
 const PDFDocument = require('pdfkit');
+const { v4: uuidv4 } = require('uuid');
+
 const fs = require('fs');
 const path = require('path');
 const { log } = require("console");
+const { param } = require("../../app");
 
 
 module.exports = {
@@ -328,8 +331,12 @@ module.exports = {
                 productName: item.productName
             }));
 
+
+
+
             // Create new order
             const newOrder = new Order({
+
                 user_id: userId,
                 address_id: shippingAddress,
                 shippingAddress: {
@@ -367,7 +374,7 @@ module.exports = {
 
             return res.status(200).json({
                 success: true,
-                orderId: newOrder._id,
+                orderId: newOrder.orderId,
                 message: "Order placed successfully"
             });
 
@@ -688,7 +695,142 @@ module.exports = {
             console.log("error in return order", error)
             return res.status(500).json({ success: false, message: 'Internal Server Error' });
         }
+    },
+
+    cancelOrderItem: async (req, res) => {
+        try {
+            const { reason, quantity } = req.body; // ⬅️ accept quantity from frontend
+            const { orderId, productId } = req.params;
+
+            const order = await Order.findById(orderId);
+            if (!order) {
+                return res.status(404).json({ success: false, message: 'Order not found' });
+            }
+
+            if (!reason || !quantity || quantity < 1) {
+                return res.status(400).json({ success: false, message: 'Reason and valid quantity are required' });
+            }
+
+            const item = order.order_items.find(item => item.productId.toString() === productId);
+            if (!item) {
+                return res.status(404).json({ success: false, message: 'Item not found in order' });
+            }
+
+            if (quantity > item.quantity) {
+                return res.status(400).json({ success: false, message: 'Quantity exceeds ordered amount' });
+            }
+
+            // Update product stock
+            await Product.findByIdAndUpdate(productId, {
+                $inc: { quantity: quantity }
+            });
+
+            const userId = order.user_id;
+
+            // Handle refund if payment is not COD
+            if (order.payment_method !== 'cod') {
+                const refundAmount = item.price * quantity;
+                let wallet = await Wallet.findOne({ userId });
+
+                if (!wallet) {
+                    wallet = new Wallet({
+                        userId,
+                        balance: 0,
+                        transactions: []
+                    });
+                }
+
+                wallet.balance += refundAmount;
+                wallet.transactions.push({
+                    type: 'credit',
+                    amount: refundAmount,
+                    description: `Refund for cancelled quantity of ${item.productName}`,
+                    status: 'completed'
+                });
+
+                await wallet.save();
+            }
+
+            if (quantity === item.quantity) {
+                // Full cancellation
+                item.status = 'cancelled';
+                item.cancel_reason = reason;
+                item.cancelled_at = new Date();
+                item.cancelled_quantity = quantity; // Store cancelled quantity
+                item.quantity = 0; // Set quantity to zero to reflect full cancel
+            } else {
+                // Partial cancellation
+                item.quantity -= quantity; // Reduce ordered quantity
+                item.cancelled_quantity = (item.cancelled_quantity || 0) + quantity;
+                item.cancel_reason = reason;
+                item.cancelled_at = new Date();
+
+                // Keep status as 'placed' since part is still active
+            }
+
+
+            // Recalculate order total and final amount
+            let newTotal = 0;
+            order.order_items.forEach(i => {
+                newTotal += i.price * i.quantity;
+            });
+
+            order.total = newTotal;
+            order.finalAmount = newTotal - (order.discount || 0);
+
+            await order.save();
+
+            return res.status(200).json({
+                success: true,
+                message: `Cancelled ${quantity} ${quantity > 1 ? 'items' : 'item'} successfully`
+            });
+
+        } catch (error) {
+            console.error("Error cancelling order item:", error);
+            return res.status(500).json({ success: false, message: 'Internal Server Error' });
+        }
+    },
+
+
+
+    returnOrderItem: async (req, res) => {
+        try {
+            const { reason } = req.body;
+            const { orderId, productId } = req.params;
+
+            const order = await Order.findById(orderId);
+            if (!order) {
+                return res.status(404).json({ success: false, message: "Order not found" });
+            }
+
+            const item = order.order_items.find(
+                (i) => i.productId.toString() === productId && i.status === "active"
+            );
+
+            if (!item) {
+                return res.status(404).json({ success: false, message: "Item not found or already returned/cancelled" });
+            }
+
+            if (order.status !== "delivered") {
+                return res.status(400).json({ success: false, message: "Only delivered orders can be returned" });
+            }
+
+            item.set('status', 'return requested');  // ✅ this now matches the corrected enum
+            item.set('return_reason', reason);
+            item.set('returned_at', new Date());
+
+            order.markModified('order_items'); // ✅ required for nested changes
+
+            await order.save();
+
+            return res.status(200).json({ success: true, message: "Item return request submitted" });
+
+        } catch (error) {
+            console.error("Return item error:", error);
+            return res.status(500).json({ success: false, message: "Server error" });
+        }
     }
+
 
 
 

@@ -151,7 +151,7 @@
 
       </div>
 
-      <h2>{{user.name}}</h2>
+      <h2 id="editName">{{user.name}}</h2>
       <p>Member since {{user.createdOn}}</p>
     </div>
 
@@ -181,7 +181,7 @@
         <i class="icon">📞</i>
         <div>
           <label>Phone</label>
-          <p>{{user.phone}}</p>
+          <p id="editPhone">{{user.phone}}</p>
         </div>
       </div>
 
@@ -201,8 +201,9 @@
           <p>Phone: {{phone}}, Alt: {{altPhone}}</p>
           <div class="mt-2">
             <a href="/editAddress/{{_id}}" class="btn btn-success btn-sm me-2">✏️ Edit</a>
-            <a href="/deleteAddress/{{_id}}" class="btn btn-danger btn-sm"
-              onclick="return confirm('Are you sure you want to delete?')">🗑️ Delete</a>
+            <a href="/deleteAddress/{{_id}}" class="btn btn-danger btn-sm delete-address" data-id="{{_id}}">
+              🗑️ Delete
+            </a>
           </div>
         </div>
       </div>
@@ -219,7 +220,7 @@
     </div>
 
     <!-- Edit Profile Button -->
-    {{!-- <button class="edit-btn">✏️ Edit Profile</button> --}}
+    <button class="edit-btn">✏️ Edit Profile</button>
   </main>
   {{else}}
   <p>User not logged in.</p>
@@ -337,58 +338,52 @@
       </div>
 
       <div class="tab-pane fade show active" id="walletHistory" role="tabpanel" aria-labelledby="walletHistory-tab">
-    <div class="card">
-        <div class="card-header">
+        <div class="card">
+          <div class="card-header">
             <h5 class="mb-0">Wallet History</h5>
-        </div>
-        <div class="card-body">
+          </div>
+          <div class="card-body">
             <div class="table-responsive">
-                <table class="table">
-                    <thead>
-                        <tr>
-                            <th>Date</th>
-                            <th>Status</th>
-                            <th>Amount</th>
-                            <th>Description</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {{#if wallet.transactions.length}}
-                            {{#each wallet.transactions}}
-                                <tr>
-                                    <td>
-                                        {{formatDate this.createdAt}}
-                                    </td>
-                                    {{#if (eq this.type "credit")}}
-                                        <td style="color:green">Credit</td>
-                                    {{else}}
-                                        <td style="color:red">Debit</td>
-                                    {{/if}}
-                                    <td style="color:black; font-weight:bold;">
-                                        {{this.amount}}
-                                    </td>
-                                    <td>
-                                        {{this.description}}
-                                    </td>
-                                </tr>
-                            {{/each}}
-                        {{else}}
-                            <tr>
-                                <td colspan="4">No transactions found.</td>
-                            </tr>
-                        {{/if}}
-                    </tbody>
-                </table>
+              <table class="table">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Status</th>
+                    <th>Amount</th>
+                    <th>Description</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {{#if wallet.transactions.length}}
+                  {{#each wallet.transactions}}
+                  <tr>
+                    <td>
+                      {{formatDate this.createdAt}}
+                    </td>
+                    {{#if (eq this.type "credit")}}
+                    <td style="color:green">Credit</td>
+                    {{else}}
+                    <td style="color:red">Debit</td>
+                    {{/if}}
+                    <td style="color:black; font-weight:bold;">
+                      {{this.amount}}
+                    </td>
+                    <td>
+                      {{this.description}}
+                    </td>
+                  </tr>
+                  {{/each}}
+                  {{else}}
+                  <tr>
+                    <td colspan="4">No transactions found.</td>
+                  </tr>
+                  {{/if}}
+                </tbody>
+              </table>
             </div>
+          </div>
         </div>
-    </div>
-</div>
-
-
-
-
-
-
+      </div>
     </div>
   </div>
 </div>
@@ -406,47 +401,177 @@
   });
 
 
-    function addMoney(event) {
-            event.preventDefault();
+  function addMoney(event) {
+    event.preventDefault();
 
-            const amount = document.querySelector('input[name="amount"]').value;
+    const amount = document.querySelector('input[name="amount"]').value;
 
-            fetch('/addMoney', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({ amount: amount }),
-            })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.success) {
-                        Swal.fire({
-                            icon: 'success',
-                            title: 'Success',
-                            text: data.message,
-                            showConfirmButton: false,
-                            timer: 1500
-                        }).then(() => {
-                            window.location.reload();
-                        });
-                    } else {
-                        Swal.fire(
-                            'Error!',
-                            data.message,
-                            'error'
-                        )
-                    }
-                })
-                .catch((error) => {
-                    console.error('Error:', error);
-                    Swal.fire(
-                        'Error!',
-                        'Something went wrong. Please try again later.',
-                        'error'
-                    )
-                });
+    fetch('/addMoney', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ amount: amount }),
+    })
+      .then(response => response.json())
+      .then(data => {
+        if (data.success) {
+          Swal.fire({
+            icon: 'success',
+            title: 'Success',
+            text: data.message,
+            showConfirmButton: false,
+            timer: 1500
+          }).then(() => {
+            window.location.reload();
+          });
+        } else {
+          Swal.fire(
+            'Error!',
+            data.message,
+            'error'
+          )
         }
+      })
+      .catch((error) => {
+        console.error('Error:', error);
+        Swal.fire(
+          'Error!',
+          'Something went wrong. Please try again later.',
+          'error'
+        )
+      });
+  }
+
+  document.getElementById("editName")?.addEventListener("click", editName);
+
+
+  async function editName() {
+    const confirmResult = await Swal.fire({
+      title: "Edit Name",
+      text: "Do you want to edit your name?",
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonText: "Yes, edit",
+      cancelButtonText: "Cancel"
+    });
+
+    if (!confirmResult.isConfirmed) return;
+
+    const inputResult = await Swal.fire({
+      title: 'Enter new name',
+      input: 'text',
+      inputLabel: 'New Name',
+      inputPlaceholder: document.getElementById("editName").innerText,
+      inputValue: document.getElementById("editName").innerText,
+      showCancelButton: true,
+      inputValidator: (value) => {
+        if (!value.trim()) return 'Name cannot be empty!';
+      }
+    });
+
+    if (!inputResult.isConfirmed) return;
+
+    const newName = inputResult.value;
+
+    try {
+      const res = await fetch('/updateName', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: newName })
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        await Swal.fire('Updated!', data.message, 'success');
+        window.location.reload();
+      } else {
+        Swal.fire('Error', data.message, 'error');
+      }
+    } catch (error) {
+      console.error(error);
+      Swal.fire('Error', 'Something went wrong.', 'error');
+    }
+  }
+
+  document.getElementById("editPhone")?.addEventListener("click", editPhone);
+
+  async function editPhone() {
+    const confirmResult = await Swal.fire({
+      title: "Edit Phone",
+      text: "Do you want to edit your phone number?",
+      icon: "question",
+      showCancelButton: true,
+      confirmButtonText: "Yes, edit",
+      cancelButtonText: "Cancel"
+    });
+
+    if (!confirmResult.isConfirmed) return;
+
+    const inputResult = await Swal.fire({
+      title: 'Enter new phone number',
+      input: 'text',
+      inputLabel: 'New Phone',
+      inputPlaceholder: document.getElementById("editPhone").innerText,
+      inputValue: document.getElementById("editPhone").innerText,
+      showCancelButton: true,
+      inputValidator: (value) => {
+        if (!value.trim()) return 'Phone number cannot be empty!';
+        if (!/^\d{10}$/.test(value)) return 'Enter a valid 10-digit phone number!';
+      }
+    });
+
+    if (!inputResult.isConfirmed) return;
+
+    const newPhone = inputResult.value;
+
+    try {
+      const res = await fetch('/updatePhone', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: newPhone })
+      });
+
+      const data = await res.json();
+
+      if (data.success) {
+        await Swal.fire('Updated!', data.message, 'success');
+        window.location.reload();
+      } else {
+        Swal.fire('Error', data.message, 'error');
+      }
+    } catch (error) {
+      console.error(error);
+      Swal.fire('Error', 'Something went wrong.', 'error');
+    }
+  }
+
+
+document.querySelectorAll(".delete-address").forEach(button => {
+    button.addEventListener("click", function (event) {
+      event.preventDefault(); // stop the default link behavior
+      const addressId = this.getAttribute("data-id");
+
+      Swal.fire({
+        title: 'Are you sure?',
+        text: "This address will be permanently deleted!",
+        icon: 'warning',
+        showCancelButton: true,
+        confirmButtonColor: '#d33',
+        cancelButtonColor: '#3085d6',
+        confirmButtonText: 'Yes, delete it!',
+        cancelButtonText: 'Cancel'
+      }).then((result) => {
+        if (result.isConfirmed) {
+          window.location.href = `/deleteAddress/${addressId}`;
+        }
+      });
+    });
+  });
+
+
+
 
 
 

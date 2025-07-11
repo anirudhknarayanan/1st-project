@@ -451,7 +451,7 @@
         <div class="info-grid">
             <div class="info-item">
                 <div class="info-label">Order ID</div>
-                <div class="info-value">#{{order._id}}</div>
+                <div class="info-value">#{{order.orderId}}</div>
             </div>
             <div class="info-item">
                 <div class="info-label">Order Date</div>
@@ -557,13 +557,16 @@
                     <th>Price</th>
                     <th>Quantity</th>
                     <th>Total</th>
+                    <th>Action</th>
+                    <th>Status</th>
                 </tr>
             </thead>
             <tbody>
                 {{#if order.order_items.length}}
                 {{#each order.order_items}}
                 {{#if this.productId}}
-                <tr>
+                <tr data-order-id="{{../order._id}}" data-product-id="{{this.productId._id}}"
+                    data-quantity="{{this.quantity}}">
                     <td>
                         <img src="/uploads/product-images/{{this.productId.productImage.[0]}}"
                             alt="{{this.productId.productName}}" class="product-image">
@@ -572,20 +575,72 @@
                     <td>₹{{this.price}}</td>
                     <td>{{this.quantity}}</td>
                     <td>₹{{multiply this.price this.quantity}}</td>
+
+                    <td>
+                        {{#if (eq this.status "active")}}
+                        {{#if (and
+                        (ne ../order.status 'cancelled')
+                        (ne ../order.status 'delivered')
+                        (ne ../order.status 'returned')
+                        (ne ../order.status 'Return requested')
+                        (ne ../order.status 'Return approved')
+                        (ne ../order.status 'Return rejected'))}}
+
+                        <button class="btn-cancel"
+                            onclick="openItemCancelModal('{{../order._id}}', '{{this.productId._id}}')">
+                            <i class="fas fa-times-circle"></i> Cancel Item
+                        </button>
+
+                        {{else if (eq ../order.status 'delivered')}}
+
+                        {{!-- ✅ Hide return button if only one item with quantity 1 --}}
+                        {{#if (or (gt ../order.order_items.length 1) (gt this.quantity 1))}}
+                        <button class="btn-cancel"
+                            onclick="openItemReturnModal('{{../order._id}}', '{{this.productId._id}}')">
+                            <i class="fas fa-undo-alt"></i> Return item
+                        </button>
+                        {{else}}
+                        <span style="color: gray;"></span>
+                        {{/if}}
+
+                        {{/if}}
+                        {{else}}
+                        <span style="color: gray;">No Actions</span>
+                        {{/if}}
+                    </td>
+
+                    <td>
+                        {{#if (eq this.status "cancelled")}}
+                        <span style="color: red;">Cancelled</span>
+                        {{else if (eq this.status "returned")}}
+                        <span style="color: orange;">Returned</span>
+                        {{else if (eq this.status "return requested")}}
+                        <span style="color: blue;">Return Requested</span>
+                        {{else if (eq this.status "return approved")}}
+                        <span style="color: green;">Return Approved</span>
+                        {{else if (eq this.status "return rejected")}}
+                        <span style="color: gray;">Return Rejected</span>
+                        {{else}}
+                        <span style="color: green;">Active</span>
+                        {{/if}}
+                    </td>
                 </tr>
                 {{/if}}
                 {{/each}}
+
                 <tr class="total-row">
                     <td colspan="4" style="text-align: right;">Total Amount:</td>
-                    <td>₹{{order.totalAmount}}</td>
+                    <td colspan="3">₹{{order.totalAmount}}</td>
                 </tr>
                 {{else}}
                 <tr>
-                    <td colspan="5" class="text-center">No items found in this order.</td>
+                    <td colspan="7" class="text-center">No items found in this order.</td>
                 </tr>
                 {{/if}}
             </tbody>
+
         </table>
+
 
         <div class="action-row">
             {{#if (and (ne order.status 'cancelled') (ne order.status 'delivered') (ne order.status 'returned') (ne
@@ -613,6 +668,7 @@
     </div>
     {{/if}}
 </div>
+
 
 
 
@@ -666,7 +722,66 @@
 </div>
 
 
+
+
+<div id="itemCancelModal" class="modal">
+    <div class="modal-content">
+        <span class="close-btn" onclick="closeItemCancelModal()">&times;</span>
+        <div class="modal-header">
+            <h2>Cancel Item</h2>
+        </div>
+        <div class="modal-body">
+            <p>Are you sure you want to cancel this item? This action cannot be undone.</p>
+            <div class="form-group">
+                <label for="itemCancelReason">Reason for cancellation:</label>
+                <select id="itemCancelReason">
+                    <option value="">Select a reason</option>
+                    <option value="changed_mind">Changed my mind</option>
+                    <option value="wrong_item">Ordered wrong item</option>
+                    <option value="shipping_time">Shipping time too long</option>
+                    <option value="price_issue">Found better price elsewhere</option>
+                    <option value="other">Other</option>
+                </select>
+            </div>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn-cancel" onclick="closeItemCancelModal()">Cancel</button>
+            <button type="button" class="btn-confirm" onclick="confirmItemCancel()">Confirm</button>
+        </div>
+    </div>
+</div>
+
+
+{{!-- return item modal --}}
+
+<div id="itemReturnModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Return Item</h2>
+            <button class="close-btn" onclick="closeItemReturnModal()">&times;</button>
+        </div>
+        <div class="modal-body">
+            <form id="itemReturnForm">
+                <input type="hidden" id="returnOrderId">
+                <input type="hidden" id="returnProductId">
+                <label for="itemReturnReason">Reason:</label>
+                <textarea id="itemReturnReason" required></textarea>
+                <div class="modal-footer">
+                    <button type="button" class="btn-cancel" onclick="closeItemReturnModal()">Cancel</button>
+                    <button type="submit" class="btn-confirm">Submit Return</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+
 <script>
+
+
+
+
 
     function openReturnModal(orderId) {
         document.getElementById("orderId").value = orderId;
@@ -774,4 +889,157 @@
         // location.reload();
 
     }
+
+
+
+
+    let currentOrderId = null;
+    let currentProductId = null;
+
+    function openItemCancelModal(orderId, productId) {
+        currentOrderId = orderId;
+        currentProductId = productId;
+        document.getElementById("itemCancelModal").style.display = "flex";
+        document.body.style.overflow = 'hidden';
+    }
+
+    function closeItemCancelModal() {
+        document.getElementById('itemCancelModal').style.display = 'none';
+        document.body.style.overflow = '';
+    }
+
+    window.onclick = function (event) {
+        const modal = document.getElementById('itemCancelModal');
+        if (event.target === modal) {
+            closeItemCancelModal();
+        }
+    }
+
+    async function confirmItemCancel() {
+        const reason = document.getElementById('itemCancelReason').value;
+
+        if (!reason) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Please select a reason'
+            });
+            return;
+        }
+
+        try {
+            // ✅ Fetch current quantity from DOM (you can pass this value while opening modal too)
+            const row = document.querySelector(`[data-order-id="${currentOrderId}"][data-product-id="${currentProductId}"]`);
+            const quantityAvailable = parseInt(row?.dataset.quantity || 1);
+
+            let quantityToCancel = 1;
+
+            // ✅ If more than 1, ask using SweetAlert
+            if (quantityAvailable > 1) {
+                const { value: qtyInput } = await Swal.fire({
+                    title: 'Enter quantity to cancel',
+                    input: 'number',
+                    inputAttributes: {
+                        min: 1,
+                        max: quantityAvailable,
+                        step: 1
+                    },
+                    inputValue: 1,
+                    showCancelButton: true,
+                    confirmButtonText: 'Confirm',
+                    preConfirm: (value) => {
+                        if (!value || value < 1 || value > quantityAvailable) {
+                            Swal.showValidationMessage(`Enter a quantity between 1 and ${quantityAvailable}`);
+                            return false;
+                        }
+                        return value;
+                    }
+                });
+
+                if (!qtyInput) return; // Cancelled
+                quantityToCancel = parseInt(qtyInput);
+            }
+
+            // ✅ Send cancel request
+            const response = await fetch(`/cancelOrderItem/${currentOrderId}/${currentProductId}`, {
+                method: 'PATCH',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ reason, quantity: quantityToCancel })
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                await Swal.fire({
+                    icon: 'success',
+                    title: 'Success',
+                    text: 'Item cancelled successfully',
+                    showConfirmButton: false,
+                    timer: 1500
+                });
+                window.location.reload();
+            } else {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: data.message || 'Failed to cancel item',
+                    showConfirmButton: false,
+                    timer: 1500
+                });
+            }
+
+        } catch (error) {
+            Swal.fire({
+                icon: 'error',
+                title: 'Error',
+                text: 'Failed to cancel item',
+                showConfirmButton: false,
+                timer: 1500
+            });
+        }
+
+        closeItemCancelModal();
+    }
+
+
+
+    function openItemReturnModal(orderId, productId) {
+        document.getElementById("returnOrderId").value = orderId;
+        document.getElementById("returnProductId").value = productId;
+        document.getElementById("itemReturnModal").style.display = "block";
+    }
+
+    function closeItemReturnModal() {
+        document.getElementById("itemReturnModal").style.display = "none";
+    }
+
+    document.getElementById("itemReturnForm").addEventListener("submit", async (e) => {
+        e.preventDefault();
+        const orderId = document.getElementById("returnOrderId").value;
+        const productId = document.getElementById("returnProductId").value;
+        const reason = document.getElementById("itemReturnReason").value;
+
+        const response = await fetch(`/returnOrderItem/${orderId}/${productId}`, {
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify({ reason })
+        });
+
+        const result = await response.json();
+        if (result.success) {
+            Swal.fire("Success", "Item return request submitted!", "success").then(() => {
+                location.reload();
+            });
+        } else {
+            Swal.fire("Error", result.message || "Something went wrong!", "error");
+        }
+    });
+
+
+
+
+
+
 </script>

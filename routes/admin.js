@@ -44,6 +44,10 @@ router.post("/approveReturn",adminAuth,orderController.approveReturn)
 router.post("/rejectReturn/:orderId",adminAuth,orderController.rejectReturn)
 
 
+router.post('/approveItemReturn',adminAuth, orderController.approveItemReturn);
+router.post('/rejectItemReturn',adminAuth, orderController.rejectItemReturn);
+
+
 
 router.get("/products", adminAuth, productController.getAllProducts);
 router.get("/addProduct", adminAuth, productController.addProductpage)
