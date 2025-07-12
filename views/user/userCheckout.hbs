@@ -1018,6 +1018,225 @@
           }
         }
       }
+      else if (paymentMethod === "razorpay") {
+
+
+        const validateResponse = await fetch("/validateCheckoutItems", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            orderedItems
+          })
+
+        });
+        const validateData = await validateResponse.json();
+
+
+        if (!validateData.success) {
+
+          if (validateData.unavailableItems && validateData.unavailableItems.length > 0) {
+            let unavailableMessage = 'The some items are no longer available:<br><ul>';
+
+            Swal.fire({
+              title: 'Products Unavailable',
+              html: unavailableMessage,
+              icon: 'error',
+              confirmButtonText: 'UPDATE CART'
+            }).then(() => {
+              window.location.replace("/cart");
+            });
+            return;
+          }
+        }
+        const orderResponse = await fetch("/createOrder", {
+          method: "POST",
+          headers: { "content-type": "application/json" },
+          body: JSON.stringify({
+            amount: totalAmount,
+            currency: "INR"
+          })
+        });
+        const orderData = await orderResponse.json();
+
+        console.log("orderData : ", orderData)
+        if (!orderData.success) {
+          throw new Error("Failed to create Razorpay order");
+        }
+
+        const options = {
+
+          key: orderData.key,
+          amount: orderData.amount,
+          currency: orderData.currency,
+          name: "Take Your Time",
+          description: "Watch Purchase",
+          order_id: orderData.order_id,
+          handler: async function (response) {
+            try {
+              const verifyResponse = await fetch("/verifyPayment", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  razorpay_payment_id: response.razorpay_payment_id,
+                  razorpay_order_id: response.razorpay_order_id,
+                  razorpay_signature: response.razorpay_signature,
+                  shippingAddress,
+                  orderedItems,
+                  totalAmount,
+                  //couponCode: appliedCouponCode,
+                  //discountAmount,
+                  paymentMethod: "razorpay"
+                })
+              });
+
+              const verifyData = await verifyResponse.json();
+
+              if (verifyData.success) {
+                await Swal.fire({
+                  title: 'Payment Successful!',
+                  text: 'Your order has been placed successfully!',
+                  icon: 'success',
+                  timer: 1500,
+                  showConfirmButton: false
+                });
+
+                window.location.href = `/viewOrder/${verifyData.orderId}`;
+              } else {
+
+
+                if (verifyData.unavailableItems && verifyData.unavailableItems.length > 0) {
+                  let unavailableMessage = 'Payment successful but some items became unavailable:<br><ul>';
+                  verifyData.unavailableItems.forEach(item => {
+                    unavailableMessage += `<li>${item.name}: ${item.reason}</li>`;
+                  });
+                  unavailableMessage += '</ul><br>Your payment will be refunded.';
+
+                  Swal.fire({
+                    title: 'Products Unavailable',
+                    html: unavailableMessage,
+                    icon: 'warning',
+                    confirmButtonText: 'OK'
+                  }).then(() => {
+                    window.location.replace("/cart");
+                  });
+                  return;
+                }
+
+                throw new Error(verifyData.message || 'Payment verification failed');
+
+
+
+
+              }
+            } catch (error) {
+              console.error("Payment verification error:", error);
+              Swal.fire({
+                title: 'Payment Failed!',
+                text: error.message || 'Payment verification failed. Please contact support.',
+                icon: 'error'
+              });
+              const failedResponse = await fetch("/verifyPayment", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({
+                  razorpay_order_id: orderData.order_id,
+                  shippingAddress,
+                  orderedItems,
+                  totalAmount,
+                 // couponCode: appliedCouponCode,
+                 // discountAmount,
+                  paymentMethod: "razorpay",
+
+                })
+              });
+              const failedData = await failedResponse.json();
+              console.log("failedData : ",failedData)
+              if (failedData.orderId) {
+                window.location.href = `/paymentFailed/${failedData.orderId}`;
+              }
+
+            }
+          },
+
+          modal: {
+            ondismiss: async function () {
+              try {
+
+                const response = await fetch("/verifyPayment", {
+                  method: "POST",
+                  headers: { "Content-Type": "application/json" },
+                  body: JSON.stringify({
+                    razorpay_order_id: orderData.order_id,
+                    shippingAddress,
+                    orderedItems,
+                    totalAmount,
+                   // couponCode: appliedCouponCode,
+                    //discountAmount,
+                    paymentMethod: "razorpay",
+                    // paymentStatus: "failed"
+                  })
+                });
+                const failedResponse = await response.json();
+                if (failedResponse.orderId) {
+                  await Swal.fire({
+                    title: 'Payment Cancelled',
+                    text: 'Your payment was cancelled',
+                    icon: 'warning',
+                    timer: 1500,
+                    showConfirmButton: false
+                  });
+                  window.location.href = `/paymentFailed/${failedResponse.orderId}`;
+                }
+              } catch (error) {
+                if (failedResponse.orderId) {
+                  await Swal.fire({
+                    title: 'Payment Cancelled',
+                    text: 'Your payment was cancelled',
+                    icon: 'warning',
+                    timer: 1500,
+                    showConfirmButton: false
+                  });
+                  window.location.href = `/paymentFailed/${failedResponse.orderId}`;
+                }
+                console.error("Failed to handle payment cancellation:", error);
+                Swal.fire({
+                  title: 'Error',
+                  text: 'Something went wrong while cancelling the payment',
+                  icon: 'error',
+                  confirmButtonText: 'OK'
+                });
+              }
+            }
+          },
+
+          prefill: {
+            name: "{{user.name}}",
+            email: "{{user.email}}",
+            contact: "{{user.phone}}"
+          },
+
+          theme: {
+            color: "#3399cc"
+          },
+
+
+
+
+
+        };
+
+        const razorpay = new Razorpay(options);
+        razorpay.open();
+
+
+
+
+
+
+
+
+
+      }
       // 👉 Continue with placing order logic or API call...
 
     } catch (error) {

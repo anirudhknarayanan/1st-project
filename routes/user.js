@@ -11,6 +11,8 @@ const storage = require("../helpers/multer");
 const wishlistController = require("../controllers/user/wishlistController")
 const cartControllers = require("../controllers/user/cartControllers")
 const checkoutControllers = require("../controllers/user/checkoutControllers")
+const razorpayControllers = require("../controllers/user/razorpayControllers")
+
 const uploads = multer({ storage: storage })
 
 
@@ -120,6 +122,21 @@ router.post("/addMoney", userAuth, walletController.addMoney)
 
 router.patch("/cancelOrderItem/:orderId/:productId",userAuth,checkoutControllers.cancelOrderItem)
 router.patch("/returnOrderItem/:orderId/:productId", userAuth, checkoutControllers.returnOrderItem)
+
+
+
+//razorpay
+
+
+router.post("/validateCheckoutItems",userAuth,checkoutControllers.validateCheckoutItems)
+router.post("/createOrder",userAuth,razorpayControllers.createOrder);
+router.post("/verifyPayment",razorpayControllers.verifyPayment)
+//router.post("/verifyPayments",userAuth,checkoutControllers.verifyPayments)
+
+router.get("/paymentFailed/:orderId",userAuth,razorpayControllers.paymentFailed)
+router.post("/retryPayment/:orderId",userAuth,razorpayControllers.retryPayment)
+
+router.post("/verifyRetryPayment",userAuth,razorpayControllers.verifyRetryPayment)
 
 
 

@@ -1,0 +1,172 @@
+<style>
+
+ .containers {
+        background: white;
+        padding: 30px;
+        border-radius: 10px;
+        box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        max-width: 560px;
+        margin: auto;
+        margin-top: 43px;
+        margin-bottom: 238px;
+    }
+    h2 {
+        color: red;
+    }
+    p {
+        font-size: 16px;
+        color: #333;
+    }
+    .buttons {
+        margin-top: 20px;
+    }
+    .buttons button {
+        background: linear-gradient(135deg, #FFD700, #FF8C00);
+    color: rgb(65, 59, 59);
+    font-size: 16px;
+    font-weight: bold;
+    padding: 12px 24px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.3s ease-in-out;
+    box-shadow: 0 4px 10px rgba(255, 140, 0, 0.3);
+    text-transform: uppercase;
+    outline: none;
+    }
+    .buttons button:hover {
+        background: linear-gradient(135deg, #FF8C00, #FFD700);
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(255, 140, 0, 0.5);
+    }
+    .buttons button:active {
+        transform: scale(0.98);
+        box-shadow: 0 2px 8px rgba(255, 140, 0, 0.5);
+    }
+    a {
+        text-decoration: none;
+    }
+    .contact {
+        margin-top: 15px;
+    }
+
+</style>
+
+
+<div class="containers">
+    <div style="display: flex; justify-content: center; align-items: center; flex-direction: column; row-gap: 8px;">
+        <h2 style="font-weight: 900; margin-bottom: 15px;">PAYMENT FAILED</h2>
+        <p style="font-size: 17px; color: #000000; font-weight: 800;">Oops! Your payment could not be processed.</p>
+
+        <p><strong>Order ID:</strong> #{{order._id}}</p>
+        <p><strong>Total Amount:</strong> ₹{{order.total}}</p>
+        <p><strong>Payment Method:</strong> {{order.payment_method}}</p>
+
+        <div class="buttons">
+            <button id="retryButton">Retry Payment</button>
+            <a href="/cart"><button>Back to Cart</button></a>
+        </div>
+
+        <p class="contact">Need help? <a href="/contact">Contact Support</a></p>
+    </div>
+</div>
+
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+    document.getElementById('retryButton').addEventListener('click', function () {
+        fetch(`/retryPayment/{{order._id}}`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        })
+            .then(response => response.json())
+            .then(data => {
+                if (data.success) {
+                    const options = {
+                        key: data.key,
+                        amount: data.amount,
+                        currency: data.currency,
+                        name: "Take Your Time",
+                        description: "Watch Purchase Retry",
+                        order_id: data.order_id,
+                        handler: function (response) {
+                            Swal.fire({
+                                title: 'Processing',
+                                text: 'Verifying your payment...',
+                                allowOutsideClick: false,
+                                allowEscapeKey: false,
+                                showConfirmButton: false,
+                                didOpen: () => Swal.showLoading()
+                            });
+
+                            fetch("/verifyRetryPayment", {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({
+                                    razorpay_payment_id: response.razorpay_payment_id,
+                                    razorpay_order_id: response.razorpay_order_id,
+                                    razorpay_signature: response.razorpay_signature,
+                                    orderId: "{{order._id}}",
+                                    paymentStatus: "success"
+                                })
+                            })
+                                .then(response => response.json())
+                                .then(data => {
+                                    if (data.success) {
+                                        Swal.fire({
+                                            title: 'Payment Successful!',
+                                            text: 'Your order has been processed successfully!',
+                                            icon: 'success',
+                                            timer: 1500,
+                                            showConfirmButton: false
+                                        }).then(() => {
+                                            window.location.href = `/viewOrder/${data.orderId}`;
+                                        });
+                                    } else {
+                                        Swal.fire({
+                                            title: 'Error!',
+                                            text: 'Payment verification failed. Please try again.',
+                                            icon: 'error'
+                                        });
+                                    }
+                                });
+                        },
+                        prefill: {
+                            name: "{{user.name}}",
+                            email: "{{user.email}}",
+                            contact: "{{user.phone}}"
+                        },
+                        theme: { color: "#3399cc" },
+                        modal: {
+                            ondismiss: function () {
+                                Swal.fire({
+                                    title: 'Payment Canceled',
+                                    text: 'You canceled the payment. Try again later.',
+                                    icon: 'warning'
+                                });
+                            }
+                        }
+                    };
+
+                    const razorpay = new Razorpay(options);
+                    razorpay.open();
+                } else {
+                    Swal.fire({
+                        title: 'Error!',
+                        text: data.message || 'Failed to initiate payment. Please try again later.',
+                        icon: 'error'
+                    });
+                }
+            })
+            .catch(error => {
+                console.error('Error:', error);
+                Swal.fire({
+                    title: 'Error!',
+                    text: 'Something went wrong. Please try again later.',
+                    icon: 'error'
+                });
+            });
+    });
+</script>

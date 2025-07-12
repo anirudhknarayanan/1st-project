@@ -829,7 +829,80 @@ module.exports = {
             console.error("Return item error:", error);
             return res.status(500).json({ success: false, message: "Server error" });
         }
-    }
+    },
+
+
+
+
+    validateCheckoutItems: async (req, res) => {
+
+        try {
+            const { orderedItems } = req.body;
+            console.log("ordered items in : ", orderedItems)
+
+            const unavailableItems = [];
+
+            for (const item of orderedItems) {
+                const product = await Product.findById(item.productId).populate("category");
+
+                if (!product || product.isBlocked) {
+                    unavailableItems.push({
+                        id: item.productId,
+                        name: item.productName || "Unknown product",
+                        reason: "Product is no longer available"
+                    });
+                    continue;
+                }
+
+
+                if (!product.category || !product.category.isListed) {
+                    unavailableItems.push({
+                        id: item.productId,
+                        name: product.productName,
+                        reason: "Product category is no longer available"
+                    });
+                    continue;
+                }
+
+                if (product.quantity < item.quantity) {
+                    unavailableItems.push({
+                        id: item.productId,
+                        name: product.productName,
+                        reason: "Insufficient stock available"
+                    });
+                }
+
+
+
+            }
+
+            if (unavailableItems.length > 0) {
+                return res.status(400).json({
+                    success: false,
+                    error: "Some products have become unavailable",
+                    unavailableItems: unavailableItems
+                });
+            }
+
+            return res.json({
+                success: true,
+                message: "All products are available"
+            });
+
+
+        } catch (error) {
+
+            console.error("Error validating checkout items:", error);
+            return res.status(500).json({
+                success: false,
+                error: "Failed to validate items. Please try again."
+            });
+
+        }
+
+    },
+
+   
 
 
 
