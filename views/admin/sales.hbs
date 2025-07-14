@@ -1,0 +1,407 @@
+<style>
+   
+
+  
+
+    h2 {
+        text-align: center;
+    }
+
+    .top-buttons {
+        display: flex;
+        justify-content: end;
+        gap: 10px;
+    }
+
+    button {
+        padding: 8px 12px;
+        border: none;
+        cursor: pointer;
+        border-radius: 4px;
+    }
+
+    .pdf-btn {
+        background: linear-gradient(to right,  #FF8C00, #af7105); 
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        font-size: 16px;
+        font-weight: bold;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: 0.3s;
+        
+    }
+    .pdf-btn:hover{
+        background: linear-gradient(to right, #FF8C00, #af7105); 
+    }
+
+    .excel-btn {
+        background: linear-gradient(to right, #509352, #213f23);
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        font-size: 16px;
+        font-weight: bold;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: 0.3s;
+    }
+    
+    .excel-btn:hover {
+        background: linear-gradient(to right, #2d562e, #285a29); 
+    }
+    
+    .top-buttons {
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 20px;
+    }
+
+    .filter-container {
+        display: flex;
+        align-items: center;
+        gap: 15px;
+        background: #fff;
+        padding: 15px;
+        border-radius: 10px;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+        justify-content: center;
+    }
+    
+    .filter-group {
+            margin-top: -18px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    }
+    
+    .filter-select, .date-input {
+        padding: 10px;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+        font-size: 16px;
+        transition: 0.3s;
+    }
+    
+    .filter-select:focus, .date-input:focus {
+        outline: none;
+        border-color: #FFD700;
+        box-shadow: 0 0 5px rgba(255, 215, 0, 0.5);
+    }
+    
+    .date-range {
+        display: flex;
+        gap: 17px;
+        align-items: center;
+        justify-content: center;
+    }
+    
+    .btn.filter-btn {
+        background: linear-gradient(to right, #000000, #689163);
+        color: white;
+        font-weight: bold;
+        padding: 12px 20px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        transition: 0.3s;
+        margin-top: 20px;
+    }
+    .btn.filter-btn:hover {
+        background: linear-gradient(to right, #2d562e, #285a29);
+    }
+
+    .summary {
+        display: flex;
+        justify-content: space-between;
+        margin-top: 20px;
+    }
+
+    .box {
+        background: #f0f0f0;
+        padding: 15px;
+        border-radius: 5px;
+        text-align: center;
+        width: 30%;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+    
+    .box h4 {
+        margin-top: 0;
+        color: #333;
+    }
+    
+    .box p {
+        font-size: 24px;
+        font-weight: bold;
+        margin-bottom: 0;
+        color: #444;
+    }
+
+    table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    }
+
+    table,
+    th,
+    td {
+        border: 1px solid #ddd;
+    }
+
+    th,
+    td {
+        padding: 10px;
+        text-align: left;
+    }
+
+    th {
+        background: #8BCAC3;
+        color: white;
+    }
+    
+    tr:nth-child(even) {
+        background-color: #f9f9f9;
+    }
+    
+    tr:hover {
+        background-color: #f0f0f0;
+    }
+
+    .status {
+        padding: 5px;
+        border-radius: 5px;
+        text-align: center;
+        font-weight: bold;
+    }
+
+    /* Existing statuses */
+    .delivered {
+        background-color: #7cdd93; /* Green */
+        color: rgb(26, 70, 16);
+    }
+
+    .cancelled {
+        background-color: #dc3545; /* Red */
+        color: white;
+    }
+
+    .pending {
+        background-color: #c4b178; /* Yellow */
+        color: rgb(171, 126, 0);
+    }
+
+    /* New return statuses */
+    .return-rejected {
+        background-color: #e6828c; /* Red */
+        color: rgb(150, 20, 20);
+    }
+
+    .return-approved {
+        background-color: #88c16e; /* Blue */
+        color: rgb(19, 129, 0);
+    }
+    
+    .pagination {
+        display: flex;
+        justify-content: center;
+        margin-top: 20px;
+    }
+
+    .pagination a {
+        color: white;
+        background-color: black;
+        padding: 8px 12px;
+        margin: 2px;
+        border-radius: 5px;
+        text-decoration: none;
+        font-weight: bold;
+        transition: background-color 0.3s;
+    }
+
+    .pagination a.active {
+        background-color: #444;
+    }
+
+    .pagination a:hover {
+        background-color: #666;
+    }
+    
+    .no-results {
+        text-align: center;
+        padding: 20px;
+        font-style: italic;
+        color: #777;
+    }
+    
+    .filter-active {
+        background-color: #8BCAC3;
+        border: 2px  #000000;
+        padding: 8px;
+        margin-bottom: 10px;
+        text-align: center;
+        border-radius: 10px;
+    }
+</style>
+
+
+<div class="container">
+    <h2>Sales Report</h2>
+
+    <div class="top-buttons">
+        <a href="/admin/salesReportPDF/pdf{{#if filterType}}?filterType={{filterType}}{{/if}}{{#if fromDate}}&fromDate={{fromDate}}{{/if}}{{#if toDate}}&toDate={{toDate}}{{/if}}">
+            <button class="pdf-btn">Download PDF</button>
+        </a>
+        <a href="/admin/salesReportExcel/excel{{#if filterType}}?filterType={{filterType}}{{/if}}{{#if fromDate}}&fromDate={{fromDate}}{{/if}}{{#if toDate}}&toDate={{toDate}}{{/if}}">
+            <button class="excel-btn">Download Excel</button>
+        </a>
+    </div>
+
+    <form id="filterForm" action="/admin/salesReport" method="GET" class="filter-container">
+        <div class="filter-group">
+            <label for="filterType">Filter By:</label>
+            <select name="filterType" id="filterType" class="filter-select">
+                <option value="All" {{#ifEquals filterType "All"}}selected{{/ifEquals}}>All Time</option>
+                <option value="Daily" {{#ifEquals filterType "Daily"}}selected{{/ifEquals}}>Daily</option>
+                <option value="Weekly" {{#ifEquals filterType "Weekly"}}selected{{/ifEquals}}>Weekly</option>
+                <option value="Monthly" {{#ifEquals filterType "Monthly"}}selected{{/ifEquals}}>Monthly</option>
+                <option value="Yearly" {{#ifEquals filterType "Yearly"}}selected{{/ifEquals}}>Yearly</option>
+                <option value="Custom" {{#if (or (eq filterType "Custom") (and (not filterType) (not fromDate) (not toDate)))}}selected{{/if}}>Custom Range</option>
+            </select>
+        </div>
+
+        <div id="dateRangeFields" class="date-range" style="{{#if (or fromDate toDate filterTypeCustom)}}display: flex;{{else}}display: none;{{/if}}">
+            <div class="filter-group">
+                <label for="fromDate">From:</label>
+                <input type="date" name="fromDate" id="fromDate" value="{{fromDate}}" class="date-input">
+            </div>
+
+            <div class="filter-group">
+                <label for="toDate">To:</label>
+                <input type="date" name="toDate" id="toDate" value="{{toDate}}" class="date-input">
+            </div>
+        </div>
+
+        <button type="submit" class="btn filter-btn">Apply Filter</button>
+    </form>
+
+    {{#if filterType}}
+    <div class="filter-active">
+        <strong>Active Filter:</strong>
+        {{#ifEquals filterType "Daily"}}Today
+        {{else ifEquals filterType "Weekly"}}This Week (From Sunday)
+        {{else ifEquals filterType "Monthly"}}Current Month
+        {{else ifEquals filterType "Yearly"}}Current Year
+        {{else if (and fromDate toDate)}}
+            Custom: {{formatDate fromDate}} to {{formatDate toDate}}
+        {{else}}
+            {{filterType}}
+        {{/ifEquals}}
+    </div>
+    {{/if}}
+
+    <div class="summary">
+        <div class="box">
+            <h4>Overall Sales Count</h4>
+            <p>{{{totalOrders}}}</p>
+        </div>
+        <div class="box">
+            <h4>Overall Sales Amount</h4>
+            <p>₹{{formatNumber totalSales}}.00</p>
+        </div>
+    </div>
+
+    {{#if orders.length}}
+        <table>
+            <thead>
+                <tr>
+                    <th>Order ID</th>
+                    <th>Date</th>
+                    <th>Customer Name</th>
+                    <th>Product</th>
+                    <th>Order Status</th>
+                    <th>Amount</th>
+                </tr>
+            </thead>
+            <tbody>
+                {{#each orders}}
+                    <tr>
+                        <td>#{{this._id}}</td>
+                        <td>{{formatDate this.createdAt}}</td>
+                        <td>{{this.user_id.name}}</td>
+                        <td>{{{this.order_items.[0].productId.productName}}}</td>
+                        <td class="status {{dashCase this.status}}">
+                            {{this.status}}
+                        </td>
+                        <td>₹ {{#if this.finalAmount}}{{formatNumberFixed this.finalAmount}}{{else}}{{formatNumberFixed this.total}}{{/if}}</td>
+                    </tr>
+                {{/each}}
+            </tbody>
+        </table>
+
+        <div class="pagination">
+            {{#if (gt currentPage 1)}}
+                <a href="?page={{subtract currentPage 1}}{{#if filterType}}&filterType={{filterType}}{{/if}}{{#if fromDate}}&fromDate={{fromDate}}{{/if}}{{#if toDate}}&toDate={{toDate}}{{/if}}">&laquo; Prev</a>
+            {{/if}}
+
+            {{#each (range 1 totalPages)}}
+                <a href="?page={{this}}{{#if ../filterType}}&filterType={{../filterType}}{{/if}}{{#if ../fromDate}}&fromDate={{../fromDate}}{{/if}}{{#if ../toDate}}&toDate={{../toDate}}{{/if}}" class="{{#ifEquals this ../currentPage}}active{{/ifEquals}}">{{this}}</a>
+            {{/each}}
+
+            {{#if (lt currentPage totalPages)}}
+                <a href="?page={{add currentPage 1}}{{#if filterType}}&filterType={{filterType}}{{/if}}{{#if fromDate}}&fromDate={{fromDate}}{{/if}}{{#if toDate}}&toDate={{toDate}}{{/if}}">Next &raquo;</a>
+            {{/if}}
+        </div>
+    {{else}}
+        <div class="no-results">
+            <p>No sales data found for the selected period.</p>
+        </div>
+    {{/if}}
+</div>
+
+
+
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        const filterType = document.getElementById('filterType');
+        const dateRangeFields = document.getElementById('dateRangeFields');
+        const fromDate = document.getElementById('fromDate');
+        const toDate = document.getElementById('toDate');
+        
+        // Show/hide date fields based on filter type
+        filterType.addEventListener('change', function() {
+            if (this.value === 'Custom') {
+                dateRangeFields.style.display = 'flex';
+                fromDate.required = true;
+                toDate.required = true;
+            } else {
+                dateRangeFields.style.display = 'none';
+                fromDate.required = false;
+                toDate.required = false;
+                
+                // Clear date values when switching to a preset filter
+                fromDate.value = '';
+                toDate.value = '';
+            }
+        });
+        
+        // Form validation
+        document.getElementById('filterForm').addEventListener('submit', function(e) {
+            if (filterType.value === 'Custom') {
+                if (!fromDate.value || !toDate.value) {
+                    e.preventDefault();
+                    alert('Please select both start and end dates for custom range');
+                } else if (new Date(fromDate.value) > new Date(toDate.value)) {
+                    e.preventDefault();
+                    alert('Start date cannot be after end date');
+                }
+            }
+        });
+    });
+</script>

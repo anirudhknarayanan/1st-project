@@ -603,8 +603,10 @@
               <div class="p-3 border rounded bg-light mb-4">
                 <h6 class="mb-3"><i class="fas fa-tag me-2"></i>Have a Coupon?</h6>
                 <div class="input-group">
-                  <input type="text" name="coupon_code" class="form-control" placeholder="Enter Coupon Code">
-                  <button type="submit" formaction="/applyCoupon" formmethod="POST" class="btn btn-dark">Apply</button>
+                  <input type="text" name="coupon_code" class="form-control" id="couponCode"
+                    placeholder="Enter Coupon Code">
+                  <button type="button" class="btn btn-dark" id="applyCoupon" onclick="applyCoupons()">Apply</button>
+
                 </div>
               </div>
 
@@ -615,17 +617,20 @@
                 {{#each coupon}}
                 <div class="p-3 border rounded bg-white mb-3">
                   <div class="d-flex justify-content-between">
-                    <span class="fw-bold">{{this.code}}</span>
-                    <span class="text-success">{{this.discountPercentage}}% OFF</span>
+                    <span class="fw-bold" data-coupon-id="{{this.couponCode}}">{{this.couponCode}}</span>
+                    <span class="text-success">{{this.couponDiscount}}% OFF</span>
                   </div>
                   <p class="mb-1">Min Purchase: ₹{{this.couponMinAmount}}</p>
                   <p class="mb-1">Valid Until: {{formatDate this.couponValidity}}</p>
                   <button type="button" class="btn btn-outline-primary btn-sm mt-2"
-                    onclick="copyCoupon('{{this.code}}')">Copy Code</button>
+                    onclick="copyCoupon('{{this.couponCode}}')">Copy Code</button>
+                  <small id="copy-message-{{this.couponCode}}" style="display: none; color: green;">Copied!</small>
                 </div>
                 {{/each}}
               </div>
               {{/if}}
+
+
 
               <!-- Order Summary -->
               <div class="order-summary p-3 bg-white rounded border mb-4">
@@ -668,7 +673,8 @@
 
                   <div id="removeCouponSection" style="display: none;" class="mt-2 text-center">
                     <small class="text-success mb-2 d-block" id="appliedCouponText"></small>
-                    <button class="btn btn-danger btn-sm w-100" id="removeCouponBtn" onclick="removeCoupon()">
+                    <button type="button" class="btn btn-danger btn-sm w-100" id="removeCouponBtn"
+                      onclick="removeCoupon()">
                       <i class="fas fa-times-circle"></i> Remove Coupon
                     </button>
                   </div>
@@ -795,7 +801,9 @@
 
 
 <script id="cartItemsJSON" type="application/json">
+
   {{{cartItemsJSON}}}
+
 </script>
 <script>
 
@@ -803,6 +811,7 @@
     if (typeof string !== 'string') return string;
     return string.replace(/'/g, '"');
   }
+
   const userAddress = {{{ json userAddress }}}; // `json` is a custom helper to inject raw JSON safely
 
   function openEditAddressModal(addressId) {
@@ -822,7 +831,9 @@
       document.body.style.overflow = 'hidden';
     }
   }
+
   function openAddAddressModal(event) {
+
     if (event) {
       event.preventDefault();
     }
@@ -834,6 +845,7 @@
   }
 
   function closeModal() {
+
     const editModal = document.getElementById("editAddressModal");
     const addModal = document.getElementById("addAddressModal");
 
@@ -864,6 +876,8 @@
       });
     }
   });
+
+
   async function placeOrder() {
     try {
       const shippingAddressElement = document.querySelector('input[name="shipping_address"]:checked');
@@ -908,6 +922,11 @@
       }
 
       console.log("✅ Final totalAmount:", totalAmount);
+
+      const couponCode = document.getElementById("couponCode").value.trim();
+      const discountText = document.getElementById("discount").innerText.replace("₹", "").replace("-", "").trim();
+      const discountAmount = parseFloat(discountText) || 0;
+      const appliedCouponCode = currentCouponCode;
 
 
       if (!shippingAddress) {
@@ -978,6 +997,9 @@
             totalAmount,
             orderedItems,
 
+            couponCode: appliedCouponCode,
+            discountAmount
+
 
           })
         });
@@ -991,7 +1013,9 @@
             timer: 1500,
             showConfirmButton: false
           });
+
           window.location.href = `/viewOrder/${data._id}`;
+
         } else {
           if (data.unavailableItems && data.unavailableItems.length > 0) {
             let unavailableMessage = 'The Some items are no longer available:<br><ul>';
@@ -1083,8 +1107,8 @@
                   shippingAddress,
                   orderedItems,
                   totalAmount,
-                  //couponCode: appliedCouponCode,
-                  //discountAmount,
+                  couponCode: appliedCouponCode,
+                  discountAmount,
                   paymentMethod: "razorpay"
                 })
               });
@@ -1143,14 +1167,14 @@
                   shippingAddress,
                   orderedItems,
                   totalAmount,
-                 // couponCode: appliedCouponCode,
-                 // discountAmount,
+                  couponCode: appliedCouponCode,
+                   discountAmount,
                   paymentMethod: "razorpay",
 
                 })
               });
               const failedData = await failedResponse.json();
-              console.log("failedData : ",failedData)
+              console.log("failedData : ", failedData)
               if (failedData.orderId) {
                 window.location.href = `/paymentFailed/${failedData.orderId}`;
               }
@@ -1170,8 +1194,8 @@
                     shippingAddress,
                     orderedItems,
                     totalAmount,
-                   // couponCode: appliedCouponCode,
-                    //discountAmount,
+                    couponCode: appliedCouponCode,
+                    discountAmount,
                     paymentMethod: "razorpay",
                     // paymentStatus: "failed"
                   })
@@ -1219,21 +1243,10 @@
             color: "#3399cc"
           },
 
-
-
-
-
         };
 
         const razorpay = new Razorpay(options);
         razorpay.open();
-
-
-
-
-
-
-
 
 
       }
@@ -1249,6 +1262,158 @@
       });
     }
   }
+
+
+  let currentCouponCode = '';
+
+  async function applyCoupons() {
+
+    const couponInputElement = document.getElementById("couponCode");
+    const couponCode = couponInputElement.value.trim();
+
+    const subtotalText = document.getElementById("subtotal").innerText.replace("₹", "").trim();
+    const subtotal = parseFloat(subtotalText);
+
+    if (!couponCode) {
+      document.getElementById("couponMessage").style.color = "red";
+      document.getElementById("couponMessage").innerText = "Please enter a coupon code!";
+      return;
+    }
+
+    try {
+      const response = await fetch("/applyCoupon", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          couponCode,
+          subtotal
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        // Update UI for applied coupon
+        document.getElementById("discount").innerText = `₹${data.discount}`;
+        document.getElementById("total").innerText = `₹${data.newTotal + 40}`;
+        document.getElementById("couponMessage").style.color = "green";
+        document.getElementById("couponMessage").innerText = "Coupon applied successfully!";
+
+        // Show remove coupon section
+        document.getElementById("removeCouponSection").style.display = "block";
+        document.getElementById("appliedCouponText").innerText = `Applied Coupon: ${couponCode}`;
+        currentCouponCode = couponCode;
+
+        // Clear input
+        couponInputElement.value = '';
+
+        Swal.fire({
+          title: 'Success!',
+          text: 'Coupon applied successfully!',
+          icon: 'success',
+          showConfirmButton: false,
+          timer: 1500
+        });
+      } else {
+        document.getElementById("couponMessage").style.color = "red";
+        document.getElementById("couponMessage").innerText = data.message;
+      }
+    } catch (error) {
+      console.error("Error applying coupon:", error);
+      document.getElementById("couponMessage").style.color = "red";
+      document.getElementById("couponMessage").innerText = "An error occurred. Please try again.";
+    }
+
+  }
+
+  async function removeCoupon() {
+    try {
+
+      const subtotalText = document.getElementById("subtotal").innerText.replace("₹", "").trim();
+      const subtotal = parseFloat(subtotalText);
+
+
+      const response = await fetch("/removeCoupon", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json"
+        },
+        body: JSON.stringify({
+          couponCode: currentCouponCode,
+          subtotal
+        })
+      });
+      const data = await response.json();
+
+      if (data.success) {
+        // Reset UI
+        document.getElementById("discount").innerText = "₹0";
+        document.getElementById("total").innerText = `₹${data.cartTotal}`;
+        document.getElementById("couponMessage").innerText = "";
+        document.getElementById("removeCouponSection").style.display = "none";
+        currentCouponCode = '';
+
+        Swal.fire({
+          title: 'Coupon Removed',
+          text: 'Coupon has been successfully removed',
+          icon: 'info',
+          showConfirmButton: false,
+          timer: 1500
+        });
+      }
+
+    } catch (error) {
+
+      console.error("Error removing coupon:", error);
+      document.getElementById("couponMessage").style.color = "red";
+      document.getElementById("couponMessage").innerText = "Error removing coupon. Please try again.";
+
+    }
+  }
+
+
+  // Add event listeners when document loads
+  document.addEventListener('DOMContentLoaded', function () {
+    const applyCouponBtn = document.getElementById("applyCoupon");
+    const removeCouponBtn = document.getElementById("removeCouponBtn");
+
+    if (applyCouponBtn) {
+      applyCouponBtn.addEventListener('click', applyCoupons);
+    }
+
+    if (removeCouponBtn) {
+      removeCouponBtn.addEventListener('click', removeCoupon);
+    }
+  });
+
+
+  function copyCoupon(couponId) {
+
+    var couponCodeElement = document.querySelector(`[data-coupon-id="${couponId}"]`);
+
+    if (couponCodeElement) {
+      var couponText = couponCodeElement.textContent.trim();
+
+      navigator.clipboard.writeText(couponText).then(() => {
+        var message = document.getElementById("copy-message-" + couponId);
+        if (message) {
+          message.style.display = "inline";
+          setTimeout(() => {
+            message.style.display = "none";
+          }, 2000);
+        }
+
+
+      }).catch(err => {
+        console.error('Failed to copy: ', err);
+      });
+    } else {
+      console.error('Coupon code element not found');
+    }
+  }
+
 
 
 

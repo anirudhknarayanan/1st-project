@@ -58,8 +58,8 @@ module.exports = {
                 shippingAddress,
                 orderedItems,
                 totalAmount,
-                // couponCode,
-                //  discountAmount
+                couponCode,
+                discountAmount
             } = req.body;
 
             if (!req.session.user) {
@@ -128,15 +128,13 @@ module.exports = {
                     finalAmount: totalAmount,
                     status: "pending",
                     paymentStatus: "success",
-                    //  couponApplied: couponCode ? true : false,
-                    // discount: discountAmount || 0,
+                    couponApplied: couponCode ? true : false,
+                    discount: discountAmount || 0,
                     razorpay_order_id,
                     razorpay_payment_id
                 });
 
                 const savedOrder = await newOrder.save();
-
-
 
                 let cart = await Cart.findOne({ userId: req.session.user });
 
@@ -165,11 +163,6 @@ module.exports = {
                     success: true,
                     orderId: savedOrder._id
                 });
-
-
-
-
-
             } else {
                 const parsedOrderItems = typeof orderedItems === 'string' ? JSON.parse(orderedItems) : orderedItems;
 
@@ -206,13 +199,13 @@ module.exports = {
                     total: totalAmount,
                     finalAmount: totalAmount,
                     status: "failed",
-                    //couponApplied: couponCode ? true : false,
+                    couponApplied: couponCode ? true : false,
                     order_items: transformedOrderItems,
                     total: totalAmount,
                     finalAmount: totalAmount,
                     status: "failed",
-                    //  couponApplied: couponCode ? true : false,
-                    //discount: discountAmount || 0,
+                     couponApplied: couponCode ? true : false,
+                    discount: discountAmount || 0,
                     razorpay_order_id
                 });
                 await failedOrder.save();

@@ -20,6 +20,8 @@ router.get("/login", adminController.adminLogin)
 router.post("/login", adminController.login)
 router.get("/logout", adminController.logout)
 
+router.get('/dashboard-data',adminController.getDashboardDataAPI);
+
 router.get("/users", adminAuth, customerController.getAllusers)
 router.post("/block/:id", adminAuth, customerController.userBlock)
 router.post("/unblock/:id", adminAuth, customerController.userUnblock)
@@ -66,7 +68,15 @@ router.post("/deleteProduct",adminAuth,productController.deleteProduct)
 //coupen mangmnt
 
 
-router.get("/coupons",adminAuth,coupenController.getCouponpage)
+router.get("/coupons",adminAuth,coupenController.getCouponpage);
+router.post("/addCoupon",adminAuth,coupenController.addCoupon)
+router.patch("/toggle-coupon/:id",adminAuth,coupenController.toggleCoupon)
+
+//sales report
+
+router.get('/salesReport',adminAuth,orderController.getSalesReport);
+router.get("/salesReportPDF/pdf",adminAuth,orderController.getSalesReportPDF)
+router.get("/salesReportExcel/excel",adminAuth,orderController.getSalesReportExcel)
 
 
 

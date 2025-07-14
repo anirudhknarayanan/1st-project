@@ -15,7 +15,7 @@ module.exports = {
 
 
             if (!cart) {
-                return res.render("user/cart", {
+                return res.render("user/userCart", {
                     user: req.session.userData,
                     cart: {
                         items: [],

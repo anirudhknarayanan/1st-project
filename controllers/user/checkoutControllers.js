@@ -58,21 +58,26 @@ module.exports = {
             // Fetch valid coupons
 
 
-            const cartTotal = cart.totalPrice;
+            const cartTotal = cart.cartTotal;
             console.log("cart :", cart);
 
             const date = new Date();
-            // const coupon = await Coupon.find({
-            //     couponMinAmount: { $lte: cartTotal },
-            //     isActive: true,
-            //     limit: { $gt: 0 },
-            //     couponValidity: { $gte: date }
-            // });
+            const coupon = await Coupon.find({
+                couponMinAmount: { $lte: cartTotal },
+                isActive: true,
+                limit: { $gt: 0 },
+                couponValidity: { $gte: date }
+            }).lean();
 
-            // Render checkout page
+
+
+            console.log("available coupon : ,", coupon)
+
+            //Render checkout page
             res.render("user/userCheckout", {
                 cart,
                 user,
+                coupon,
                 userAddress,
                 cartItemsJSON: JSON.stringify(
                     cart.items.map(item => ({
@@ -212,7 +217,7 @@ module.exports = {
     placeOrder: async (req, res) => {
         try {
             const userId = req.session.user;
-            const { shippingAddress, paymentMethod, totalAmount } = req.body;
+            const { shippingAddress, paymentMethod, totalAmount, couponCode, discountAmount } = req.body;
 
             // Validate totalAmount
             if (totalAmount < 0) {
@@ -290,7 +295,16 @@ module.exports = {
                 });
             }
 
+            let coupon = "";
+            if (couponCode) {
+                coupon = await Coupon.findOne({ couponCode: couponCode });
+                if (!coupon) {
+                    return res.status(400).json({ success: false, error: "Invalid coupon code" });
+                }
+            }
+
             const cleanedTotal = parseFloat(totalAmount);
+            const cleanedDiscount = parseFloat(discountAmount)
 
             if (isNaN(cleanedTotal)) {
                 return res.status(400).json({
@@ -353,8 +367,18 @@ module.exports = {
                 finalAmount: cleanedTotal,
                 order_items: formattedItems,
                 status: "pending",
-                total: cleanedTotal
+                total: cleanedTotal,
+                couponCode: couponCode || null,
+                couponApplied: !!coupon,
+                discount: cleanedDiscount
             });
+
+            if (coupon) {
+                await Coupon.findOneAndUpdate(
+                    { couponCode },
+                    { $inc: { usageCount: 1 } }
+                );
+            }
 
             await newOrder.save();
 
@@ -499,82 +523,46 @@ module.exports = {
     generateInvoice: async (req, res) => {
         try {
             const orderId = req.params.id;
-            console.log(orderId)
+            if (!orderId) return res.status(400).send('Invalid Order ID');
 
-            if (!orderId) {
-                return res.status(400).send('Invalid Order ID');
-            }
             const order = await Order.findById(orderId)
                 .populate({
                     path: 'order_items.productId',
                     select: 'name price'
                 })
-                .populate('user_id', 'name email mobile')
-            console.log(order)
+                .populate('user_id', 'name email mobile');
 
-            const customerName = order.user_id ?
-                (order.user_id.name || 'Customer') :
-                'Customer';
-
-
-
-            if (!order) {
-                return res.status(404).send('Order not found');
-            }
+            if (!order) return res.status(404).send('Order not found');
 
             const invoiceDir = path.join(__dirname, '../../publics/invoices');
-            if (!fs.existsSync(invoiceDir)) {
-                fs.mkdirSync(invoiceDir, { recursive: true });
-            }
+            if (!fs.existsSync(invoiceDir)) fs.mkdirSync(invoiceDir, { recursive: true });
 
             const invoicePath = path.join(invoiceDir, `invoice-${orderId}.pdf`);
             const writeStream = fs.createWriteStream(invoicePath);
-
-            const doc = new PDFDocument({
-                size: 'A4',
-                margins: {
-                    top: 50,
-                    bottom: 50,
-                    left: 50,
-                    right: 50
-                }
-            });
+            const doc = new PDFDocument({ size: 'A4', margins: { top: 50, bottom: 50, left: 50, right: 50 } });
 
             doc.pipe(writeStream);
 
-            doc.font('Helvetica-Bold')
-                .fontSize(25)
-                .text('Timeless Aura', { align: 'center' })
-                .fontSize(16)
-                .text('Tax Invoice', { align: 'center' })
-                .moveDown(1.5);
+            // 🧾 Header
+            doc.font('Helvetica-Bold').fontSize(25).text('Take Your Time', { align: 'center' })
+                .fontSize(16).text('Tax Invoice', { align: 'center' }).moveDown(1.5);
 
-            doc.font('Helvetica')
-                .fontSize(10)
-                .text(`Invoice Number: ${order._id}`, { align: 'left' })
-                .text(`Date of Issue: ${order.createdAt.toLocaleDateString()}`, { align: 'left' })
-                .moveDown(1);
+            doc.font('Helvetica').fontSize(10)
+                .text(`Invoice Number: ${order._id}`)
+                .text(`Date of Issue: ${order.createdAt.toLocaleDateString()}`).moveDown(1);
 
-            doc.font('Helvetica-Bold')
-                .text('Billing Details:', { underline: false })
-                .moveDown(0.5)
-                .font('Helvetica')
-                .text(`Customer Name: ${customerName}`, { align: 'left' })
-                .moveDown(1);
-            doc.font('Helvetica-Bold')
-                .text('Payment Details:', { underline: false })
-                .moveDown(1)
-                .font('Helvetica')
-                .text(`Payment Method: ${order.payment_method}`, { align: 'left' })
-                .moveDown(0.5)
-                .font('Helvetica')
-                .text(`Payment Status: ${order.status}`, { align: 'left' })
-                .moveDown(1);
+            // 🧍 Billing Info
+            const customerName = order.user_id?.name || 'Customer';
+            doc.font('Helvetica-Bold').text('Billing Details:').moveDown(0.5)
+                .font('Helvetica').text(`Customer Name: ${customerName}`).moveDown(1);
 
-            doc.font('Helvetica-Bold')
-                .fontSize(12)
-                .text('Order Summary', { underline: false });
+            // 💳 Payment Info
+            doc.font('Helvetica-Bold').text('Payment Details:').moveDown(0.5)
+                .font('Helvetica').text(`Payment Method: ${order.payment_method}`)
+                .text(`Payment Status: ${order.status}`).moveDown(1);
 
+            // 📦 Order Items Table
+            doc.font('Helvetica-Bold').fontSize(12).text('Order Summary');
             const startX = 50;
             const columnWidths = { product: 250, quantity: 80, price: 80, total: 80 };
             let y = doc.y + 10;
@@ -585,9 +573,7 @@ module.exports = {
                 .text('Price', startX + columnWidths.product + columnWidths.quantity, y, { width: columnWidths.price, align: 'right' })
                 .text('Total', startX + columnWidths.product + columnWidths.quantity + columnWidths.price, y, { width: columnWidths.total, align: 'right' })
                 .moveDown(0.5)
-                .moveTo(startX, doc.y)
-                .lineTo(550, doc.y)
-                .stroke();
+                .moveTo(startX, doc.y).lineTo(550, doc.y).stroke();
 
             let runningTotal = 0;
             order.order_items.forEach((item) => {
@@ -598,47 +584,47 @@ module.exports = {
                 doc.font('Helvetica')
                     .text(item.productName, startX, y, { width: columnWidths.product })
                     .text(`${item.quantity}`, startX + columnWidths.product, y, { width: columnWidths.quantity, align: 'right' })
-                    .text(`RS.${item.price.toFixed(2)}`, startX + columnWidths.product + columnWidths.quantity, y, { width: columnWidths.price, align: 'right' })
-                    .text(`RS.${itemTotal.toFixed(2)}`, startX + columnWidths.product + columnWidths.quantity + columnWidths.price, y, { width: columnWidths.total, align: 'right' })
+                    .text(`₹${item.price.toFixed(2)}`, startX + columnWidths.product + columnWidths.quantity, y, { width: columnWidths.price, align: 'right' })
+                    .text(`₹${itemTotal.toFixed(2)}`, startX + columnWidths.product + columnWidths.quantity + columnWidths.price, y, { width: columnWidths.total, align: 'right' })
                     .moveDown(0.5);
             });
 
+            doc.moveDown(1).moveTo(startX, doc.y).lineTo(550, doc.y).stroke().moveDown(0.5);
 
-            doc.moveDown(1)
-                .moveTo(startX, doc.y)
-                .lineTo(550, doc.y)
-                .stroke()
-                .moveDown(0.5);
-
-            const summaryStartY = doc.y;
+            // 📋 Order Totals
+            const summaryY = doc.y;
             const lineHeight = 15;
+            const subtotal = order.total || runningTotal;
+            const discount = order.discount || 0;
+            const deliveryCharge = 40;
+            const grandTotal = order.finalAmount || (subtotal - discount + deliveryCharge);
 
-            doc.font('Helvetica-Bold').text('Subtotal', 400, summaryStartY, { width: 100, align: 'right' });
-            doc.font('Helvetica').text(`RS.${runningTotal.toFixed(2)}`, 500, summaryStartY, { width: 50, align: 'right' });
+            doc.font('Helvetica-Bold').text('Subtotal', 400, summaryY, { width: 100, align: 'right' });
+            doc.font('Helvetica').text(`₹${subtotal.toFixed(2)}`, 500, summaryY, { width: 50, align: 'right' });
 
-            doc.font('Helvetica-Bold').text('Discount', 400, summaryStartY + lineHeight, { width: 100, align: 'right' });
-            doc.font('Helvetica').text(`RS.${order.discount.toFixed(2)}`, 500, summaryStartY + lineHeight, { width: 50, align: 'right' });
+            doc.font('Helvetica-Bold').text('Discount', 400, summaryY + lineHeight, { width: 100, align: 'right' });
+            doc.font('Helvetica').text(`₹${discount.toFixed(2)}`, 500, summaryY + lineHeight, { width: 50, align: 'right' });
 
-            doc.font('Helvetica-Bold').text('Delivery Charge', 400, summaryStartY + lineHeight * 2, { width: 100, align: 'right' });
-            doc.font('Helvetica').text('RS.40.00', 500, summaryStartY + lineHeight * 2, { width: 50, align: 'right' });
+            doc.font('Helvetica-Bold').text('Delivery Charge', 400, summaryY + lineHeight * 2, { width: 100, align: 'right' });
+            doc.font('Helvetica').text(`₹${deliveryCharge.toFixed(2)}`, 500, summaryY + lineHeight * 2, { width: 50, align: 'right' });
 
-            doc.font('Helvetica-Bold').text('Grand Total', 400, summaryStartY + lineHeight * 3, { width: 100, align: 'right' });
-            doc.font('Helvetica-Bold').text(`RS.${(runningTotal - order.discount + 40)}`, 500, summaryStartY + lineHeight * 3, { width: 50, align: 'right' });
+            doc.font('Helvetica-Bold').text('Grand Total', 400, summaryY + lineHeight * 3, { width: 100, align: 'right' });
+            doc.font('Helvetica-Bold').text(`₹${grandTotal.toFixed(2)}`, 500, summaryY + lineHeight * 3, { width: 50, align: 'right' });
 
+            // 🏷️ Optional: Show applied coupon
+            if (order.coupenApplied && order.couponCode) {
+                doc.moveDown(1)
+                    .font('Helvetica-Bold').text('Coupon Applied:', 50)
+                    .font('Helvetica').text(`${order.couponCode}`);
+            }
 
-
-
+            // 🎉 Footer
             doc.moveDown(3)
-                .font('Helvetica')
-                .text('Thanks for choosing Timeless Aura', 50, null, { width: 550, align: 'center' })
-                .text('Return & Exchange Policy: www.timelessaura.com/return-policy', 50, null, { width: 550, align: 'center' })
-                .moveDown(1)
-                .font('Helvetica-Bold')
-                .text('Contact Us: 7994102605', 50, null, { width: 550, align: 'center' })
-                .text('Email: contact@timelessaura.com', 50, null, { width: 550, align: 'center' })
-                .moveDown(1)
-                .font('Helvetica')
-                .text('Visit Us: www.timelessaura.com', 50, null, { width: 550, align: 'center' })
+                .font('Helvetica').text('Thanks for choosing Timeless Aura', { width: 550, align: 'center' })
+                .text('Return Policy: www.timelessaura.com/return-policy', { width: 550, align: 'center' })
+                .moveDown(1).font('Helvetica-Bold').text('Contact Us: 7994102605', { width: 550, align: 'center' })
+                .text('Email: contact@timelessaura.com', { width: 550, align: 'center' })
+                .moveDown(1).font('Helvetica').text('Visit Us: www.timelessaura.com', { width: 550, align: 'center' });
 
             doc.end();
 
@@ -651,12 +637,9 @@ module.exports = {
                 });
             });
 
-
-
         } catch (error) {
             console.error('Invoice Generation Error:', error);
             res.status(500).send('Error generating invoice');
-
         }
     },
 
@@ -770,13 +753,22 @@ module.exports = {
 
 
             // Recalculate order total and final amount
+            // Recalculate order total and final amount with delivery charge logic
             let newTotal = 0;
+            let hasActiveItems = false;
+
             order.order_items.forEach(i => {
-                newTotal += i.price * i.quantity;
+                if (i.status !== 'cancelled' && i.quantity > 0) {
+                    newTotal += i.price * i.quantity;
+                    hasActiveItems = true;
+                }
             });
 
             order.total = newTotal;
-            order.finalAmount = newTotal - (order.discount || 0);
+
+            const DELIVERY_CHARGE = 40;
+            order.finalAmount = newTotal - (order.discount || 0) + (hasActiveItems ? DELIVERY_CHARGE : 0);
+
 
             await order.save();
 
@@ -902,7 +894,83 @@ module.exports = {
 
     },
 
-   
+    applyCoupon: async (req, res) => {
+        try {
+
+            const { couponCode, subtotal } = req.body;
+            const coupon = await Coupon.findOne({ couponCode, isActive: true });
+            if (!coupon) {
+                return res.status(400).json({ success: false, message: 'Invalid or expired coupon' });
+            }
+            const currentDate = new Date();
+            if (coupon.couponValidity < currentDate) {
+                return res.status(400).json({ success: false, message: 'Coupon has expired' });
+            }
+            if (coupon.limit <= 0) {
+                return res.status(400).json({ success: false, message: 'Coupon has reached its limit' });
+            }
+
+            let discount = 0;
+            if (coupon.couponType === "percentage") {
+                discount = (subtotal * coupon.couponDiscount) / 100;
+            } else {
+                discount = coupon.couponDiscount;
+            }
+
+            if (discount > coupon.couponMaxAmount) {
+                discount = coupon.couponMaxAmount;
+            }
+
+            let newTotal = subtotal - discount;
+
+            coupon.limit -= 1;
+
+            coupon.usageCount += 1;
+
+            await coupon.save();
+
+            return res.status(200).json({ success: true, message: 'Coupon applied successfully', discount, newTotal });
+
+        } catch (error) {
+
+            console.log("error applying coupon", error)
+            return res.status(500).json({ success: false, message: 'Internal server error' });
+
+        }
+    },
+
+    removeCoupon: async (req, res) => {
+        try {
+
+            const { couponCode, subtotal } = req.body;
+            const coupon = await Coupon.findOne({ couponCode: couponCode });
+
+            if (!coupon) {
+                return res.json({ success: false, message: 'Invalid coupon' });
+            }
+
+            coupon.limit += 1;
+            coupon.usageCount -= 1;
+            await coupon.save();
+
+            const cartTotal = subtotal;
+
+            res.json({
+                success: true,
+                cartTotal,
+                message: 'Coupon removed successfully'
+            });
+
+        } catch (error) {
+            console.error("Error removing coupon:", error);
+            res.status(500).json({
+                success: false,
+                message: 'Server error while removing coupon'
+            });
+        }
+    }
+
+
 
 
 

@@ -1,113 +1,939 @@
 <style>
-  body {
-    background-color: #f8f9fa;
-  }
-  .sidebar {
-    height: 100vh;
-    background-color: #8BCAC3;
-    padding-top: 20px;
-  }
-  .sidebar a {
-    color: white;
-    display: block;
-    padding: 10px 20px;
-    text-decoration: none;
-  }
-  .sidebar a:hover, .sidebar a.active {
-    background-color: #76b1ab;
-    border-radius: 0 20px 20px 0;
-  }
-  .dashboard-cards .card {
-    border: none;
-    border-left: 5px solid #8BCAC3;
-  }
+
+  * {
+   margin: 0;
+   padding: 0;
+   box-sizing: border-box;
+   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+  .brand {
+   font-size: 2.5rem;
+   font-weight: bold;
+   color: #989898;
+   margin-left: 66px;
+}
+
+.header-right {
+   display: flex;
+   align-items: center;
+   gap: 1.5rem;
+}
+
+.notification-icon {
+   position: relative;
+   color: #4b5563;
+   cursor: pointer;
+   font-size: 1.2rem;
+}
+
+.notification-badge {
+   position: absolute;
+   top: -5px;
+   right: -5px;
+   background: var(--danger-color);
+   color: white;
+   border-radius: 50%;
+   width: 18px;
+   height: 18px;
+   font-size: 0.7rem;
+   display: flex;
+   align-items: center;
+   justify-content: center;
+}
+
+.profile-dropdown {
+   position: relative;
+}
+
+.profile-img {
+   width: 41px;
+   height: 40px;
+   border-radius: 50%;
+   background: #000000;
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   cursor: pointer;
+   color: #ffffff;
+}
+
+.dropdown-menu {
+   position: absolute;
+   top: 120%;
+   right: 0;
+   background: white;
+   border-radius: 8px;
+   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+   padding: 0.5rem 0;
+   min-width: 180px;
+   display: none;
+   z-index: 200;
+}
+
+.dropdown-menu.show {
+   display: block;
+}
+
+.dropdown-item {
+   padding: 0.75rem 1rem;
+   color: #4b5563;
+   text-decoration: none;
+   display: flex;
+   align-items: center;
+   gap: 10px;
+}
+
+.dropdown-item:hover {
+   background: #f3f4f6;
+   color: var(--primary-color);
+}
+
+/* Breadcrumbs */
+.breadcrumbs {
+   margin-bottom: 20px;
+   font-size: 14px;
+   color: #6c757d;
+}
+
+.breadcrumbs span {
+   margin: 0 0.5rem;
+}
+
+/* Main Content */
+.main-content {
+   padding: 20px;
+   background-color: #f4f6f9;
+}
+
+.dashboard-grid {
+   display: grid;
+   grid-template-columns: repeat(3, 1fr);
+   gap: 1.5rem;
+   margin-bottom: 2rem;
+}
+
+.summary-cards {
+   display: grid;
+   grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+   gap: 1.5rem;
+   margin-bottom: 1.5rem;
+   margin-top: 48px;
+}
+
+.card, .summary-card {
+   background: white;
+   border-radius: 12px;
+   padding: 1.5rem;
+   box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+}
+
+.card-title {
+   font-size: 23px;
+   color: #1f2937;
+   font-weight: 600;
+   margin-bottom: 16px;
+   text-align: center;
+}
+
+/* Table Styles */
+.table {
+   width: 100%;
+   border-collapse: collapse;
+}
+
+.table th, .table td {
+   padding: 1rem;
+   text-align: left;
+   border-bottom: 1px solid #e5e7eb;
+}
+
+.table th {
+   background: #f9fafb;
+   font-weight: 600;
+   color: #4b5563;
+}
+
+.status {
+   padding: 0.25rem 0.75rem;
+   border-radius: 20px;
+   font-size: 0.875rem;
+   font-weight: 500;
+   text-transform: capitalize;
+}
+
+.status.completed { 
+   background: rgba(46, 204, 113, 0.1); 
+   color: #27ae60; 
+}
+
+.status.pending { 
+   background: rgba(241, 196, 15, 0.1); 
+   color: #f39c12; 
+}
+
+.status.processing { 
+   background: rgba(52, 152, 219, 0.1); 
+   color: #3498db; 
+}
+
+.status.shipped { 
+   background: rgba(155, 89, 182, 0.1); 
+   color: #9b59b6; 
+}
+
+.status.delivered { 
+   background: rgba(46, 204, 113, 0.1); 
+   color: #2ecc71; 
+}
+
+.status.cancelled { 
+   background: rgba(231, 76, 60, 0.1); 
+   color: #e74c3c; 
+}
+
+/* Additional Dashboard Styling */
+.summary-card {
+   background: linear-gradient(-2deg, #000000, #17af31);
+   border-radius: 15px;
+   padding: 1.5rem;
+   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+   display: flex;
+   align-items: center;
+   justify-content: space-between;
+   transition: transform 0.3s ease, box-shadow 0.3s ease, background 0.3s ease;
+   color: white;
+   position: relative;
+   overflow: hidden;
+}
+
+/* 3D Glow Effect */
+.summary-card {
+background: linear-gradient(to bottom, #7ccdc4, #2b2626);
+
+   border-radius: 15px;
+   padding: 1.5rem;
+   box-shadow: 0 8px 25px rgba(0, 0, 0, 0.2);
+   display: flex;
+   align-items: center;
+   justify-content: space-between;
+   transition: transform 0.4s ease-out, box-shadow 0.4s ease-out, background 0.4s ease-out;
+   color: white;
+   position: relative;
+   overflow: hidden;
+   perspective: 1000px; /* Adds slight 3D depth without tilt */
+}
+
+/* 3D Glow Effect */
+.summary-card::before {
+   content: "";
+   position: absolute;
+   top: -50%;
+   left: -50%;
+   width: 200%;
+   height: 200%;
+   background: radial-gradient(circle, rgba(0, 0, 0, 0.2) 0%, transparent 50%);
+   transform: rotate(25deg);
+   transition: all 0.5s ease-in-out;
+   opacity: 0;
+}
+
+/* ✨ Premium Hover Effect */
+.summary-card:hover {
+   transform: translateY(-10px) scale(1.1); /* Zoom effect without slanting */
+   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.6); /* Richer golden glow */
+   background: linear-gradient(120deg, #7ccdc4, #000000);
+}
+
+/* Glow effect appears on hover */
+.summary-card:hover::before {
+   opacity: 1;
+   top: -20%;
+   left: -20%;
+}
+
+
+
+.summary-icon {
+   font-size: 2rem;
+   display: flex;
+   align-items: center;
+   justify-content: center;
+   width: 60px;
+   height: 60px;
+   background: rgba(255, 255, 255, 0.2);
+   border-radius: 50%;
+}
+.summary-info{
+   margin-right: 50px;
+
+}
+
+.summary-info h3 {
+   font-size: 1.8rem;
+   font-weight: bold;
+   margin: 0;
+}
+
+.summary-info p {
+   font-size: 1rem;
+   opacity: 0.8;
+}
+
+.summary-change {
+   font-size: 1rem;
+   display: flex;
+   align-items: center;
+   gap: 5px;
+   padding: 5px 12px;
+   border-radius: 20px;
+   font-weight: bold;
+   background: rgba(255, 255, 255, 0.2);
+}
+
+.summary-change.increase {
+   color: #27ae60;
+   background: rgba(39, 174, 96, 0.2);
+}
+
+.summary-change.decrease {
+   color: #e74c3c;
+   background: rgba(231, 76, 60, 0.2);
+}
+
+.summary-change i {
+   font-size: 1.2rem;
+}
+
+
+.chart-filter {
+   position: relative;
+}
+
+.chart-select {
+   appearance: none;
+   padding: 0.5rem 2rem 0.5rem 1rem;
+   border: 1px solid #e5e7eb;
+   border-radius: 6px;
+   background: white;
+   color: #4b5563;
+   font-size: 0.9rem;
+   cursor: pointer;
+   transition: all 0.3s ease;
+}
+
+.chart-select:focus {
+   outline: none;
+   border-color: var(--primary-color);
+   box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+}
+
+.chart-filter::after {
+   content: '\f078';
+   font-family: 'Font Awesome 5 Free';
+   font-weight: 900;
+   position: absolute;
+   right: 10px;
+   top: 50%;
+   transform: translateY(-50%);
+   pointer-events: none;
+   color: #6b7280;
+}
+
+.chart-container {
+   height: 300px;
+   position: relative;
+}
+
+.view-all-btn {
+   
+   background-color: rgba(0, 0, 0, 0.1);
+   /* color: var(--primary-color); */
+   color:black;
+   border-radius: 6px;
+   text-decoration: none;
+   font-size: 0.9rem;
+   font-weight: 500;
+   transition: all 0.3sease;
+   width: 73px;
+   height: 34px;
+   padding: 8px; 
+   
+}
+
+.view-all-btn:hover {
+   background: rgba(59, 130, 246, 0.2);
+}
+
+.order-link {
+   color:black;
+   text-decoration:none;
+   font-weight: 500;
+   transition: color 0.3s ease;
+}
+
+
+
+/* Responsive Adjustments */
+@media (max-width: 1200px) {
+   .dashboard-grid {
+       grid-template-columns: repeat(2, 1fr);
+   }
+}
+
+@media (max-width: 768px) {
+   .dashboard-grid {
+       grid-template-columns: 1fr;
+   }
+}
+.chart-container {
+   background-color: #ffffff;
+   border-radius: 8px;
+   box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+   padding: 15px;
+   margin-bottom: 20px;
+}
+
+.chart-header {
+   display: flex;
+   justify-content: space-between;
+   align-items: center;
+   margin-bottom: 15px;
+}
+
+/* Container for proper alignment */
+.chart-filter-container {
+   display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    gap: 9px;
+    padding: 20px;
+    background: linear-gradient(135deg, #dfdfdf, #bac8e0);
+    border: 1px solid #aaa;
+    border-radius: 8px;
+    max-width: 318px;
+    margin: 0 auto;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+    height: 99px;
+    width: 228px;
+    margin-right: 33px;
+}
+
+/* Label styling */
+.chart-label {
+   font-size: 18px;
+   font-weight: bold;
+   color: #403e3e;
+   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+/* Dropdown Select */
+.chart-select {
+   width: 72%;
+    padding: 10px 30px;
+    border: 2px solid #fff;
+    border-radius: 8px;
+    font-size: 16px;
+    font-weight: bold;
+    background: rgba(255, 255, 255, 0.9);
+    color: #333;
+    cursor: pointer;
+    transition: all 0.3sease;
+    outline: none;
+    box-shadow: 0 3px 8px rgba(0, 0, 0, 0.1);
+
+}
+
+/* Hover & Focus Effects */
+.chart-select:hover,
+.chart-select:focus {
+   border-color: #ff6f61;
+   background: #fff;
+   box-shadow: 0 0 10px rgba(255, 111, 97, 0.5);
+}
+
+/* Dropdown Arrow Customization */
+.chart-select {
+   appearance: none;
+   background-image: url('data:image/svg+xml;charset=US-ASCII,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 4 5"><path fill="black" d="M2 0L0 2h4z"/></svg>');
+   background-repeat: no-repeat;
+   background-position: right 10px center;
+   background-size: 12px;
+}
+
+/* Mobile Optimization */
+@media (max-width: 500px) {
+   .chart-filter-container {
+       max-width: 100%;
+       padding: 15px;
+   }
+
+   .chart-select {
+       font-size: 14px;
+       padding: 10px;
+   }
+}
+.category-card {
+   width: 100%;
+   margin: auto;
+   margin-top: 10px;
+}
+.dashboard-container {
+   display: flex;
+   flex-direction: column;
+   gap: 20px; /* Adds space between cards */
+   max-width: 800px; /* Adjust width to look good */
+   margin: auto; /* Centers content */
+}
+.product-image {
+   width: 50px;
+   height: 50px;
+   object-fit: cover;
+   border-radius: 5px;
+}
+.brand-image{
+   width: 50px;
+   height: 50px;
+   object-fit: cover;
+   border-radius: 5px;
+}
 </style>
 
-<!-- Main Content -->
-<div class="col-md-10">
-  <!-- Top Bar -->
-  <div class="d-flex justify-content-between align-items-center py-3 px-4 border-bottom">
-    <h4 class="mb-0">Dashboard</h4>
-    <div>
-      <input type="text" class="form-control d-inline-block me-2" placeholder="Search..." style="width: 200px;">
-      <i class="fas fa-bell me-3"></i>
-      <i class="fas fa-user-circle"></i>
-    </div>
+
+
+ <main class="main-content">
+  <h1 class="dashboard-hed">Dashboard</h1>
+
+  <div class="summary-cards">
+    <a href="/admin/salesReport" style="text-decoration: none; color: inherit;">
+      <div class="summary-card">
+        <div class="summary-icon">
+          <i class="fa fa-chart-line" style="color: #000000;"></i>
+        </div>
+        <div class="summary-info">
+          <h3>₹{{dashboardData.summary.totalRevenue}}</h3>
+          <p>Total Revenue</p>
+        </div>
+      </div>
+    </a>
+    <a href="/admin/users" style="text-decoration: none; color: inherit;">
+      <div class="summary-card">
+        <div class="summary-icon">
+          <i class="fa fa-users" style="color: #000000;"></i>
+        </div>
+        <div class="summary-info">
+          <h3>{{dashboardData.summary.totalCustomers}}</h3>
+          <p>Total Customers</p>
+        </div>
+      </div>
+    </a>
+    <a href="/admin/orders" style="text-decoration: none; color: inherit;">
+      <div class="summary-card">
+        <div class="summary-icon">
+          <i class="fas fa-shopping-cart" style="color: #000000;"></i>
+        </div>
+        <div class="summary-info">
+          <h3>{{dashboardData.summary.totalOrders}}</h3>
+          <p>Total Orders</p>
+        </div>
+      </div>
+    </a>
   </div>
 
-  <!-- Cards -->
-  <div class="row dashboard-cards p-4">
-    <div class="col-md-3 mb-4">
-      <div class="card p-3">
-        <h6>Total Orders</h6>
-        <h3>1,245</h3>
-      </div>
-    </div>
-    <div class="col-md-3 mb-4">
-      <div class="card p-3">
-        <h6>Revenue</h6>
-        <h3>$58,900</h3>
-      </div>
-    </div>
-    <div class="col-md-3 mb-4">
-      <div class="card p-3">
-        <h6>Customers</h6>
-        <h3>784</h3>
-      </div>
-    </div>
-    <div class="col-md-3 mb-4">
-      <div class="card p-3">
-        <h6>Stock</h6>
-        <h3>3,200</h3>
-      </div>
-    </div>
+  <div class="chart-filter-container">
+    <label for="salesChartFilter" class="chart-label">Select Time Filter:</label>
+    <select id="salesChartFilter" class="chart-select">
+      <option value="yearly">Yearly</option>
+      <option value="monthly">Monthly</option>
+      <option value="weekly" selected>Weekly</option>
+    </select>
   </div>
 
-  <!-- Orders Table -->
-  <div class="px-4">
+  <div class="dashboard-grid">
     <div class="card">
-      <div class="card-header bg-white">
-        <h5>Recent Orders</h5>
+      <div class="card-header">
+        <h3 class="card-title">Sales Revenue</h3>
       </div>
-      <div class="card-body">
-        <table class="table table-hover">
+      <div class="chart-container">
+        <canvas id="salesChart"></canvas>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Customer Growth</h3>
+      </div>
+      <div class="chart-container">
+        <canvas id="customersChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="dashboard-grid">
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Orders Overview</h3>
+      </div>
+      <div class="chart-container">
+        <canvas id="ordersChart"></canvas>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Category Performance</h3>
+      </div>
+      <div class="chart-container">
+        <canvas id="categoryChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  <div class="dashboard-container">
+    <div class="card" style="margin-top: 40px;">
+      <div class="card-header">
+        <h3 class="card-title">Top 5 Selling Products</h3>
+      </div>
+      <div class="table-responsive">
+        <table class="table">
           <thead>
             <tr>
-              <th>Order ID</th>
-              <th>Customer</th>
-              <th>Date</th>
-              <th>Status</th>
-              <th>Total</th>
+              <th>Image</th>
+              <th>Product</th>
+              <th>Sold</th>
+            </tr>
+          </thead>
+          <tbody>
+            {{#each topSellingProducts}}
+            <tr>
+              <td>
+                <img src="/uploads/product-images/{{this.productImages.[0]}}" alt="{{this.productName}}" class="product-image">
+              </td>
+              <td>{{this.productName}}</td>
+              <td>{{this.totalSold}}</td>
+            </tr>
+            {{/each}}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card category-card">
+      <div class="card-header">
+        <h3 class="card-title">Top Selling Categories</h3>
+      </div>
+      <div class="table-responsive">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Category</th>
+              <th>Sold</th>
+            </tr>
+          </thead>
+          <tbody>
+            {{#each topSellingCategories}}
+            <tr>
+              <td>{{this.name}}</td>
+              <td>{{this.totalSold}}</td>
+            </tr>
+            {{/each}}
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="card brand-card">
+      <div class="card-header">
+        <h3 class="card-title">Top Selling Brands</h3>
+      </div>
+      <div class="table-responsive">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Brand Logo</th>
+              <th>Brand</th>
+              <th>Sold</th>
+            </tr>
+          </thead>
+          <tbody>
+            {{#each topSellingBrands}}
+            <tr>
+              <td>
+                <img class="brand-image" src="/uploads/brands/{{this.brandImage}}" alt="{{this.brandName}}">
+              </td>
+              <td>{{this.brandName}}</td>
+              <td>{{this.totalSold}}</td>
+            </tr>
+            {{/each}}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="card recent-orders" style="margin-top: 40px;">
+    <div class="card-header">
+      <div style="display: flex; justify-content: space-between; margin-bottom: 24px;">
+        <h3 class="card-title">Recent Orders</h3>
+        <a href="/admin/orders" class="view-all-btn">View All</a>
+      </div>
+    </div>
+    <div class="table-responsive">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Order ID</th>
+            <th>Customer</th>
+            <th>Date</th>
+            <th>Amount</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          {{#each dashboardData.recentOrders}}
+          <tr>
+            <td class="order-link">#{{this.orderId}}</td>
+            <td>{{this.customer}}</td>
+            <td>{{formatDate this.date}}</td>
+            <td class="amount">₹{{ this.amount}}</td>
+            <td>
+              <span class="status {{ this.status}}">{{this.status}}</span>
+            </td>
+          </tr>
+          {{/each}}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</main> 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+{{!-- 
+
+<main class="main-content">
+  <h1 class="dashboard-hed">Dashboard</h1>
+
+  <div class="summary-cards">
+    <a href="#" style="text-decoration: none; color: inherit;">
+      <div class="summary-card">
+        <div class="summary-icon">
+          <i class="fa fa-chart-line" style="color: #000000;"></i>
+        </div>
+        <div class="summary-info">
+          <h3>₹1,23,456</h3>
+          <p>Total Revenue</p>
+        </div>
+      </div>
+    </a>
+    <a href="#" style="text-decoration: none; color: inherit;">
+      <div class="summary-card">
+        <div class="summary-icon">
+          <i class="fa fa-users" style="color: #000000;"></i>
+        </div>
+        <div class="summary-info">
+          <h3>500</h3>
+          <p>Total Customers</p>
+        </div>
+      </div>
+    </a>
+    <a href="#" style="text-decoration: none; color: inherit;">
+      <div class="summary-card">
+        <div class="summary-icon">
+          <i class="fas fa-shopping-cart" style="color: #000000;"></i>
+        </div>
+        <div class="summary-info">
+          <h3>320</h3>
+          <p>Total Orders</p>
+        </div>
+      </div>
+    </a>
+  </div>
+
+ <div class="chart-filter-container">
+    <label for="salesChartFilter" class="chart-label">Select Time Filter:</label>
+    <select id="salesChartFilter" class="chart-select">
+      <option value="yearly">Yearly</option>
+      <option value="monthly">Monthly</option>
+      <option value="weekly" selected>Weekly</option>
+    </select>
+  </div>
+
+  <div class="dashboard-grid">
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Sales Revenue</h3>
+      </div>
+      <div class="chart-container">
+        <canvas id="salesChart"></canvas>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Customer Growth</h3>
+      </div>
+      <div class="chart-container">
+        <canvas id="customersChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+  
+
+  <div class="dashboard-grid">
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Orders Overview</h3>
+      </div>
+      <div class="chart-container">
+        <canvas id="ordersChart"></canvas>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Category Performance</h3>
+      </div>
+      <div class="chart-container">
+        <canvas id="categoryChart"></canvas>
+      </div>
+    </div>
+  </div>
+
+   
+
+  <div class="dashboard-container">
+    <div class="card" style="margin-top: 40px;">
+      <div class="card-header">
+        <h3 class="card-title">Top 5 Selling Products</h3>
+      </div>
+      <div class="table-responsive">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Image</th>
+              <th>Product</th>
+              <th>Sold</th>
             </tr>
           </thead>
           <tbody>
             <tr>
-              <td>#00123</td>
-              <td>John Doe</td>
-              <td>2025-06-13</td>
-              <td><span class="badge bg-success">Delivered</span></td>
-              <td>$120.00</td>
+              <td><img src="/uploads/product-images/sample1.jpg" alt="Product 1" class="product-image"></td>
+              <td>Product 1</td>
+              <td>150</td>
             </tr>
             <tr>
-              <td>#00124</td>
-              <td>Jane Smith</td>
-              <td>2025-06-12</td>
-              <td><span class="badge bg-warning text-dark">Pending</span></td>
-              <td>$85.50</td>
-            </tr>
-            <tr>
-              <td>#00125</td>
-              <td>Michael Lee</td>
-              <td>2025-06-11</td>
-              <td><span class="badge bg-danger">Cancelled</span></td>
-              <td>$0.00</td>
+              <td><img src="/uploads/product-images/sample2.jpg" alt="Product 2" class="product-image"></td>
+              <td>Product 2</td>
+              <td>120</td>
             </tr>
           </tbody>
         </table>
-      </div> <!-- card-body -->
-    </div> <!-- card -->
-  </div> <!-- px-4 -->
-</div> <!-- col-md-10 -->
+      </div>
+    </div>
 
-  
+    <div class="card category-card">
+      <div class="card-header">
+        <h3 class="card-title">Top Selling Categories</h3>
+      </div>
+      <div class="table-responsive">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Category</th>
+              <th>Sold</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Watches</td>
+              <td>300</td>
+            </tr>
+            <tr>
+              <td>Accessories</td>
+              <td>250</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
 
+    <div class="card brand-card">
+      <div class="card-header">
+        <h3 class="card-title">Top Selling Brands</h3>
+      </div>
+      <div class="table-responsive">
+        <table class="table">
+          <thead>
+            <tr>
+              <th>Brand Logo</th>
+              <th>Brand</th>
+              <th>Sold</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><img class="brand-image" src="/uploads/brands/logo1.png" alt="Brand A"></td>
+              <td>Brand A</td>
+              <td>200</td>
+            </tr>
+            <tr>
+              <td><img class="brand-image" src="/uploads/brands/logo2.png" alt="Brand B"></td>
+              <td>Brand B</td>
+              <td>180</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="card recent-orders" style="margin-top: 40px;">
+    <div class="card-header">
+      <div style="display: flex; justify-content: space-between; margin-bottom: 24px;">
+        <h3 class="card-title">Recent Orders</h3>
+        <a href="#" class="view-all-btn">View All</a>
+      </div>
+    </div>
+    <div class="table-responsive">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Order ID</th>
+            <th>Customer</th>
+            <th>Date</th>
+            <th>Amount</th>
+            <th>Status</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="order-link">#ORD123</td>
+            <td>John Doe</td>
+            <td>Jul 12, 2025</td>
+            <td class="amount">₹23,000</td>
+            <td><span class="status shipped">Shipped</span></td>
+          </tr>
+          <tr>
+            <td class="order-link">#ORD124</td>
+            <td>Jane Smith</td>
+            <td>Jul 11, 2025</td>
+            <td class="amount">₹56,000</td>
+            <td><span class="status pending">Pending</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div> 
+  </div>
+</main> --}}

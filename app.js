@@ -133,7 +133,25 @@ app.engine(
           hour: '2-digit',
           minute: '2-digit'
         });
-      }
+      }, 
+      not: function (value) {
+        return !value;
+      },
+       formatNumber: function (value) {
+        if (typeof value !== 'number') value = Number(value);
+        return value.toLocaleString('en-IN'); // Adds commas based on Indian numbering system
+      },
+       dashCase: function (str) {
+        if (!str || typeof str !== 'string') return '';
+        return str.trim().toLowerCase().replace(/\s+/g, '-');
+      },
+      formatNumberFixed: function (value) {
+        if (isNaN(value)) return '0.00';
+        return Number(value).toLocaleString('en-IN', {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        });
+      },
 
 
     }

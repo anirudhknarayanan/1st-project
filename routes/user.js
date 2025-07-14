@@ -114,6 +114,11 @@ router.post("/addCheckoutAddress", userAuth, checkoutControllers.addCheckoutAddr
 router.get("/vieworder/:id", userAuth, checkoutControllers.viewOrder)
 router.patch("/cancelOrder/:orderId", userAuth, checkoutControllers.cancelOrder)
 router.get("/invoice/:id", userAuth, checkoutControllers.generateInvoice)
+router.post("/validateCheckoutItems",userAuth,checkoutControllers.validateCheckoutItems)
+
+
+router.post("/applyCoupon",userAuth,checkoutControllers.applyCoupon)
+router.post("/removeCoupon",userAuth,checkoutControllers.removeCoupon)
 
 
 router.post("/returnOrder/:orderId", userAuth, checkoutControllers.returnOrder)
@@ -128,7 +133,7 @@ router.patch("/returnOrderItem/:orderId/:productId", userAuth, checkoutControlle
 //razorpay
 
 
-router.post("/validateCheckoutItems",userAuth,checkoutControllers.validateCheckoutItems)
+
 router.post("/createOrder",userAuth,razorpayControllers.createOrder);
 router.post("/verifyPayment",razorpayControllers.verifyPayment)
 //router.post("/verifyPayments",userAuth,checkoutControllers.verifyPayments)

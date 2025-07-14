@@ -1,0 +1,522 @@
+<style>
+    .page-header {
+        background-color: #fff;
+        padding: 15px 0;
+        margin-bottom: 30px;
+        border-bottom: 1px solid #e0e0e0;
+    }
+
+    .table {
+        background-color: white;
+        box-shadow: 0 0 15px rgba(0, 0, 0, 0.1);
+    }
+
+    .table thead th {
+        background-color: #8BCAC3 !important;
+        color: white !important;
+        font-weight: 600;
+    }
+
+    .badge {
+        padding: 8px 12px;
+    }
+
+    .btn-action {
+        margin: 0 3px;
+    }
+
+    body {
+        background-color: #f8f9fa;
+    }
+
+    .modal {
+        position: fixed;
+        z-index: 1100;
+        left: 0;
+        top: 0;
+        width: 100%;
+        height: 100%;
+        background-color: rgba(0, 0, 0, 0.6);
+        display: none;
+        justify-content: center;
+        align-items: center;
+        backdrop-filter: blur(5px);
+    }
+
+    .modal-content {
+        z-index: 1000;
+        background: #fff;
+        padding: 25px;
+        border-radius: 12px;
+        width: 420px;
+        max-width: 90%;
+        box-shadow: 0px 10px 30px rgba(0, 0, 0, 0.3);
+        animation: fadeIn 0.3s ease-in-out;
+        position: relative;
+    }
+
+    .modal-title {
+        font-size: 22px;
+        font-weight: 600;
+        color: #333;
+        text-align: center;
+        margin-bottom: 15px;
+    }
+
+    .close-btn {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        font-size: 22px;
+        cursor: pointer;
+        color: #555;
+        transition: 0.3s ease;
+    }
+
+    .close-btn:hover {
+        color: #d9534f;
+    }
+
+    .modal-content form {
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .modal-content label {
+        font-size: 14px;
+        font-weight: 500;
+        color: #333;
+    }
+
+    .modal-content input,
+    .modal-content select {
+        padding: 10px;
+        font-size: 14px;
+        border: 1px solid #ddd;
+        border-radius: 6px;
+        width: 100%;
+        transition: 0.3s ease;
+    }
+
+    .modal-content input:focus,
+    .modal-content select:focus {
+        border-color: #007bff;
+        outline: none;
+        box-shadow: 0px 0px 5px rgba(0, 123, 255, 0.5);
+    }
+
+    .save-btn {
+        background: linear-gradient(45deg, #ffa500, #ffd700);
+        color: white;
+        font-size: 16px;
+        font-weight: 500;
+        border: none;
+        padding: 12px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: 0.3s ease;
+    }
+
+    .save-btn:hover {
+        background: linear-gradient(45deg, #ff8c00, #ffc000);
+        transform: translateY(-1px);
+    }
+
+    @keyframes fadeIn {
+        from {
+            transform: scale(0.95);
+            opacity: 0;
+        }
+
+        to {
+            transform: scale(1);
+            opacity: 1;
+        }
+    }
+
+    .modal.show {
+        display: flex !important;
+    }
+
+    .addcoupen-btn {
+        background: linear-gradient(45deg, #ffa500, #ffd700);
+        color: white;
+        margin-right: 0.5rem;
+    }
+
+    .addcoupen-btn:hover {
+        background: linear-gradient(45deg, #ff8c00, #ffc000);
+        transform: translateY(-1px);
+    }
+
+    /* Adjust the size of the switch */
+    .form-check-input {
+        width: 40px;
+        height: 16px;
+        cursor: pointer;
+    }
+
+    /* Customize the switch when checked */
+    .form-check-input:checked {
+        background-color: #28a745 !important;
+        /* Bootstrap success green */
+        border-color: #28a745 !important;
+    }
+
+    .form-check-input:not(:checked) {
+        background-color: #ff0019 !important;
+        /* Bootstrap danger red */
+        border-color: #ff0019 !important;
+    }
+
+    /* Smooth transition for better UI */
+    .form-check-input {
+        transition: all 0.3s ease-in-out;
+    }
+
+    /* Status text styling */
+    .status-label {
+        font-weight: 600;
+        font-size: 14px;
+        transition: color 0.3s ease-in-out;
+    }
+
+    /* Green when active, red when inactive */
+    .text-g {
+        color: #28a745 !important;
+    }
+
+    .text-danger {
+        color: #dc3545 !important;
+    }
+</style>
+
+<!-- Main Content -->
+<div class="main-content">
+    <div class="page-header">
+        <div class="container-fluid">
+            <div class="d-flex justify-content-between align-items-center">
+                <h2>Manage Coupons</h2>
+                <button class="btn addcoupen-btn" id="addCouponBtn">
+                    <i class="fas fa-plus"></i> Add Coupon
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div class="container-fluid">
+        <div class="card">
+            <div class="card-body">
+                <table class="table table-hover text-center">
+                    <thead>
+                        <tr>
+                            <th>Coupon Code</th>
+                            <th>Coupon Type</th>
+                            <th>Coupon %</th>
+                            <th>Minimum Purchase</th>
+                            <th>Maximum Discount</th>
+                            <th>Expiration Date</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {{#each coupons}}
+                        <tr>
+                            <td>{{this.couponCode}}</td>
+                            <td>{{this.couponType}}</td>
+                            <td>
+                                {{#if (eq this.couponType "percentage")}}
+                                {{this.couponDiscount}}%
+                                {{else}}
+                                ₹{{this.couponDiscount}}
+                                {{/if}}
+                            </td>
+                            <td>{{this.couponMinAmount}}</td>
+                            <td>{{this.couponMaxAmount}}</td>
+                            <td>{{formatDate this.couponValidity}}</td>
+                            <td>
+                                <div class="form-check form-switch d-flex align-items-center justify-content-start">
+                                    <input type="checkbox" class="form-check-input toggle-status" data-id="{{this._id}}"
+                                        {{#if this.isActive}}checked{{/if}} />
+                                    <span
+                                        class="status-label ms-2 {{#if this.isActive}}text-success{{else}}text-danger{{/if}}">
+                                        {{#if this.isActive}}Active{{else}}Inactive{{/if}}
+                                    </span>
+                                </div>
+                            </td>
+                        </tr>
+                        {{/each}}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <div class="d-flex justify-content-center mt-3">
+        <nav>
+            <ul class="pagination">
+                {{#if (gt currentPage 1)}}
+                <li class="page-item">
+                    <a class="page-link bg-dark text-white" href="?page={{subtract currentPage 1}}">Previous</a>
+                </li>
+                {{/if}}
+
+                {{#each (range 1 totalPages)}}
+                <li class="page-item {{#if (eq this ../currentPage)}}active{{/if}}">
+                    <a class="page-link bg-dark text-white {{#if (eq this ../currentPage)}}border-light{{/if}}"
+                        href="?page={{this}}">{{this}}</a>
+                </li>
+                {{/each}}
+
+                {{#if (lt currentPage totalPages)}}
+                <li class="page-item">
+                    <a class="page-link bg-dark text-white" href="?page={{add currentPage 1}}">Next</a>
+                </li>
+                {{/if}}
+            </ul>
+        </nav>
+    </div>
+</div>
+
+<!-- Coupon Modal -->
+<div id="couponModal" class="modal">
+    <div class="modal-content">
+        <span class="close-btn" id="closeModalBtn">&times;</span>
+        <h2 class="modal-title">Add Coupon</h2>
+        <form id="couponForm">
+            <div class="form-group">
+                <label for="couponCode">Coupon Code</label>
+                <input type="text" name="couponCode" placeholder="Enter Coupon Code" required>
+
+                <label for="couponType">Coupon Type</label>
+                <select name="couponType" required>
+                    <option value="percentage">Percentage</option>
+
+                </select>
+                <!-- <input type="text" name="couponType" value="percentage" placeholder="Enter Coupon Type" required> -->
+
+                <label for="discount">Discount Percentage</label>
+                <input type="number" name="discount" placeholder="Discount Value" required>
+
+                <label for="minPurchase">Minimum Purchase Amount</label>
+                <input type="number" name="minPurchase" placeholder="Minimum Purchase Amount" required>
+
+                <label for="maxDiscount">Maximum Discount</label>
+                <input type="number" name="maxDiscount" placeholder="Maximum Discount" required>
+
+                <label for="expiryDate">Expiration Date</label>
+                <input type="date" name="expiryDate" required>
+
+                <label for="usageLimit">Usage Limit</label>
+                <input type="number" name="usageLimit" placeholder="Usage Limit" required>
+            </div>
+            <button type="submit" class="save-btn">Save Coupon</button>
+        </form>
+    </div>
+</div>
+
+
+<script>
+
+    document.addEventListener("DOMContentLoaded", function () {
+
+        const modal = document.getElementById('couponModal');
+        const addCouponBtn = document.getElementById('addCouponBtn')
+        const closeModalBtn = document.getElementById('closeModalBtn');
+        const couponForm = document.getElementById('couponForm');
+
+        function openModal() {
+            modal.classList.add('show');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeModal() {
+            modal.classList.remove('show');
+            document.body.style.overflow = '';
+            couponForm.reset();
+        }
+
+        addCouponBtn.addEventListener('click', openModal);
+        closeModalBtn.addEventListener('click', closeModal);
+
+        window.addEventListener('click', (event) => {
+            if (event.target === modal) {
+                closeModal();
+            }
+        });
+
+        // Handle form submission
+        couponForm.addEventListener('submit', async function (event) {
+            event.preventDefault();
+
+
+            const couponCode = document.querySelector("input[name='couponCode']").value;
+            const couponType = document.querySelector("select[name='couponType']").value;
+            const discount = document.querySelector("input[name='discount']").value;
+            const minPurchase = document.querySelector("input[name='minPurchase']").value;
+            const maxDiscount = document.querySelector("input[name='maxDiscount']").value;
+            const expiryDate = document.querySelector("input[name='expiryDate']").value;
+            const usageLimit = document.querySelector("input[name='usageLimit']").value;
+
+            try {
+                const response = await fetch("/admin/addCoupon", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        couponCode,
+                        couponType,
+                        discount,
+                        minPurchase,
+                        expiryDate,
+                        maxDiscount,
+                        usageLimit
+                    })
+                });
+
+
+                const data = await response.json();
+                console.log('Response data:', data);
+
+                if (response.ok) {
+                    if (data.success) {
+                        Swal.fire({
+                            title: 'Success!',
+                            text: 'Your coupon has been added.',
+                            icon: 'success',
+                            showConfirmButton: false,
+                            timer: 1500
+                        });
+                        window.location.reload();
+                        closeModal();
+                        couponForm.reset();
+                    } else {
+                        Swal.fire({
+                            title: 'Error!',
+                            text: data.message || "Failed to add coupon",
+                            icon: 'error',
+                            showConfirmButton: false,
+                            timer: 1500
+                        })
+                    }
+                } else {
+                    // Handle HTTP errors
+                    const errorMessage = data.message || `Error: ${response.status} ${response.statusText}`;
+                    console.error('Coupon submission error:', errorMessage);
+                    Swal.fire({
+                        title: 'Error!',
+                        text: errorMessage,
+                        icon: 'error',
+                        showConfirmButton: false,
+                        timer: 1500
+                    })
+                }
+            } catch (error) {
+                // Catch network errors or JSON parsing errors
+                console.error("Detailed error in add coupon:", error);
+                Swal.fire({
+                    title: 'Error!',
+                    text: `Network error: ${error.message}. Please check your connection and try again.`,
+                    icon: 'error',
+                    showConfirmButton: false,
+                    timer: 1500
+                });
+            }
+        });
+
+
+
+
+
+
+    });
+
+
+    
+        document.addEventListener('DOMContentLoaded', function () {
+            document.querySelectorAll('.toggle-status').forEach(toggle => {
+                toggle.addEventListener('change', function () {
+                    const couponId = this.getAttribute('data-id');
+                    const statusLabel = this.nextElementSibling;
+                    const isActive = this.checked;
+
+                    Swal.fire({
+                        title: 'Confirm Status Change',
+                        text: `Are you sure you want to ${isActive ? 'Activate' : 'Inactivate'} this coupon?`,
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: '#3085d6',
+                        cancelButtonColor: '#d33',
+                        confirmButtonText: 'Yes, change it!'
+                    }).then((result) => {
+                        if (result.isConfirmed) {
+
+                            fetch(`/admin/toggle-coupon/${couponId}`, {
+                                method: 'PATCH',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({ isActive })
+                            })
+                                .then(response => response.json())
+                                .then(data => {
+                                    if (data.success) {
+
+                                        if (data.isActive) {
+                                            statusLabel.textContent = 'Active';
+                                            statusLabel.classList.remove('text-danger');
+                                            statusLabel.classList.add('text-success');
+                                        } else {
+                                            statusLabel.textContent = 'Inactive';
+                                            statusLabel.classList.remove('text-success');
+                                            statusLabel.classList.add('text-danger');
+                                        }
+
+                                        Swal.fire({
+                                            icon: 'success',
+                                            title: 'Coupon Status Updated',
+                                            text: data.message,
+                                            toast: true,
+                                            position: 'top-end',
+                                            showConfirmButton: false,
+                                            timer: 2000
+                                        });
+                                    } else {
+                                        this.checked = !isActive;
+
+                                        Swal.fire({
+                                            icon: 'error',
+                                            title: 'Error',
+                                            text: data.message || 'Failed to update coupon status'
+                                        });
+                                    }
+                                })
+                                .catch(error => {
+                                    console.error('Error:', error);
+
+                                    // Revert toggle
+                                    this.checked = !isActive;
+
+                                    Swal.fire({
+                                        icon: 'error',
+                                        title: 'Network Error',
+                                        text: 'Unable to update coupon status'
+                                    });
+                                });
+                        } else {
+                            // Revert toggle if user cancels
+                            this.checked = !isActive;
+                        }
+                    });
+                });
+            });
+        });
+
+
+
+
+
+
+</script>
