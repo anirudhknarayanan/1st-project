@@ -151,7 +151,9 @@ app.engine(
           minimumFractionDigits: 2,
           maximumFractionDigits: 2,
         });
-      },
+      },lowercase: function (str) {
+      return str.toLowerCase();
+    },
 
 
     }

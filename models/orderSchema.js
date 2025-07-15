@@ -35,58 +35,62 @@ const orderSchema = new Schema({
       required: true
    },
 
-   order_items: [{
-      productId: {
-         type: Schema.Types.ObjectId,
-         ref: "Product",
-         required: true
-      },
-      productName: {
-         type: String,
-         required: true
-      },
-      price: {
-         type: Number,
-         required: true
-      },
-      quantity: {
-         type: Number,
-         required: true
-      },
-      status: {
-         type: String,
-         enum: [
-            "active",           // default for normal item
-            "cancelled",        // fully cancelled
-            "returned",         // fully returned
-            "return requested", // user requests return
-            "return approved",  // admin approves
-            "return rejected"   // admin rejects
-         ],
-         default: "active"
-      }
-      ,
-      cancel_reason: {
-         type: String,
-         default: null
-      },
-      cancelled_at: {
-         type: Date,
-         default: null
-      },
-      cancelled_quantity: {
-         type: Number,
-         default: 0
-      },
-      return_reason: {
-         type: String,
-         default: null
-      },
-      returned_at: {
-         type: Date,
-         default: null
-      }
-   }]
+  order_items: [{
+  productId: {
+    type: Schema.Types.ObjectId,
+    ref: "Product",
+    required: true
+  },
+  productName: {
+    type: String,
+    required: true
+  },
+  price: {
+    type: Number,
+    required: true
+  },
+  quantity: {
+    type: Number,
+    required: true
+  },
+  status: {
+    type: String,
+    enum: [
+      "active",
+      "cancelled",
+      "returned",
+      "return requested",
+      "return approved",
+      "return rejected"
+    ],
+    default: "active"
+  },
+  cancel_reason: {
+    type: String,
+    default: null
+  },
+  cancelled_at: {
+    type: Date,
+    default: null
+  },
+  cancelled_quantity: {
+    type: Number,
+    default: 0
+  },
+  return_reason: {
+    type: String,
+    default: null
+  },
+  returned_at: {
+    type: Date,
+    default: null
+  },
+  return_qty: {                      // ✅ NEW FIELD
+    type: Number,
+    default: 0
+  }
+}]
+
    ,
 
 

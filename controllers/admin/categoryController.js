@@ -81,11 +81,12 @@ module.exports = {
 
             await Category.updateOne({ _id: categoryId }, { $set: { categoryOffer: percentage } })
 
+            // ✅ Only reset product offers, don't modify salePrice
             for (const product of products) {
                 product.productOffer = 0;
-                product.salePrice = product.regularPrice;
+                // ❌ REMOVED: Don't modify salePrice - keep original price
+                // product.salePrice = product.regularPrice;
                 await product.save();
-
             }
 
             res.json({ status: true })
@@ -107,9 +108,11 @@ module.exports = {
             const percentage = category.categoryOffer;
             const products = await Product.find({ category: category._id })
 
+            // ✅ No need to modify product prices when removing category offer
             if (products.length > 0) {
                 for (const product of products) {
-                    product.salePrice += Math.floor(product.regularPrice * (percentage / 100))
+                    // ❌ REMOVED: Don't modify salePrice
+                    // product.salePrice += Math.floor(product.regularPrice * (percentage / 100))
                     product.productOffer = 0;
                     await product.save()
                 }

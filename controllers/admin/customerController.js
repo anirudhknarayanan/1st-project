@@ -5,43 +5,58 @@ const mongoose = require("mongoose");
 module.exports = {
 
     getAllusers: async (req, res) => {
+ try {
 
-        try {
-            let search = "";
-            if (req.query.search) {
-                search = req.query.search;
-            }
+      let search = ""
+      if (req.query.search) {
+         search = req.query.search; //backendil llath access  cheyth serchik vekknnu
 
-            let page = 1;
-            if (req.query.page) {
-                page = req.query.page
-            }
+      }
+      let page = 1
+      if (req.query.page) {
+         page = req.query.page
+      }
 
-            const limit = 3
-            const userData = await User.find({
-                isAdmin: false,
-                $or: [{ name: { $regex: ".*" + search + ".*" } }, { email: { $regex: ".*" + search + ".*" } }],
+      const limit = 5
+      const userData = await User.find({
+         isAdmin: false,
+         $or: [
+            { name: { $regex: ".*" + search + ".*" } },
+            { email: { $regex: ".*" + search + ".*" } },
 
+         ]
+      })
+      .sort({ createdAt: -1 }).lean()
+      .limit(limit * 1)
+      .skip((page - 1) * limit)
+      .exec()   // chain of promise combine cheyunnu
+         
 
-            }).limit(limit * 1)
-                .skip((page - 1) * limit)
-                .lean()
-                .exec();
+      const count = await User.find({
+         isAdmin: false,
+         $or: [
 
-            const count = await User.find({
+            { name: { $regex: ".*" + search + ".*" } },
+            { email: { $regex: ".*" + search + ".*" } },
 
-                isAdmin: false,
-                $or: [{ name: { $regex: ".*" + search + ".*" } }, { email: { $regex: ".*" + search + ".*" } }],
-            }).countDocuments();
+         ],
 
-            res.render("admin/customers", { admin: true, userData })
+      }).countDocuments()
 
-        } catch (error) {
+      const totalPages = Math.ceil(count / limit);
 
-            console.log("Error in getAllusers:", error);
-            res.redirect("/admin");
+      res.render("admin/customers", {
+        admin  : true,
+         userData,
+         totalPages: totalPages,
+         currentPage: page,
+         search: search
+      });
 
-        }
+   } catch (error) {
+      console.error('Error in customerInfo:', error);
+      res.redirect('/pageerror');
+   }
 
     },
     userBlock: async (req, res) => {

@@ -3670,6 +3670,7 @@ input[type="button"].btn-block {
   padding: 1.25rem; }
 
 .card-img {
+  
   width: 100%;
   border-radius: calc(0.25rem - 1px); }
 
@@ -8992,7 +8993,7 @@ input[type="text"] {
             text-decoration: none;
         }
  .cart-img{
-        max-width: 39%;    
+        max-width: 15%;    
     }
     .custom-quantity-input {
         display: flex;

@@ -152,54 +152,70 @@ module.exports = {
     },
 
     approveReturn: async (req, res) => {
-        try {
-            const { orderId } = req.body
+  try {
+    const { orderId } = req.body;
 
+    if (!orderId) {
+      return res.status(400).json({ success: false, message: "Order ID is required" });
+    }
 
-            if (!orderId) {
-                return res.status(404).json({ success: false, message: "order not found" })
-            }
+    const order = await Order.findById(orderId);
+    if (!order || order.status !== 'Return requested') {
+      return res.status(404).json({ success: false, message: "Order not found or not in return requested state" });
+    }
 
+    const userId = order.user_id;
+    let totalRefund = 0;
 
-            const order = await Order.findByIdAndUpdate(orderId, { status: 'Return approved' })
+    for (let item of order.order_items) {
+      // ✅ Only update items that are in return requested state
+      if (item.status === 'return requested') {
+        item.status = 'returned';
+        item.returned_at = new Date();
 
-            const userId = order.user_id;
+        // ✅ Restock
+        await Product.findByIdAndUpdate(item.productId, {
+          $inc: { quantity: item.quantity }
+        });
 
+        // ✅ Refund for this item
+        totalRefund += item.price * item.quantity;
+      }
+    }
 
-            for (let item of order.order_items) {
-                await Product.findByIdAndUpdate(item.productId, { $inc: { quantity: item.quantity } });
-            }
+    // ✅ Update order status
+    order.status = 'Return approved';
+    order.adminReturnStatus = 'approved';
+    order.markModified('order_items');
+    await order.save();
 
-            let wallet = await Wallet.findOne({ userId });
-            if (!wallet) {
-                wallet = new Wallet({
-                    userId,
-                    balance: 0,
-                    transactions: []
-                });
-            }
+    // ✅ Refund to wallet
+    let wallet = await Wallet.findOne({ userId });
+    if (!wallet) {
+      wallet = new Wallet({
+        userId,
+        balance: 0,
+        transactions: []
+      });
+    }
 
-            wallet.balance += order.total;
-            wallet.transactions.push({
-                type: 'credit',
-                amount: order.total,
-                description: `Refund for returned order`,
-                status: 'completed'
-            });
+    wallet.balance += totalRefund;
+    wallet.transactions.push({
+      type: 'credit',
+      amount: totalRefund,
+      description: `Refund for approved return of order (${order.orderId})`,
+      status: 'completed'
+    });
 
-            await wallet.save();
+    await wallet.save();
 
+    return res.status(200).json({ success: true, message: "Return approved and refunded successfully." });
 
-            res.status(200).json({ success: true, message: "Return approved" })
-
-
-        } catch (error) {
-
-            console.log("error approving return", error)
-            res.status(500).json({ success: false, message: "internal server error" })
-
-        }
-    },
+  } catch (error) {
+    console.error("Error approving return:", error);
+    return res.status(500).json({ success: false, message: "Internal Server Error" });
+  }
+},
 
     rejectReturn: async (req, res) => {
         try {
@@ -240,77 +256,72 @@ module.exports = {
 
 
 
-    approveItemReturn: async (req, res) => {
-        try {
-            const { orderId, productId } = req.body;
+   approveItemReturn: async (req, res) => {
+  try {
+    const { orderId, productId } = req.body;
 
-            console.log(orderId, productId);
+    if (!orderId || !productId) {
+      return res.status(400).json({ success: false, message: "Missing orderId or productId" });
+    }
 
+    const order = await Order.findById(orderId);
+    if (!order) {
+      return res.status(404).json({ success: false, message: "Order not found" });
+    }
 
-            if (!orderId || !productId) {
-                return res.status(400).json({ success: false, message: "Missing orderId or productId" });
-            }
+    // ✅ Find the correct return-requested item
+    const item = order.order_items.find(
+      (i) => i.productId.toString() === productId && i.status === 'return requested'
+    );
 
+    if (!item) {
+      return res.status(400).json({ success: false, message: "Item not eligible for return" });
+    }
 
-            const order = await Order.findById(orderId);
+    // ✅ Update product stock based on returned quantity
+    await Product.findByIdAndUpdate(productId, {
+      $inc: { quantity: item.quantity } // quantity of returned units
+    });
 
-            console.log("return item order : ", order)
-            if (!order) {
-                return res.status(404).json({ success: false, message: "Order not found" });
-            }
+    // ✅ Mark item as returned
+    item.status = 'returned';
+    item.returned_at = new Date();
 
-            // Find the item to approve
-            const item = order.order_items.find(item => item.productId.toString() === productId);
-            if (!item || item.status !== 'return requested') {
-                return res.status(400).json({ success: false, message: "Item not eligible for return" });
-            }
+    await order.save();
 
-            // Update product stock
-            await Product.findByIdAndUpdate(productId, {
-                $inc: { quantity: item.quantity }
-            });
+    // ✅ Refund to wallet
+    const userId = order.user_id;
+    let wallet = await Wallet.findOne({ userId });
 
-            item.status = 'returned';
-            item.returned_at = new Date();
+    if (!wallet) {
+      wallet = new Wallet({
+        userId,
+        balance: 0,
+        transactions: []
+      });
+    }
 
-            await order.save();
+    const refundAmount = item.price * item.quantity;
 
-            // Credit to wallet
-            const userId = order.user_id;
-            let wallet = await Wallet.findOne({ userId });
-            if (!wallet) {
-                wallet = new Wallet({
-                    userId,
-                    balance: 0,
-                    transactions: []
-                });
-            }
+    wallet.balance += refundAmount;
+    wallet.transactions.push({
+      type: 'credit',
+      amount: refundAmount,
+      description: `Refund for returned item (${item.productName})`,
+      status: 'completed',
+      createdAt: new Date()
+    });
 
-            wallet.balance += item.price * item.quantity;
-            wallet.transactions.push({
-                type: 'credit',
-                amount: item.price * item.quantity,
-                description: `Refund for returned item (${item.productName})`,
-                status: 'completed'
-            });
+    await wallet.save();
 
-            await wallet.save();
+    return res.status(200).json({ success: true, message: "Item return approved" });
 
-            return res.status(200).json({ success: true, message: "Item return approved" });
+  } catch (error) {
+    console.error("Error approving item return", error);
+    return res.status(500).json({ success: false, message: "Internal Server Error" });
+  }
+},
 
-
-
-
-
-
-        } catch (error) {
-
-
-            console.error("Error approving item return", error);
-            return res.status(500).json({ success: false, message: "Internal Server Error" });
-
-        }
-    },
 
     rejectItemReturn: async (req, res) => {
 

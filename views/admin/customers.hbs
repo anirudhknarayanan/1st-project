@@ -31,5 +31,29 @@
         {{/each}}
       </tbody>
     </table>
+    <nav aria-label="Page navigation" class="mt-4">
+  <ul class="pagination justify-content-center">
+
+    {{#if (gt currentPage 1)}}
+      <li class="page-item">
+        <a class="page-link" href="?page={{subtract currentPage 1}}&search={{search}}">Previous</a>
+      </li>
+    {{/if}}
+
+    {{#each (range 1 totalPages)}}
+      <li class="page-item {{#if (eq this ../currentPage)}}active{{/if}}">
+        <a class="page-link" href="?page={{this}}&search={{../search}}">{{this}}</a>
+      </li>
+    {{/each}}
+
+    {{#if (lt currentPage totalPages)}}
+      <li class="page-item">
+        <a class="page-link" href="?page={{add currentPage 1}}&search={{search}}">Next</a>
+      </li>
+    {{/if}}
+
+  </ul>
+</nav>
+
   </div>
 </div>

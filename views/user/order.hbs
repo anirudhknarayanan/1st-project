@@ -578,22 +578,22 @@
 
                     <td>
                         {{#if (eq this.status "active")}}
+                        {{!-- Show Cancel Item button --}}
                         {{#if (and
-                        (ne ../order.status 'cancelled')
-                        (ne ../order.status 'delivered')
-                        (ne ../order.status 'returned')
-                        (ne ../order.status 'Return requested')
-                        (ne ../order.status 'Return approved')
-                        (ne ../order.status 'Return rejected'))}}
-
+                        (not (eq ../order.status "cancelled"))
+                        (not (eq ../order.status "delivered"))
+                        (not (eq ../order.status "returned"))
+                        (not (eq ../order.status "Return requested"))
+                        (not (eq ../order.status "Return approved"))
+                        (not (eq ../order.status "Return rejected"))
+                        (or (gt ../order.order_items.length 1) (gt this.quantity 1))
+                        )}}
                         <button class="btn-cancel"
                             onclick="openItemCancelModal('{{../order._id}}', '{{this.productId._id}}')">
                             <i class="fas fa-times-circle"></i> Cancel Item
                         </button>
-
-                        {{else if (eq ../order.status 'delivered')}}
-
-                        {{!-- ✅ Hide return button if only one item with quantity 1 --}}
+                        {{!-- Show Return Item button (when delivered) --}}
+                        {{else if (eq ../order.status "delivered")}}
                         {{#if (or (gt ../order.order_items.length 1) (gt this.quantity 1))}}
                         <button class="btn-cancel"
                             onclick="openItemReturnModal('{{../order._id}}', '{{this.productId._id}}')">
@@ -602,7 +602,8 @@
                         {{else}}
                         <span style="color: gray;"></span>
                         {{/if}}
-
+                        {{else}}
+                        <span style="color: gray;"></span>
                         {{/if}}
                         {{else}}
                         <span style="color: gray;">No Actions</span>
@@ -638,6 +639,8 @@
                 </tr>
                 {{/if}}
             </tbody>
+
+
 
         </table>
 
@@ -755,25 +758,29 @@
 {{!-- return item modal --}}
 
 <div id="itemReturnModal" class="modal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h2>Return Item</h2>
-            <button class="close-btn" onclick="closeItemReturnModal()">&times;</button>
-        </div>
-        <div class="modal-body">
-            <form id="itemReturnForm">
-                <input type="hidden" id="returnOrderId">
-                <input type="hidden" id="returnProductId">
-                <label for="itemReturnReason">Reason:</label>
-                <textarea id="itemReturnReason" required></textarea>
-                <div class="modal-footer">
-                    <button type="button" class="btn-cancel" onclick="closeItemReturnModal()">Cancel</button>
-                    <button type="submit" class="btn-confirm">Submit Return</button>
-                </div>
-            </form>
-        </div>
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>Return Item</h2>
+      <button class="close-btn" onclick="closeItemReturnModal()">&times;</button>
     </div>
+    <div class="modal-body">
+      <form id="itemReturnForm">
+        <input type="hidden" id="returnOrderId" name="orderId">
+        <input type="hidden" id="returnProductId" name="productId">
+        <input type="hidden" id="returnQuantity" name="quantity"> <!-- ✅ ADD THIS -->
+
+        <label for="itemReturnReason">Reason:</label>
+        <textarea id="itemReturnReason" required></textarea>
+
+        <div class="modal-footer">
+          <button type="button" class="btn-cancel" onclick="closeItemReturnModal()">Cancel</button>
+          <button type="submit" class="btn-confirm">Submit Return</button>
+        </div>
+      </form>
+    </div>
+  </div>
 </div>
+
 
 
 
@@ -1004,39 +1011,87 @@
     }
 
 
+    let currentReturnOrderId = null;
+    let currentReturnProductId = null;
 
     function openItemReturnModal(orderId, productId) {
-        document.getElementById("returnOrderId").value = orderId;
-        document.getElementById("returnProductId").value = productId;
-        document.getElementById("itemReturnModal").style.display = "block";
+        currentReturnOrderId = orderId;
+        currentReturnProductId = productId;
+
+        // Fetch quantity from the DOM like you do for cancel
+        const row = document.querySelector(`[data-order-id="${orderId}"][data-product-id="${productId}"]`);
+        const quantityAvailable = parseInt(row?.dataset.quantity || 1);
+
+        // If quantity > 1, ask how many to return
+        if (quantityAvailable > 1) {
+            Swal.fire({
+                title: 'Enter quantity to return',
+                input: 'number',
+                inputAttributes: {
+                    min: 1,
+                    max: quantityAvailable,
+                    step: 1
+                },
+                inputValue: 1,
+                showCancelButton: true,
+                confirmButtonText: 'Continue',
+                preConfirm: (value) => {
+                    if (!value || value < 1 || value > quantityAvailable) {
+                        Swal.showValidationMessage(`Enter a quantity between 1 and ${quantityAvailable}`);
+                        return false;
+                    }
+                    return value;
+                }
+            }).then(({ value: qty }) => {
+                if (qty) {
+                    // Pass to form
+                    document.getElementById("returnOrderId").value = orderId;
+                    document.getElementById("returnProductId").value = productId;
+                    document.getElementById("returnQuantity").value = qty;
+                    document.getElementById("itemReturnModal").style.display = "block";
+                }
+            });
+        } else {
+            // Single quantity
+            document.getElementById("returnOrderId").value = orderId;
+            document.getElementById("returnProductId").value = productId;
+            document.getElementById("returnQuantity").value = 1;
+            document.getElementById("itemReturnModal").style.display = "block";
+        }
     }
 
     function closeItemReturnModal() {
         document.getElementById("itemReturnModal").style.display = "none";
     }
 
+    // Updated submit logic
     document.getElementById("itemReturnForm").addEventListener("submit", async (e) => {
         e.preventDefault();
+
         const orderId = document.getElementById("returnOrderId").value;
         const productId = document.getElementById("returnProductId").value;
         const reason = document.getElementById("itemReturnReason").value;
+        const quantity = parseInt(document.getElementById("returnQuantity").value);
+
+        if (!reason || !quantity) {
+            return Swal.fire("Error", "Please provide a reason and quantity", "error");
+        }
 
         const response = await fetch(`/returnOrderItem/${orderId}/${productId}`, {
             method: "PATCH",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ reason })
+            body: JSON.stringify({ reason, quantity })
         });
 
         const result = await response.json();
         if (result.success) {
-            Swal.fire("Success", "Item return request submitted!", "success").then(() => {
+            Swal.fire("Success", result.message, "success").then(() => {
                 location.reload();
             });
         } else {
             Swal.fire("Error", result.message || "Something went wrong!", "error");
         }
     });
-
 
 
 

@@ -117,7 +117,7 @@ module.exports = {
         }
     },
 
-    
+
     getDashboardDataAPI: async (req, res) => {
         try {
             const { timeFilter } = req.query;
@@ -379,6 +379,101 @@ async function getDashboardData(timeFilter) {
         }
     ]);
 
+    // Top Selling Products
+    const topSellingProducts = await Order.aggregate([
+        { $unwind: '$order_items' },
+        {
+            $group: {
+                _id: '$order_items.productId',
+                totalSold: { $sum: '$order_items.quantity' }
+            }
+        },
+        {
+            $lookup: {
+                from: 'products',
+                localField: '_id',
+                foreignField: '_id',
+                as: 'product'
+            }
+        },
+        { $unwind: '$product' },
+        {
+            $project: {
+                productName: '$product.productName',
+                productImages: '$product.productImage',
+                totalSold: 1
+            }
+        },
+        { $sort: { totalSold: -1 } },
+        { $limit: 5 }
+    ]);
+
+    // Top Selling Categories
+    const topSellingCategories = await Order.aggregate([
+        { $unwind: '$order_items' },
+        {
+            $lookup: {
+                from: 'products',
+                localField: 'order_items.productId',
+                foreignField: '_id',
+                as: 'product'
+            }
+        },
+        { $unwind: '$product' },
+        {
+            $lookup: {
+                from: 'categories',
+                localField: 'product.category',
+                foreignField: '_id',
+                as: 'category'
+            }
+        },
+        { $unwind: '$category' },
+        {
+            $group: {
+                _id: '$category._id',
+                name: { $first: '$category.name' },
+                totalSold: { $sum: '$order_items.quantity' }
+            }
+        },
+        { $sort: { totalSold: -1 } },
+        { $limit: 5 }
+    ]);
+
+    // Top Selling Brands
+    const topSellingBrands = await Order.aggregate([
+        { $unwind: '$order_items' },
+        {
+            $lookup: {
+                from: 'products',
+                localField: 'order_items.productId',
+                foreignField: '_id',
+                as: 'product'
+            }
+        },
+        { $unwind: '$product' },
+        {
+            $lookup: {
+                from: 'brands',
+                localField: 'product.brand',   // Now matching by name (string)
+                foreignField: 'brandName',          // Match against brand name
+                as: 'brand'
+            }
+        },
+        { $unwind: { path: '$brand', preserveNullAndEmptyArrays: false } }, // Only include matched brands
+        {
+            $group: {
+                _id: '$brand._id',
+                brandName: { $first: '$brand.brandName' },
+                brandImage: { $first: '$brand.brandImage' },
+                totalSold: { $sum: '$order_items.quantity' }
+            }
+        },
+        { $sort: { totalSold: -1 } },
+        { $limit: 5 }
+    ]);
+
+
 
     // Map data to chart format with labels
     const salesData = mapDataToLabels(salesByPeriod, labels, timeFilter, 'total');
@@ -388,7 +483,6 @@ async function getDashboardData(timeFilter) {
     // Prepare category data
     const categoryLabels = categoryPerformance.map(cat => cat.categoryName);
     const categoryData = categoryPerformance.map(cat => cat.totalSales);
-
 
     return {
         summary: {
@@ -415,8 +509,12 @@ async function getDashboardData(timeFilter) {
             labels: categoryLabels,
             data: categoryData
         },
-        recentOrders
+        recentOrders,
+        topSellingProducts,
+        topSellingCategories,
+        topSellingBrands
     };
+
 
 }
 

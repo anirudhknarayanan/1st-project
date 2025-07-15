@@ -168,7 +168,8 @@ module.exports = {
             }
 
 
-            findProduct.salePrice = findProduct.regularPrice - Math.floor(findProduct.regularPrice * (percentage / 100));
+            // ✅ Don't modify salePrice - let offers be applied dynamically
+            // ❌ REMOVED: findProduct.salePrice = findProduct.regularPrice - Math.floor(findProduct.regularPrice * (percentage / 100));
 
             findProduct.productOffer = parseInt(percentage)
             await findProduct.save();
@@ -190,7 +191,8 @@ module.exports = {
                 return res.json({ status: false, message: "Product not found" });
             }
 
-            findProduct.salePrice = findProduct.regularPrice;
+            // ✅ Don't modify salePrice - keep original price intact
+            // ❌ REMOVED: findProduct.salePrice = findProduct.regularPrice;
             findProduct.productOffer = 0;
             await findProduct.save()
             res.json({ status: true })
