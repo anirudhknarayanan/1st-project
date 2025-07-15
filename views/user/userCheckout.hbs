@@ -588,7 +588,19 @@
                       <td>
                         <img src="/uploads/product-images/{{this.productId.productImage.[0]}}" alt="Product" width="50"
                           class="me-2">
-                        {{this.productId.productName}}
+                        <div>
+                          <div>{{this.productId.productName}}</div>
+                          {{#if this.appliedOffer}}
+                          <small class="text-success">
+                            <i class="fas fa-tag"></i>
+                            {{#if (eq this.appliedOfferType 'product')}}
+                              Product Offer: {{this.appliedOffer}}% OFF
+                            {{else if (eq this.appliedOfferType 'category')}}
+                              Category Offer: {{this.appliedOffer}}% OFF
+                            {{/if}}
+                          </small>
+                          {{/if}}
+                        </div>
                       </td>
                       <td class="text-end">₹{{this.totalPrice}}</td>
                       <td class="text-center">x{{this.quantity}}</td>

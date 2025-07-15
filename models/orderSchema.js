@@ -49,6 +49,19 @@ const orderSchema = new Schema({
     type: Number,
     required: true
   },
+  originalPrice: {
+    type: Number,
+    default: 0
+  },
+  appliedOffer: {
+    type: Number,
+    default: 0
+  },
+  appliedOfferType: {
+    type: String,
+    enum: ['product', 'category', null],
+    default: null
+  },
   quantity: {
     type: Number,
     required: true

@@ -323,17 +323,26 @@ module.exports = {
             // Re-confirm product data from DB
             const orderedItemsWithDetails = await Promise.all(
                 orderedItems.map(async (item) => {
-                    const product = await Product.findById(item.productId);
+                    const product = await Product.findById(item.productId).populate('category');
 
                     if (!product) {
                         throw new Error(`Product not found for ID: ${item.productId}`);
                     }
 
+                    // ✅ Calculate the actual discounted price (same as what customer pays)
+                    const discountedProduct = getDiscountPrice(product);
+                    const actualPrice = discountedProduct ? discountedProduct.finalPrice : product.salePrice;
+                    const appliedOffer = discountedProduct ? discountedProduct.appliedOffer : 0;
+                    const appliedOfferType = discountedProduct ? discountedProduct.appliedOfferType : null;
+
                     return {
                         productId: product._id,
                         quantity: item.quantity,
-                        price: product.salePrice,
-                        productName: product.productName
+                        price: actualPrice, // ✅ Store the discounted price, not original price
+                        originalPrice: product.salePrice, // ✅ Keep original price for reference
+                        productName: product.productName,
+                        appliedOffer: appliedOffer, // ✅ Store offer percentage
+                        appliedOfferType: appliedOfferType // ✅ Store offer type (product/category)
                     };
                 })
             );
@@ -341,8 +350,11 @@ module.exports = {
             const formattedItems = orderedItemsWithDetails.map(item => ({
                 productId: item.productId,
                 quantity: item.quantity,
-                price: item.price,
-                productName: item.productName
+                price: item.price, // ✅ This is now the discounted price
+                originalPrice: item.originalPrice, // ✅ Store original price for reference
+                productName: item.productName,
+                appliedOffer: item.appliedOffer, // ✅ Store offer percentage
+                appliedOfferType: item.appliedOfferType // ✅ Store offer type
             }));
 
 
@@ -581,12 +593,19 @@ module.exports = {
                 const itemTotal = item.price * item.quantity;
                 runningTotal += itemTotal;
 
+                // Product name with offer info
+                let productText = item.productName;
+                if (item.appliedOffer && item.appliedOffer > 0) {
+                    const offerType = item.appliedOfferType === 'product' ? 'Product' : 'Category';
+                    productText += `\n(${offerType} Offer: ${item.appliedOffer}% OFF)`;
+                }
+
                 doc.font('Helvetica')
-                    .text(item.productName, startX, y, { width: columnWidths.product })
+                    .text(productText, startX, y, { width: columnWidths.product })
                     .text(`${item.quantity}`, startX + columnWidths.product, y, { width: columnWidths.quantity, align: 'right' })
                     .text(`₹${item.price.toFixed(2)}`, startX + columnWidths.product + columnWidths.quantity, y, { width: columnWidths.price, align: 'right' })
                     .text(`₹${itemTotal.toFixed(2)}`, startX + columnWidths.product + columnWidths.quantity + columnWidths.price, y, { width: columnWidths.total, align: 'right' })
-                    .moveDown(0.5);
+                    .moveDown(item.appliedOffer > 0 ? 0.8 : 0.5); // Extra space if offer text is shown
             });
 
             doc.moveDown(1).moveTo(startX, doc.y).lineTo(550, doc.y).stroke().moveDown(0.5);
@@ -665,11 +684,36 @@ module.exports = {
                 return res.status(400).json({ success: false, message: 'Only delivered orders can be returned' });
             }
 
-            order.status = 'Return requested';
-            order.returnReason = reason;
+            // ✅ Only change status of items that are currently "active"
+            let hasActiveItems = false;
+            for (let item of order.order_items) {
+                if (item.status === "active") {
+                    item.status = "return requested";
+                    item.return_reason = reason;
+                    item.returned_at = new Date();
+                    hasActiveItems = true;
+                }
+            }
+
+            if (!hasActiveItems) {
+                return res.status(400).json({ success: false, message: 'No active items found to return' });
+            }
+
+            // ✅ Check if all items are now returned/cancelled, then update order status
+            const allItemsReturned = order.order_items.every(item =>
+                item.status === "return requested" ||
+                item.status === "returned" ||
+                item.status === "cancelled"
+            );
+
+            if (allItemsReturned) {
+                order.status = 'Return requested';
+                order.returnReason = reason;
+            }
+
             await order.save();
 
-            return res.status(200).json({ success: true, message: 'Product return request sended update status later....' })
+            return res.status(200).json({ success: true, message: 'Return request submitted successfully for active items' })
 
 
 
@@ -787,12 +831,16 @@ module.exports = {
 
     returnOrderItem: async (req, res) => {
         try {
-            const { reason } = req.body;
+            const { reason, quantity } = req.body; // ✅ Accept quantity from frontend
             const { orderId, productId } = req.params;
 
             const order = await Order.findById(orderId);
             if (!order) {
                 return res.status(404).json({ success: false, message: "Order not found" });
+            }
+
+            if (!reason || !quantity || quantity < 1) {
+                return res.status(400).json({ success: false, message: 'Reason and valid quantity are required' });
             }
 
             const item = order.order_items.find(
@@ -803,19 +851,62 @@ module.exports = {
                 return res.status(404).json({ success: false, message: "Item not found or already returned/cancelled" });
             }
 
+            if (quantity > item.quantity) {
+                return res.status(400).json({ success: false, message: 'Return quantity exceeds available quantity' });
+            }
+
             if (order.status !== "delivered") {
                 return res.status(400).json({ success: false, message: "Only delivered orders can be returned" });
             }
 
-            item.set('status', 'return requested');  // ✅ this now matches the corrected enum
-            item.set('return_reason', reason);
-            item.set('returned_at', new Date());
+            // ✅ Handle partial quantity returns (similar to cancel logic)
+            if (quantity < item.quantity) {
+                // Reduce the original item quantity
+                item.quantity -= quantity;
 
-            order.markModified('order_items'); // ✅ required for nested changes
+                // Create a new item entry for the returned quantity
+                const returnedItem = {
+                    productId: item.productId,
+                    quantity: quantity,
+                    price: item.price,
+                    originalPrice: item.originalPrice || item.price,
+                    productName: item.productName,
+                    status: 'return requested',
+                    return_reason: reason,
+                    returned_at: new Date()
+                };
 
+                order.order_items.push(returnedItem);
+            } else {
+                // ✅ Return entire quantity - change status of existing item
+                item.set('status', 'return requested');
+                item.set('return_reason', reason);
+                item.set('returned_at', new Date());
+            }
+
+            // ✅ Recalculate order totals
+            let newTotal = 0;
+            let hasActiveItems = false;
+
+            order.order_items.forEach(orderItem => {
+                if (orderItem.status === 'active') {
+                    newTotal += orderItem.price * orderItem.quantity;
+                    hasActiveItems = true;
+                }
+            });
+
+            order.total = newTotal;
+
+            const DELIVERY_CHARGE = 40;
+            order.finalAmount = newTotal - (order.discount || 0) + (hasActiveItems ? DELIVERY_CHARGE : 0);
+
+            order.markModified('order_items');
             await order.save();
 
-            return res.status(200).json({ success: true, message: "Item return request submitted" });
+            return res.status(200).json({
+                success: true,
+                message: `Return request submitted for ${quantity} ${quantity > 1 ? 'items' : 'item'}`
+            });
 
         } catch (error) {
             console.error("Return item error:", error);

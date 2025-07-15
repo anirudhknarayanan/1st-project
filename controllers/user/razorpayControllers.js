@@ -89,7 +89,7 @@ module.exports = {
 
 
             const productIds = parsedOrderItems.map(item => item.productId);
-            const products = await Product.find({ _id: { $in: productIds } });
+            const products = await Product.find({ _id: { $in: productIds } }).populate('category');
 
             const transformedOrderItems = parsedOrderItems.map(item => {
                 const product = products.find(p => p._id.toString() === item.productId.toString());

@@ -90,7 +90,7 @@ module.exports = {
 
 
             const itemQuantity = parseInt(quantity) || 1;
-            const { finalPrice, appliedOffer, regularPrice } = getDiscountPrice(product);
+            const { finalPrice, appliedOffer, appliedOfferType, regularPrice } = getDiscountPrice(product);
             console.log("this is your final price : ", finalPrice);
             let cart = await Cart.findOne({ userId })
             console.log("cart is : ", cart)
@@ -138,7 +138,8 @@ module.exports = {
                     quantity: itemQuantity,
                     price: finalPrice,
                     totalPrice: finalPrice * itemQuantity,
-                    appliedOffer: appliedOffer
+                    appliedOffer: appliedOffer,
+                    appliedOfferType: appliedOfferType
                 });
 
 
