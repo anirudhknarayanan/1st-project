@@ -6,6 +6,9 @@ const nodemailer = require("nodemailer");
 const path = require("path")
 const bcrypt = require("bcrypt");
 const mongoose = require("mongoose");
+// Import referral helpers
+const { getUserReferralCoupons } = require("../../helpers/referralHelpers");
+const Referral = require("../../models/referralSchema");
 require("dotenv").config();
 
 function generateOtp() {
@@ -490,6 +493,61 @@ module.exports = {
       res.render("user/changePassword", { hideFooter: true })
     } catch (error) {
       res.redirect("/pageNotFOUND")
+    }
+  },
+
+  // Referral Details Page
+  showReferralDetails: async (req, res) => {
+    try {
+      const userId = req.session.user;
+
+      if (!userId) {
+        return res.redirect("/login");
+      }
+
+      // Get user data
+      const userData = await User.findById(userId).lean();
+
+      // Get all referral coupons for this user
+      const referralCoupons = await getUserReferralCoupons(userId);
+
+      // Get users who used this user's referral code
+      const referredUsers = await Referral.find({ referrer: userId })
+        .populate('referredUser', 'name email createdOn')
+        .sort({ createdAt: -1 })
+        .lean();
+
+      // Calculate statistics
+      const totalReferrals = referredUsers.length;
+      const totalCoupons = referralCoupons.length;
+      const usedCoupons = referralCoupons.filter(coupon => coupon.status === 'used').length;
+      const unusedCoupons = referralCoupons.filter(coupon => coupon.status === 'unused').length;
+      const totalEarnings = totalCoupons * 100; // ₹100 per coupon
+
+      // Debug: Log what we're sending to template
+      console.log("🔍 DEBUG - Data being sent to template:");
+      console.log("  User:", userData.name, userData.email);
+      console.log("  Referral Coupons:", referralCoupons.length);
+      referralCoupons.forEach((coupon, i) => {
+        console.log(`    Coupon ${i+1}: ${coupon.couponCode}, Status: ${coupon.status}, Discount: ${coupon.discount}`);
+      });
+
+      res.render("user/referralDetails", {
+        user: userData,
+        referralCoupons,
+        referredUsers,
+        stats: {
+          totalReferrals,
+          totalCoupons,
+          usedCoupons,
+          unusedCoupons,
+          totalEarnings
+        }
+      });
+
+    } catch (error) {
+      console.error("Error in showReferralDetails:", error);
+      res.redirect("/pageNotFound");
     }
   }
   ,

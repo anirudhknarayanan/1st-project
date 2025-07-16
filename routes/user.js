@@ -68,6 +68,9 @@ router.post("/verify-email-otp", userAuth, profileController.verifyEmailOtp)
 
 router.get("/changePassword", userAuth, profileController.getChangePassword)
 router.post("/changePassword", userAuth, profileController.changePasswordValid)
+
+//referral details
+router.get("/referralDetails", userAuth, profileController.showReferralDetails)
 router.post("/verify-changePassword-otp", userAuth, profileController.verifychangePasswordotp)
 
 router.post("/uploadProfileImage", userAuth, uploads.single("profileImage"), profileController.uploadProfileImg)

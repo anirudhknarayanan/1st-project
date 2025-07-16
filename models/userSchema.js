@@ -55,8 +55,10 @@ const userSchema = new Schema({
         type: Date,
         default: Date.now,
     },
-    referalCode: {
-        type: String
+    referralCode: {
+        type: String,
+        unique: true,
+        sparse: true  // Only check uniqueness if value exists
     },
     redeemed: {
         type: Boolean,

@@ -120,6 +120,17 @@ app.engine(
         if (typeof value !== 'number') value = Number(value);
         return value.toLocaleString('en-IN', { style: 'currency', currency: 'INR' });
       },
+      formatDate: (date) => {
+        if (!date) return '-';
+        return new Date(date).toLocaleDateString('en-IN', {
+          year: 'numeric',
+          month: 'short',
+          day: 'numeric'
+        });
+      },
+      eq: (a, b) => {
+        return a === b;
+      },
       and: function () {
         const args = Array.from(arguments).slice(0, -1);
         return args.every(Boolean);

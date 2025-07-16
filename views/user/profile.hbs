@@ -115,6 +115,57 @@
     font-size: 14px;
     cursor: pointer;
   }
+
+  /* Referral Code Styles */
+  .referral-section {
+    background: linear-gradient(135deg, #e8f5e8, #f0f8f0);
+    padding: 15px;
+    border-radius: 10px;
+    border: 2px solid #28a745;
+    margin-bottom: 20px;
+  }
+
+  .referral-code-container {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 5px 0;
+  }
+
+  .referral-code {
+    font-family: 'Courier New', monospace;
+    font-size: 18px;
+    font-weight: bold;
+    color: #28a745;
+    background: #fff;
+    padding: 8px 12px;
+    border-radius: 6px;
+    border: 1px solid #28a745;
+    margin: 0;
+    letter-spacing: 1px;
+  }
+
+  .copy-btn {
+    padding: 6px 12px;
+    font-size: 12px;
+    background: #28a745;
+    color: white;
+    border: none;
+    border-radius: 5px;
+    cursor: pointer;
+    transition: background 0.3s;
+  }
+
+  .copy-btn:hover {
+    background: #218838;
+  }
+
+  .referral-hint {
+    color: #666;
+    font-style: italic;
+    margin-top: 5px;
+    display: block;
+  }
 </style>
 
 <div class="profile-container">
@@ -125,7 +176,7 @@
       <li><i class="icon">💰</i> Wallet</li>
       <li><a href="/addAddress"><i class="icon">📍</i> Address</a></li>
       <li><i class="icon">🔒</i> Password</li>
-      <li><i class="icon">🎁</i> Refer & Earn</li>
+      <li><a href="/referralDetails"><i class="icon">🎁</i> Refer & Earn</a></li>
       <li><a href="/logout"><i class="icon">🚪</i> Logout</a></li>
     </ul>
   </aside>
@@ -182,6 +233,21 @@
         <div>
           <label>Phone</label>
           <p id="editPhone">{{user.phone}}</p>
+        </div>
+      </div>
+
+      <!-- Referral Code -->
+      <div class="detail-item referral-section">
+        <i class="icon">🎁</i>
+        <div>
+          <label>Your Referral Code</label>
+          <div class="referral-code-container">
+            <p class="referral-code" id="referralCode">{{user.referralCode}}</p>
+            <button class="btn btn-primary btn-sm copy-btn" onclick="copyReferralCode('{{user.referralCode}}')">
+              <i class="fas fa-copy"></i> Copy
+            </button>
+          </div>
+          <small class="referral-hint">Share this code with friends! When they sign up, you get ₹100 coupon!</small>
         </div>
       </div>
 
@@ -569,6 +635,33 @@ document.querySelectorAll(".delete-address").forEach(button => {
       });
     });
   });
+  // Copy referral code function
+  function copyReferralCode(referralCode) {
+    navigator.clipboard.writeText(referralCode).then(function() {
+      // Show success message
+      const copyBtn = event.target.closest('.copy-btn');
+      const originalText = copyBtn.innerHTML;
+      copyBtn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+      copyBtn.style.background = '#28a745';
+
+      // Reset button after 2 seconds
+      setTimeout(() => {
+        copyBtn.innerHTML = originalText;
+        copyBtn.style.background = '#28a745';
+      }, 2000);
+    }).catch(function(err) {
+      console.error('Could not copy text: ', err);
+      // Fallback for older browsers
+      const textArea = document.createElement('textarea');
+      textArea.value = referralCode;
+      document.body.appendChild(textArea);
+      textArea.select();
+      document.execCommand('copy');
+      document.body.removeChild(textArea);
+
+      alert('Referral code copied: ' + referralCode);
+    });
+  }
 
 
 

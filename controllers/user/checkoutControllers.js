@@ -6,6 +6,8 @@ const Order = require('../../models/orderSchema')
 const Coupon = require('../../models/coupenSchema')
 const Wallet = require('../../models/walletSchema')
 const { getDiscountPrice, getDiscountPriceCart } = require("../../helpers/offerHelpers");
+// Import referral helpers
+const { getUserReferralCoupons, validateReferralCoupon, markReferralCouponAsUsed } = require("../../helpers/referralHelpers");
 const PDFDocument = require('pdfkit');
 const { v4: uuidv4 } = require('uuid');
 
@@ -69,15 +71,19 @@ module.exports = {
                 couponValidity: { $gte: date }
             }).lean();
 
-
+            // Get user's referral coupons
+            const referralCoupons = await getUserReferralCoupons(userId);
+            const availableReferralCoupons = referralCoupons.filter(coupon => coupon.status === 'unused');
 
             console.log("available coupon : ,", coupon)
+            console.log("available referral coupons : ,", availableReferralCoupons)
 
             //Render checkout page
             res.render("user/userCheckout", {
                 cart,
                 user,
                 coupon,
+                referralCoupons: availableReferralCoupons,
                 userAddress,
                 cartItemsJSON: JSON.stringify(
                     cart.items.map(item => ({
@@ -296,10 +302,19 @@ module.exports = {
             }
 
             let coupon = "";
+            let isReferralCoupon = false;
             if (couponCode) {
+                // First check if it's a regular coupon
                 coupon = await Coupon.findOne({ couponCode: couponCode });
+
+                // If not a regular coupon, check if it's a referral coupon
                 if (!coupon) {
-                    return res.status(400).json({ success: false, error: "Invalid coupon code" });
+                    const referralValidation = await validateReferralCoupon(userId, couponCode);
+                    if (!referralValidation.valid) {
+                        return res.status(400).json({ success: false, error: "Invalid coupon code" });
+                    }
+                    isReferralCoupon = true;
+                    coupon = referralValidation.coupon;
                 }
             }
 
@@ -381,11 +396,17 @@ module.exports = {
                 status: "pending",
                 total: cleanedTotal,
                 couponCode: couponCode || null,
-                couponApplied: !!coupon,
-                discount: cleanedDiscount
+                coupenApplied: !!coupon,
+                discount: cleanedDiscount,
+                isReferralCoupon: isReferralCoupon || false
             });
 
-            if (coupon) {
+            if (isReferralCoupon && couponCode) {
+                // Mark referral coupon as used
+                await markReferralCouponAsUsed(couponCode, newOrder._id);
+                console.log("✅ Referral coupon marked as used:", couponCode);
+            } else if (coupon && !isReferralCoupon) {
+                // Update regular coupon usage
                 await Coupon.findOneAndUpdate(
                     { couponCode },
                     { $inc: { usageCount: 1 } }
@@ -630,11 +651,25 @@ module.exports = {
             doc.font('Helvetica-Bold').text('Grand Total', 400, summaryY + lineHeight * 3, { width: 100, align: 'right' });
             doc.font('Helvetica-Bold').text(`₹${grandTotal.toFixed(2)}`, 500, summaryY + lineHeight * 3, { width: 50, align: 'right' });
 
-            // 🏷️ Optional: Show applied coupon
+            // 🏷️ Show applied coupons (both regular and referral)
             if (order.coupenApplied && order.couponCode) {
-                doc.moveDown(1)
-                    .font('Helvetica-Bold').text('Coupon Applied:', 50)
-                    .font('Helvetica').text(`${order.couponCode}`);
+                doc.moveDown(1);
+
+                // Check if it's a referral coupon (use saved field or fallback to code prefix)
+                const isReferralCoupon = order.isReferralCoupon || order.couponCode.startsWith('REF');
+
+                if (isReferralCoupon) {
+                    doc.font('Helvetica-Bold').fontSize(12).text('🎁 Referral Coupon Applied:', 50)
+                        .font('Helvetica').fontSize(11).text(`Code: ${order.couponCode}`, 50)
+                        .text(`Discount: ₹${order.discount}`, 50)
+                        .font('Helvetica').fontSize(9).fillColor('#28a745')
+                        .text('🎉 Referral Reward - Thank you for referring friends to Take Your Time!', 50)
+                        .fillColor('black');
+                } else {
+                    doc.font('Helvetica-Bold').fontSize(12).text('💳 Coupon Applied:', 50)
+                        .font('Helvetica').fontSize(11).text(`Code: ${order.couponCode}`, 50)
+                        .text(`Discount: ₹${order.discount}`, 50);
+                }
             }
 
             // 🎉 Footer
@@ -987,12 +1022,35 @@ module.exports = {
 
     applyCoupon: async (req, res) => {
         try {
-
             const { couponCode, subtotal } = req.body;
+            const userId = req.session.user;
+
+            // First check if it's a regular coupon
             const coupon = await Coupon.findOne({ couponCode, isActive: true });
+
+            // If not a regular coupon, check if it's a referral coupon
             if (!coupon) {
-                return res.status(400).json({ success: false, message: 'Invalid or expired coupon' });
+                const referralValidation = await validateReferralCoupon(userId, couponCode);
+                if (!referralValidation.valid) {
+                    return res.status(400).json({ success: false, message: 'Invalid or expired coupon' });
+                }
+
+                // Handle referral coupon
+                const discount = referralValidation.discount; // ₹100
+                const newTotal = subtotal - discount;
+
+                // For referral coupons, don't modify any usage count here
+                // Only mark as used when order is actually placed
+                return res.status(200).json({
+                    success: true,
+                    message: 'Referral coupon applied successfully',
+                    discount,
+                    newTotal,
+                    isReferralCoupon: true
+                });
             }
+
+            // Handle regular coupons
             const currentDate = new Date();
             if (coupon.couponValidity < currentDate) {
                 return res.status(400).json({ success: false, message: 'Coupon has expired' });
@@ -1015,9 +1073,7 @@ module.exports = {
             let newTotal = subtotal - discount;
 
             coupon.limit -= 1;
-
             coupon.usageCount += 1;
-
             await coupon.save();
 
             return res.status(200).json({ success: true, message: 'Coupon applied successfully', discount, newTotal });
@@ -1032,23 +1088,35 @@ module.exports = {
 
     removeCoupon: async (req, res) => {
         try {
-
             const { couponCode, subtotal } = req.body;
+            const userId = req.session.user;
+
+            // First check if it's a regular coupon
             const coupon = await Coupon.findOne({ couponCode: couponCode });
 
             if (!coupon) {
-                return res.json({ success: false, message: 'Invalid coupon' });
+                // Check if it's a referral coupon
+                const referralValidation = await validateReferralCoupon(userId, couponCode);
+                if (!referralValidation.valid) {
+                    return res.json({ success: false, message: 'Invalid coupon' });
+                }
+
+                // For referral coupons, just return success (no usage count to revert)
+                return res.json({
+                    success: true,
+                    cartTotal: subtotal,
+                    message: 'Referral coupon removed successfully'
+                });
             }
 
+            // Handle regular coupon removal
             coupon.limit += 1;
             coupon.usageCount -= 1;
             await coupon.save();
 
-            const cartTotal = subtotal;
-
             res.json({
                 success: true,
-                cartTotal,
+                cartTotal: subtotal,
                 message: 'Coupon removed successfully'
             });
 

@@ -6,6 +6,12 @@ const Brand = require("../../models/brandSchema")
 const env = require("dotenv").config()
 const bcrypt = require("bcrypt")
 const nodemailer = require("nodemailer")
+// Import our referral helper functions
+const {
+    generateReferralCode,
+    validateReferralCode,
+    processReferralReward
+} = require("../../helpers/referralHelpers")
 
 
 
@@ -100,7 +106,7 @@ module.exports = {
   signup: async (req, res) => {
     try {
       console.log(req.body);
-      const { name, email, password, cpassword, phone } = req.body;
+      const { name, email, password, cpassword, phone, referralCode } = req.body;
       const existingEmail = await User.findOne({ email });
       const existingPhone = await User.findOne({ phone });
 
@@ -117,6 +123,19 @@ module.exports = {
         return res.render("user/userSignin", { message });
       }
 
+      // Check if referral code is valid (if provided)
+      let referrerData = null;
+      if (referralCode && referralCode.trim()) {
+        const referralValidation = await validateReferralCode(referralCode.trim().toUpperCase());
+        if (!referralValidation.valid) {
+          return res.render("user/userSignin", {
+            message: "Invalid referral code. Please check and try again."
+          });
+        }
+        referrerData = referralValidation.referrer;
+        console.log("Valid referral code used:", referralCode, "Referrer:", referrerData.name);
+      }
+
       const otp = generateOtp()
 
 
@@ -128,7 +147,7 @@ module.exports = {
         return res.json("email - error")
       }
       req.session.userOtp = otp;
-      req.session.userData = { password, email, name, phone }
+      req.session.userData = { password, email, name, phone, referrerData }
       res.render("user/verify-otp")
       console.log("otp send", otp);
     } catch (error) {
@@ -143,14 +162,30 @@ module.exports = {
       if (otp === req.session.userOtp) {
         const user = req.session.userData
         const passwordHash = await securePassword(user.password)
+        // Generate unique referral code for new user
+        const userReferralCode = await generateReferralCode(user.name);
+
         const saveUserDaTa = new User({
           name: user.name,
           email: user.email,
           phone: user.phone,
-          password: passwordHash
+          password: passwordHash,
+          referralCode: userReferralCode  // Give new user their own referral code
         })
 
         await saveUserDaTa.save()
+
+        // If user was referred by someone, give reward to referrer
+        if (user.referrerData) {
+          try {
+            const rewardResult = await processReferralReward(user.referrerData._id, saveUserDaTa._id);
+            if (rewardResult.success) {
+              console.log("✅ Referral reward given! Coupon:", rewardResult.couponCode);
+            }
+          } catch (error) {
+            console.error("❌ Error processing referral rewards:", error);
+          }
+        }
         // req.session.user = saveUserDaTa._id;
         req.session.successMessage = "Signup successful! Please log in.";
         return res.redirect("/login");
