@@ -331,7 +331,7 @@
             <tbody>
                 {{#each orders}}
                     <tr>
-                        <td>#{{this._id}}</td>
+                        <td>#{{this.orderId}}</td>
                         <td>{{formatDate this.createdAt}}</td>
                         <td>{{this.user_id.name}}</td>
                         <td>{{{this.order_items.[0].productId.productName}}}</td>

@@ -3,22 +3,21 @@ const Referral = require("../models/referralSchema");
 const crypto = require("crypto");
 
 /**
- * TOOL 1: Generate a unique referral code for a user
- * Input: User's name (like "John")
- * Output: Unique code (like "JOHN1234")
+  Generate a unique referral code for a user
  */
 const generateReferralCode = async (userName) => {
+    
     try {
-        // Take first 4 letters from name and make them uppercase
+        
         const namePrefix = userName.substring(0, 4).toUpperCase().replace(/[^A-Z]/g, '');
-        const paddedName = namePrefix.padEnd(4, 'X'); // If name is short, add X's
+        const paddedName = namePrefix.padEnd(4, 'X');
 
         // Generate 4 random numbers
         const randomNumbers = Math.floor(1000 + Math.random() * 9000);
 
         let referralCode = `${paddedName}${randomNumbers}`;
 
-        // Make sure this code doesn't already exist
+        
         let counter = 1;
         while (await User.findOne({ referralCode })) {
             referralCode = `${paddedName}${randomNumbers + counter}`;
@@ -28,15 +27,13 @@ const generateReferralCode = async (userName) => {
         return referralCode;
     } catch (error) {
         console.error("Error generating referral code:", error);
-        // If something goes wrong, use timestamp as backup
+    
         return `REF${Date.now().toString().slice(-5)}`;
     }
 };
 
 /**
- * TOOL 2: Check if a referral code is valid
- * Input: Referral code (like "JOHN1234")
- * Output: {valid: true/false, referrer: user info}
+Check if a referral code is valid
  */
 const validateReferralCode = async (referralCode, excludeUserId = null) => {
     try {
@@ -57,18 +54,13 @@ const validateReferralCode = async (referralCode, excludeUserId = null) => {
 };
 
 /**
- * TOOL 3: Generate unique coupon code for referral rewards
- * Output: Unique coupon code (like "REF1A2B3C4D")
+ Generate unique coupon code for referral rewards
  */
 const generateCouponCode = () => {
     return `REF${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
 };
 
-/**
- * TOOL 4: Give reward to referrer when someone uses their code
- * Input: Referrer's ID, New user's ID
- * Output: Success/failure result
- */
+
 const processReferralReward = async (referrerId, newUserId) => {
     try {
         // Create a ₹100 coupon for the referrer
@@ -94,18 +86,17 @@ const processReferralReward = async (referrerId, newUserId) => {
 };
 
 /**
- * TOOL 5: Get all referral coupons for a user
- * Input: User's ID
- * Output: List of their referral coupons
+  Get all referral coupons for a user
+
  */
 const getUserReferralCoupons = async (userId) => {
     try {
         const coupons = await Referral.find({
-            referrer: userId  // Only get coupons where this user is the referrer
+            referrer: userId  
         }).populate('referrer', 'name')
           .populate('referredUser', 'name')
           .sort({ createdAt: -1 })
-          .lean(); // Convert to plain JavaScript objects
+          .lean(); 
 
         return coupons;
     } catch (error) {
@@ -115,9 +106,8 @@ const getUserReferralCoupons = async (userId) => {
 };
 
 /**
- * TOOL 6: Check if a coupon is valid and can be used
- * Input: User's ID, Coupon code
- * Output: {valid: true/false, coupon: coupon info, discount: amount}
+ Check if a coupon is valid and can be used
+ 
  */
 const validateReferralCoupon = async (userId, couponCode) => {
     try {
@@ -139,9 +129,8 @@ const validateReferralCoupon = async (userId, couponCode) => {
 };
 
 /**
- * TOOL 7: Mark a coupon as used when order is placed
- * Input: Coupon code, Order ID
- * Output: Success/failure
+ Mark a coupon as used when order is placed
+
  */
 const markReferralCouponAsUsed = async (couponCode, orderId) => {
     try {

@@ -434,6 +434,8 @@ module.exports = {
         .sort({ createdOn: -1 })
         .lean();
 
+        console.log("findProducts : ",findProducts)
+
       const itemsPerPage = 6;
       const currentPage = parseInt(req.query.page) || 1;
       const startIndex = (currentPage - 1) * itemsPerPage;
