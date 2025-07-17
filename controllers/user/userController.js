@@ -304,8 +304,9 @@ module.exports = {
       const products = await Product.find({
         isBlocked: false,
         category: { $in: categoryIds },
-        
+
       })
+        .populate('category') // ✅ ADD: Populate category to get category offers
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
@@ -327,9 +328,21 @@ module.exports = {
       }));
       console.log("cate dshhsdgds", categoriesWithIds)
 
+      // ✅ ADD: Calculate offer information for each product
+      const { getDiscountPrice } = require("../../helpers/offerHelpers");
+      const productsWithOffers = products.map(product => {
+        const offerData = getDiscountPrice(product);
+        return {
+          ...product,
+          appliedOffer: offerData?.appliedOffer || 0,
+          appliedOfferType: offerData?.appliedOfferType || null,
+          hasOffer: (offerData?.appliedOffer || 0) > 0
+        };
+      });
+
       res.render("user/shopp", {
         user: UserData,
-        products: products,
+        products: productsWithOffers, // ✅ UPDATED: Use products with offer information
         category: categoriesWithIds,
         brand: brands,
         totalProducts: totalProducts,
@@ -398,9 +411,21 @@ module.exports = {
       }
       req.session.filteredProduct = currentProduct;
 
+      // ✅ ADD: Calculate offer information for filtered products
+      const { getDiscountPrice } = require("../../helpers/offerHelpers");
+      const productsWithOffers = currentProduct.map(product => {
+        const offerData = getDiscountPrice(product);
+        return {
+          ...product,
+          appliedOffer: offerData?.appliedOffer || 0,
+          appliedOfferType: offerData?.appliedOfferType || null,
+          hasOffer: (offerData?.appliedOffer || 0) > 0
+        };
+      });
+
       res.render("user/shopp", {
         user: userData,
-        products: currentProduct,
+        products: productsWithOffers, // ✅ UPDATED: Use products with offer information
         category: categories,
         brand: brands,
         totalPages: totalPages,
@@ -445,9 +470,21 @@ module.exports = {
 
       req.session.filteredProduct = findProducts;
 
+      // ✅ ADD: Calculate offer information for price filtered products
+      const { getDiscountPrice } = require("../../helpers/offerHelpers");
+      const productsWithOffers = currentProduct.map(product => {
+        const offerData = getDiscountPrice(product);
+        return {
+          ...product,
+          appliedOffer: offerData?.appliedOffer || 0,
+          appliedOfferType: offerData?.appliedOfferType || null,
+          hasOffer: (offerData?.appliedOffer || 0) > 0
+        };
+      });
+
       res.render("user/shopp", {
         user: userData,
-        products: currentProduct,
+        products: productsWithOffers, // ✅ UPDATED: Use products with offer information
         category: categories,
         brand: brands,
         totalPages,
@@ -489,9 +526,21 @@ module.exports = {
       const totalPages = Math.ceil(searchResult.length / itemsPerPage);
       const currentProduct = searchResult.slice(startIndex, endIndex);
 
+      // ✅ ADD: Calculate offer information for search results
+      const { getDiscountPrice } = require("../../helpers/offerHelpers");
+      const productsWithOffers = currentProduct.map(product => {
+        const offerData = getDiscountPrice(product);
+        return {
+          ...product,
+          appliedOffer: offerData?.appliedOffer || 0,
+          appliedOfferType: offerData?.appliedOfferType || null,
+          hasOffer: (offerData?.appliedOffer || 0) > 0
+        };
+      });
+
       res.render("user/shopp", {
         user: userData,
-        products: currentProduct,
+        products: productsWithOffers, // ✅ UPDATED: Use products with offer information
         category: categories,
         brand: brands,
         totalPages,

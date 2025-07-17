@@ -32,7 +32,19 @@ module.exports = {
 
                 item.productId.isAvailable = productAvailable && categoryAvailable;
 
-                return { ...item, productId: getDiscountPriceCart(item.productId) };
+                // ✅ SAFE UPDATE: Get current offer information and update cart item
+                const productWithOffers = getDiscountPriceCart(item.productId);
+                const currentOfferData = getDiscountPrice(item.productId);
+
+                // ✅ UPDATE: Apply current offer data to cart item
+                const updatedItem = {
+                    ...item,
+                    productId: productWithOffers,
+                    appliedOffer: currentOfferData?.appliedOffer || 0,
+                    appliedOfferType: currentOfferData?.appliedOfferType || null
+                };
+
+                return updatedItem;
 
             }).filter((item => item && item.productId));
             console.log("your prossedData:", processedData)

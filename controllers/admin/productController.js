@@ -5,6 +5,7 @@ const User = require("../../models/userSchema")
 const fs = require("fs")
 const path = require("path");
 const sharp = require("sharp")
+const { updateProductSalePrice } = require("../../helpers/offerHelpers")
 
 module.exports = {
     // getAllproducts :async (req,res)=>{
@@ -163,24 +164,18 @@ module.exports = {
                 return res.status(404).json({ status: false, message: "Category not found" });
             }
 
-            if (findCategory.categoryOffer && findCategory.categoryOffer > percentage) {
-                return res.json({ status: false, message: "This product already has a better category offer" });
-            }
-
-
-            // ✅ Don't modify salePrice - let offers be applied dynamically
-            // ❌ REMOVED: findProduct.salePrice = findProduct.regularPrice - Math.floor(findProduct.regularPrice * (percentage / 100));
-
+            // ✅ NEW LOGIC: Allow both offers to coexist, just set product offer
             findProduct.productOffer = parseInt(percentage)
             await findProduct.save();
-            findCategory.categoryOffer = 0;
-            await findCategory.save()
+
+            // ✅ AUTO-UPDATE: Calculate salePrice using max(productOffer, categoryOffer)
+            await updateProductSalePrice(findProduct, findCategory.categoryOffer);
+
             res.json({ status: true });
 
         } catch (error) {
-
+            console.error("Error in addProductOffer:", error);
             res.status(500).json({ status: false, message: "internal server error" })
-
         }
     },
     removeProductOffer: async (req, res) => {
@@ -191,10 +186,13 @@ module.exports = {
                 return res.json({ status: false, message: "Product not found" });
             }
 
-            // ✅ Don't modify salePrice - keep original price intact
-            // ❌ REMOVED: findProduct.salePrice = findProduct.regularPrice;
+            // ✅ Remove product offer
             findProduct.productOffer = 0;
             await findProduct.save()
+
+            // ✅ AUTO-UPDATE: Recalculate salePrice (will use category offer if exists)
+            await updateProductSalePrice(findProduct);
+
             res.json({ status: true })
         } catch (error) {
             console.error("Error in removeProductOffer:", error);

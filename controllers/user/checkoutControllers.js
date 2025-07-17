@@ -39,7 +39,19 @@ module.exports = {
                 !item.productId.isBlocked &&
                 item.productId.category &&
                 item.productId.category.isListed
-            );
+            ).map(item => {
+                // ✅ RECALCULATE: Get current offer information for each product
+                const currentOfferData = getDiscountPrice(item.productId);
+
+                // ✅ UPDATE: Use current offer data instead of stored cart data
+                return {
+                    ...item,
+                    appliedOffer: currentOfferData?.appliedOffer || 0,
+                    appliedOfferType: currentOfferData?.appliedOfferType || null,
+                    price: currentOfferData?.finalPrice || item.productId.salePrice,
+                    totalPrice: (currentOfferData?.finalPrice || item.productId.salePrice) * item.quantity
+                };
+            });
 
             if (availableItems.length !== cart.items.length) {
                 req.flash("error", "Some unavailable products or categories have been removed from your cart.");

@@ -1,5 +1,6 @@
 const Category = require("../../models/categorySchema")
 const Product = require("../../models/productSchema")
+const { updateMultipleProductsSalePrice } = require("../../helpers/offerHelpers")
 
 module.exports = {
 
@@ -73,27 +74,18 @@ module.exports = {
             }
 
             const products = await Product.find({ category: category._id })
-            const hasProductOffer = products.some((product) => product.productOffer > percentage);
 
-            if (hasProductOffer) {
-                return res.json({ status: false, message: "products with in this category have product offer" })
-            }
-
+            // ✅ NEW LOGIC: Update category offer (don't check or reset product offers)
             await Category.updateOne({ _id: categoryId }, { $set: { categoryOffer: percentage } })
 
-            // ✅ Only reset product offers, don't modify salePrice
-            for (const product of products) {
-                product.productOffer = 0;
-                // ❌ REMOVED: Don't modify salePrice - keep original price
-                // product.salePrice = product.regularPrice;
-                await product.save();
-            }
+            // ✅ AUTO-UPDATE: Recalculate salePrice for all products using max(productOffer, categoryOffer)
+            await updateMultipleProductsSalePrice(products, percentage);
 
             res.json({ status: true })
 
         } catch (error) {
+            console.error("Error in addCategoryOffer:", error);
             res.status(500).json({ status: false, message: "internal server error" })
-
         }
     },
 
@@ -103,25 +95,25 @@ module.exports = {
             const category = await Category.findById(categoryId);
 
             if (!category) {
-                res.status(404).json({ status: false, message: "category not found" })
+                return res.status(404).json({ status: false, message: "category not found" })
             }
-            const percentage = category.categoryOffer;
+
             const products = await Product.find({ category: category._id })
 
-            // ✅ No need to modify product prices when removing category offer
-            if (products.length > 0) {
-                for (const product of products) {
-                    // ❌ REMOVED: Don't modify salePrice
-                    // product.salePrice += Math.floor(product.regularPrice * (percentage / 100))
-                    product.productOffer = 0;
-                    await product.save()
-                }
-            }
+            // ✅ Reset category offer only
             category.categoryOffer = 0;
             await category.save()
+
+            // ✅ NEW LOGIC: Don't reset product offers, let them keep their individual offers
+            // Products will now use their productOffer (if any) or regularPrice (if no offers)
+
+            // ✅ AUTO-UPDATE: Recalculate salePrice for all products (categoryOffer = 0, but productOffer may exist)
+            await updateMultipleProductsSalePrice(products, 0);
+
             res.json({ status: true })
 
         } catch (error) {
+            console.error("Error in removeCategoryOffer:", error);
             res.status(500).json({ status: false, message: "internal server error" })
         }
     },

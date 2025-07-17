@@ -155,9 +155,23 @@
 								<div class="desc">
 									<h2><a href="#">{{productName}}</a></h2>
 									<p>{{brand}}</p>
+
+									{{!-- ✅ SHOW OFFER INFORMATION --}}
+									{{#if hasOffer}}
+									<div class="offer-badge" style="background: linear-gradient(45deg, #361414, #1fe962); color: white; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: bold; margin-bottom: 8px; display: inline-block;">
+										{{#if (eq appliedOfferType 'product')}}
+											🏷️ Product Offer: {{appliedOffer}}% OFF
+										{{else if (eq appliedOfferType 'category')}}
+											📂 Category Offer: {{appliedOffer}}% OFF
+										{{/if}}
+									</div>
+									{{/if}}
+
 									<p>
 										Price: {{formatINR salePrice}}
+										{{#if hasOffer}}
 										<span class="text-muted"><strike>{{formatINR regularPrice}}</strike></span>
+										{{/if}}
 									</p>
 									<button class="add-to-cart-btn btn-dark" onclick="addToCart('{{this._id}}')">Add To
 										Cart</button>
