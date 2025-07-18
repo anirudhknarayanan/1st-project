@@ -61,6 +61,31 @@
                                                             <img class="cart-img"
                                                                 src="/uploads/product-images/{{this.productId.productImage.[0]}}"
                                                                 alt="">
+
+                                                            {{!-- ✅ SHOW OFFER INFORMATION UNDER PRODUCT IMAGE --}}
+                                                            {{#if hasOffer}}
+                                                            <div class="product-offer-details" style="margin-top: 8px; padding: 6px; background: #f8f9fa; border-left: 4px solid #28a745; border-radius: 4px; font-size: 10px;">
+                                                                {{#if (eq appliedOfferType 'product')}}
+                                                                    <div style="color: #28a745; font-weight: bold;">
+                                                                        🏷️ <strong>Product Offer</strong>
+                                                                    </div>
+                                                                    <div style="color: #666; margin-top: 2px;">
+                                                                        Saved <strong>₹{{totalSaved}}</strong> ({{appliedOffer}}% off)
+                                                                    </div>
+                                                                {{else if (eq appliedOfferType 'category')}}
+                                                                    <div style="color: #17a2b8; font-weight: bold;">
+                                                                        📂 <strong>Category Offer</strong>
+                                                                    </div>
+                                                                    <div style="color: #666; margin-top: 2px;">
+                                                                        Saved <strong>₹{{totalSaved}}</strong> ({{appliedOffer}}% off)
+                                                                    </div>
+                                                                {{/if}}
+                                                            </div>
+                                                            {{else}}
+                                                            <div style="color: #999; font-size: 10px; margin-top: 5px; text-align: center;">
+                                                                No offers
+                                                            </div>
+                                                            {{/if}}
                                                         </div>
                                                         <div class="product__cart__item__text">
                                                             <h6>
@@ -75,7 +100,11 @@
                                                                 {{/if}}
                                                                 {{/if}}
                                                             </h6>
-                                                            <h5>₹{{this.productId.finalPrice}}</h5>
+                                                            <h5>₹{{this.productId.finalPrice}}
+                                                                {{#if hasOffer}}
+                                                                <span style="text-decoration: line-through; color: #999; font-size: 14px;">₹{{this.productId.regularPrice}}</span>
+                                                                {{/if}}
+                                                            </h5>
                                                         </div>
                                                     </td>
                                                     <td class="quantity__item">

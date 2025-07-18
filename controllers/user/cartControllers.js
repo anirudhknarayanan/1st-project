@@ -36,14 +36,30 @@ module.exports = {
                 const productWithOffers = getDiscountPriceCart(item.productId);
                 const currentOfferData = getDiscountPrice(item.productId);
 
+                // ✅ DEBUG: Log offer information
+                console.log(`Product: ${item.productId.productName}`);
+                console.log(`Product Offer: ${item.productId.productOffer || 0}%`);
+                console.log(`Category Offer: ${item.productId.category?.categoryOffer || 0}%`);
+                console.log(`Current Offer Data:`, currentOfferData);
+
+                // ✅ CALCULATE: Amount saved per item
+                const regularPrice = item.productId.regularPrice;
+                const salePrice = item.productId.salePrice;
+                const savedPerItem = regularPrice - salePrice;
+                const totalSaved = savedPerItem * item.quantity;
+
                 // ✅ UPDATE: Apply current offer data to cart item
                 const updatedItem = {
                     ...item,
                     productId: productWithOffers,
                     appliedOffer: currentOfferData?.appliedOffer || 0,
-                    appliedOfferType: currentOfferData?.appliedOfferType || null
+                    appliedOfferType: currentOfferData?.appliedOfferType || null,
+                    savedPerItem: savedPerItem,
+                    totalSaved: totalSaved,
+                    hasOffer: (currentOfferData?.appliedOffer || 0) > 0
                 };
 
+                console.log(`Has Offer: ${updatedItem.hasOffer}, Applied Offer: ${updatedItem.appliedOffer}%, Type: ${updatedItem.appliedOfferType}`);
                 return updatedItem;
 
             }).filter((item => item && item.productId));
