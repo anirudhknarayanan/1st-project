@@ -72,11 +72,15 @@ module.exports = {
 
             console.log("your cart detailes", cart.items);
 
+            const relatedProducts = await Product.find({isBlocked : false}).limit(4).lean();
+            console.log("related products:",relatedProducts)
+
 
 
             res.render("user/userCart", {
                 user: req.session.userData,
-                cart
+                cart,
+                relatedProducts
             })
         } catch (error) {
             console.error("Error loading cart:", error);
