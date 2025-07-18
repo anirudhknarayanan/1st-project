@@ -500,23 +500,63 @@ module.exports = {
       const user = req.session.user;
       const userData = await User.findOne({ _id: user })
       let search = req.body.query;
-      console.log("this is sea", search);
+      console.log("🔍 SEARCH DEBUG - Search term:", search);
 
       const brands = await Brand.find({}).lean();
       const categories = await Category.find({ isListed: true }).lean();
       const categoryIds = categories.map((category) => category._id.toString());
+      console.log("🔍 SEARCH DEBUG - Available categories:", categoryIds.length);
+
       let searchResult = [];
-      if (req.session.filteredProduct && req.session.filteredProduct.length > 0) {
-        searchResult = req.session.filteredProduct.filter((product) =>
-          product.productName.toLowerCase().includes(search.toLowerCase()))
-      } else {
-        searchResult = await Product.find({
-          productName: { $regex: ".*" + search + ".*", $options: "i" },
-          isBlocked: false,
-          quantity: { $gt: 0 },
-          category: { $in: categoryIds }
-        }).lean()
+
+      // ✅ ALWAYS SEARCH IN DATABASE, NOT FILTERED PRODUCTS
+      console.log("🔍 SEARCH DEBUG - Searching in database for all products");
+
+      // ✅ IMPROVED: Search in both product name AND brand name
+      const searchRegex = new RegExp(search.trim(), "i"); // More robust regex
+
+      searchResult = await Product.find({
+        $and: [
+          {
+            $or: [
+              { productName: { $regex: searchRegex } },  // Search in product name
+              { brand: { $regex: searchRegex } }         // Search in brand name
+            ]
+          },
+          { isBlocked: false },
+          { category: { $in: categoryIds } }
+        ]
+      }).populate('category').lean()
+
+      console.log("🔍 SEARCH DEBUG - Search regex pattern:", searchRegex);
+      console.log("🔍 SEARCH DEBUG - Searching for products containing:", search.trim());
+
+      console.log("🔍 SEARCH DEBUG - Total products in database:", await Product.countDocuments());
+      console.log("🔍 SEARCH DEBUG - Products matching search:", searchResult.length);
+
+      // ✅ DEBUG: Check all products that contain the search term (ignoring other filters)
+      const allMatchingProducts = await Product.find({
+        $or: [
+          { productName: { $regex: searchRegex } },
+          { brand: { $regex: searchRegex } }
+        ]
+      }).lean();
+      console.log("🔍 SEARCH DEBUG - All products/brands containing '" + search + "' (ignoring filters):", allMatchingProducts.length);
+      allMatchingProducts.forEach(p => {
+        console.log(`  - ${p.productName} | Brand: ${p.brand} (blocked: ${p.isBlocked}, category: ${p.category})`);
+      });
+
+      // ✅ DEBUG: Show final results
+      console.log("🔍 SEARCH DEBUG - Final filtered results:");
+      searchResult.forEach(p => {
+        console.log(`  ✅ ${p.productName} | Brand: ${p.brand}`);
+      });
+      console.log("🔍 SEARCH DEBUG - Search results found:", searchResult.length);
+
+      if (searchResult.length > 0) {
+        console.log("🔍 SEARCH DEBUG - First result:", searchResult[0].productName);
       }
+
       searchResult.sort((a, b) => new Date(b.createdOn) - new Date(a.createdOn));
 
       const itemsPerPage = 6;
