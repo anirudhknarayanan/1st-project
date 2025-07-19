@@ -574,11 +574,13 @@
                     <td>
                         <div>{{this.productId.productName}}</div>
 
-                        {{!-- ✅ SHOW PRICE WITH ORIGINAL PRICE (SAME AS CART PAGE) --}}
+                        {{!-- ✅ SHOW ACTUAL PRICE AS MAIN PRICE --}}
                         <div style="margin-top: 5px;">
-                            <strong>₹{{this.price}}</strong>
+                            <strong>₹{{this.originalPrice}}</strong>
                             {{#if this.appliedOffer}}
-                            <span style="text-decoration: line-through; color: #999; font-size: 14px; margin-left: 8px;">₹{{this.originalPrice}}</span>
+                            <div style="color: #28a745; font-size: 14px; margin-top: 2px;">
+                                Offer Price: <strong>₹{{this.price}}</strong>
+                            </div>
                             {{/if}}
                         </div>
 
@@ -590,14 +592,18 @@
                                     🏷️ <strong>Product Offer</strong>
                                 </div>
                                 <div style="color: #666; margin-top: 2px;">
-                                    Saved <strong>₹{{subtract this.originalPrice this.price}}</strong> ({{this.appliedOffer}}% off)
+                                    <span class="savings-amount" data-original="{{this.originalPrice}}" data-price="{{this.price}}" data-offer="{{this.appliedOffer}}">
+                                        Saved <strong>₹0</strong> ({{this.appliedOffer}}% off)
+                                    </span>
                                 </div>
                             {{else if (eq this.appliedOfferType 'category')}}
                                 <div style="color: #17a2b8; font-weight: bold;">
                                     📂 <strong>Category Offer</strong>
                                 </div>
                                 <div style="color: #666; margin-top: 2px;">
-                                    Saved <strong>₹{{subtract this.originalPrice this.price}}</strong> ({{this.appliedOffer}}% off)
+                                    <span class="savings-amount" data-original="{{this.originalPrice}}" data-price="{{this.price}}" data-offer="{{this.appliedOffer}}">
+                                        Saved <strong>₹0</strong> ({{this.appliedOffer}}% off)
+                                    </span>
                                 </div>
                             {{/if}}
                         </div>
@@ -1132,4 +1138,38 @@
 
 
 
+</script>
+
+{{!-- ✅ CALCULATE CORRECT SAVINGS AMOUNTS --}}
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Calculate correct savings for all order items
+        const savingsElements = document.querySelectorAll('.savings-amount');
+
+        savingsElements.forEach(element => {
+            const originalPrice = parseFloat(element.dataset.original) || 0;
+            const currentPrice = parseFloat(element.dataset.price) || 0;
+            const offerPercentage = parseFloat(element.dataset.offer) || 0;
+
+            let savedAmount = 0;
+
+            // ✅ SMART CALCULATION: Handle both old and new order data
+            if (originalPrice > currentPrice) {
+                // New orders: originalPrice is correct, calculate difference
+                savedAmount = originalPrice - currentPrice;
+            } else if (offerPercentage > 0) {
+                // Old orders: originalPrice is wrong, calculate from offer percentage
+                // If current price is ₹30000 and offer is 40%, then original was ₹50000
+                const calculatedOriginal = currentPrice / (1 - offerPercentage / 100);
+                savedAmount = calculatedOriginal - currentPrice;
+            }
+
+            // Update the display
+            if (savedAmount > 0) {
+                element.innerHTML = `Saved <strong>₹${Math.round(savedAmount)}</strong> (${offerPercentage}% off)`;
+            } else {
+                element.innerHTML = `No savings calculated`;
+            }
+        });
+    });
 </script>

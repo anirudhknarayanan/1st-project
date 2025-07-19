@@ -463,7 +463,7 @@ module.exports = {
 
             doc.fontSize(24)
                 .font('Helvetica-Bold')
-                .text('TIMELESS AURA', { align: 'center' })
+                .text('TAKE YOUR TIME', { align: 'center' })
                 .moveDown(0.5);
 
             doc.fontSize(16)
