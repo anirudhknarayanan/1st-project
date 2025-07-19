@@ -43,14 +43,30 @@ module.exports = {
                 // ✅ RECALCULATE: Get current offer information for each product
                 const currentOfferData = getDiscountPrice(item.productId);
 
+                // ✅ DEBUG: Log checkout offer information
+                console.log(`CHECKOUT DEBUG - Product: ${item.productId.productName}`);
+                console.log(`CHECKOUT DEBUG - Current Offer Data:`, currentOfferData);
+
+                // ✅ CALCULATE: Amount saved per item (same as cart controller)
+                const regularPrice = item.productId.regularPrice;
+                const salePrice = item.productId.salePrice;
+                const savedPerItem = regularPrice - salePrice;
+                const totalSaved = savedPerItem * item.quantity;
+
                 // ✅ UPDATE: Use current offer data instead of stored cart data
-                return {
+                const updatedItem = {
                     ...item,
                     appliedOffer: currentOfferData?.appliedOffer || 0,
                     appliedOfferType: currentOfferData?.appliedOfferType || null,
                     price: currentOfferData?.finalPrice || item.productId.salePrice,
-                    totalPrice: (currentOfferData?.finalPrice || item.productId.salePrice) * item.quantity
+                    totalPrice: (currentOfferData?.finalPrice || item.productId.salePrice) * item.quantity,
+                    savedPerItem: savedPerItem,
+                    totalSaved: totalSaved,
+                    hasOffer: (currentOfferData?.appliedOffer || 0) > 0
                 };
+
+                console.log(`CHECKOUT DEBUG - Has Offer: ${updatedItem.hasOffer}, Applied Offer: ${updatedItem.appliedOffer}%, Type: ${updatedItem.appliedOfferType}`);
+                return updatedItem;
             });
 
             if (availableItems.length !== cart.items.length) {
