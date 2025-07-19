@@ -573,15 +573,38 @@
                     </td>
                     <td>
                         <div>{{this.productId.productName}}</div>
-                        {{#if this.appliedOffer}}
-                        <small class="text-success">
-                            <i class="fas fa-tag"></i>
-                            {{#if (eq this.appliedOfferType 'product')}}
-                                Product Offer: {{this.appliedOffer}}% OFF
-                            {{else if (eq this.appliedOfferType 'category')}}
-                                Category Offer: {{this.appliedOffer}}% OFF
+
+                        {{!-- ✅ SHOW PRICE WITH ORIGINAL PRICE (SAME AS CART PAGE) --}}
+                        <div style="margin-top: 5px;">
+                            <strong>₹{{this.price}}</strong>
+                            {{#if this.appliedOffer}}
+                            <span style="text-decoration: line-through; color: #999; font-size: 14px; margin-left: 8px;">₹{{this.originalPrice}}</span>
                             {{/if}}
-                        </small>
+                        </div>
+
+                        {{!-- ✅ SHOW OFFER INFORMATION (SAME AS CART PAGE) --}}
+                        {{#if this.appliedOffer}}
+                        <div class="product-offer-details" style="margin-top: 6px; padding: 4px 6px; background: #f8f9fa; border-left: 3px solid #28a745; border-radius: 3px; font-size: 10px;">
+                            {{#if (eq this.appliedOfferType 'product')}}
+                                <div style="color: #28a745; font-weight: bold;">
+                                    🏷️ <strong>Product Offer</strong>
+                                </div>
+                                <div style="color: #666; margin-top: 2px;">
+                                    Saved <strong>₹{{subtract this.originalPrice this.price}}</strong> ({{this.appliedOffer}}% off)
+                                </div>
+                            {{else if (eq this.appliedOfferType 'category')}}
+                                <div style="color: #17a2b8; font-weight: bold;">
+                                    📂 <strong>Category Offer</strong>
+                                </div>
+                                <div style="color: #666; margin-top: 2px;">
+                                    Saved <strong>₹{{subtract this.originalPrice this.price}}</strong> ({{this.appliedOffer}}% off)
+                                </div>
+                            {{/if}}
+                        </div>
+                        {{else}}
+                        <div style="color: #999; font-size: 10px; margin-top: 5px;">
+                            No offers applied
+                        </div>
                         {{/if}}
                     </td>
                     <td>₹{{this.price}}</td>

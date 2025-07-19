@@ -85,6 +85,10 @@ module.exports = {
             const addressDoc = await Address.findOne({ userId }).lean();
             const userAddress = addressDoc ? addressDoc.address : [];
 
+            // ✅ FETCH WALLET BALANCE FROM WALLET SCHEMA
+            const wallet = await Wallet.findOne({ userId }).lean();
+            const walletBalance = wallet ? wallet.balance : 0;
+
             // Fetch valid coupons
 
 
@@ -109,7 +113,7 @@ module.exports = {
             //Render checkout page
             res.render("user/userCheckout", {
                 cart,
-                user,
+                user: { ...user, walletBalance }, // ✅ ADD WALLET BALANCE TO USER OBJECT
                 coupon,
                 referralCoupons: availableReferralCoupons,
                 userAddress,
@@ -363,6 +367,21 @@ module.exports = {
                 });
             }
 
+            // ✅ WALLET PAYMENT VALIDATION
+            if (paymentMethod === "wallet") {
+                const wallet = await Wallet.findOne({ userId });
+                if (!wallet) {
+                    return res.status(400).json({ success: false, error: "Wallet not found" });
+                }
+
+                if (wallet.balance < cleanedTotal) {
+                    return res.status(400).json({
+                        success: false,
+                        error: `Insufficient wallet balance. Your balance: ₹${wallet.balance}, Required: ₹${cleanedTotal}`
+                    });
+                }
+            }
+
             // Re-confirm product data from DB
             const orderedItemsWithDetails = await Promise.all(
                 orderedItems.map(async (item) => {
@@ -442,6 +461,24 @@ module.exports = {
             }
 
             await newOrder.save();
+
+            // ✅ WALLET PAYMENT PROCESSING
+            if (paymentMethod === "wallet") {
+                // Deduct amount from wallet and add transaction
+                const wallet = await Wallet.findOne({ userId });
+                if (wallet) {
+                    wallet.balance -= cleanedTotal;
+                    wallet.transactions.push({
+                        type: 'debit',
+                        amount: cleanedTotal,
+                        description: `Order payment - ${newOrder.orderId}`,
+                        status: 'completed'
+                    });
+                    await wallet.save();
+                }
+
+                console.log(`✅ Wallet payment successful. Deducted ₹${cleanedTotal} from wallet. New balance: ₹${wallet.balance}`);
+            }
 
             // Reduce stock
             for (const item of formattedItems) {

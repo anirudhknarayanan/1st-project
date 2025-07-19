@@ -172,10 +172,11 @@
   <aside class="sidebar">
     <ul>
       <li><a href="/profile"><i class="icon">👤</i> Profile</a></li>
-      <li><i class="icon">📦</i> Orders</li>
-      <li><i class="icon">💰</i> Wallet</li>
+      <li><a href="#orders"><i class="icon">📦</i> Orders</a></li>
+
+      <li><a href="#walletHistory"><i class="icon">💰</i> Wallet</a></li>
       <li><a href="/addAddress"><i class="icon">📍</i> Address</a></li>
-      <li><i class="icon">🔒</i> Password</li>
+      <li><a href="/changePassword"><i class="icon">🔒</i> Password</a></li>
       <li><a href="/referralDetails"><i class="icon">🎁</i> Refer & Earn</a></li>
       <li><a href="/logout"><i class="icon">🚪</i> Logout</a></li>
     </ul>
@@ -614,7 +615,7 @@
   }
 
 
-document.querySelectorAll(".delete-address").forEach(button => {
+  document.querySelectorAll(".delete-address").forEach(button => {
     button.addEventListener("click", function (event) {
       event.preventDefault(); // stop the default link behavior
       const addressId = this.getAttribute("data-id");
@@ -637,7 +638,7 @@ document.querySelectorAll(".delete-address").forEach(button => {
   });
   // Copy referral code function
   function copyReferralCode(referralCode) {
-    navigator.clipboard.writeText(referralCode).then(function() {
+    navigator.clipboard.writeText(referralCode).then(function () {
       // Show success message
       const copyBtn = event.target.closest('.copy-btn');
       const originalText = copyBtn.innerHTML;
@@ -649,7 +650,7 @@ document.querySelectorAll(".delete-address").forEach(button => {
         copyBtn.innerHTML = originalText;
         copyBtn.style.background = '#28a745';
       }, 2000);
-    }).catch(function(err) {
+    }).catch(function (err) {
       console.error('Could not copy text: ', err);
       // Fallback for older browsers
       const textArea = document.createElement('textarea');

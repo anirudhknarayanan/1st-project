@@ -747,11 +747,26 @@
                     <span class="badge bg-success ms-2">No charges</span>
                   </label>
                 </div>
-                <div class="form-check">
+                <div class="form-check mb-2">
                   <input class="form-check-input" type="radio" name="payment_method" id="razorpay" value="razorpay">
                   <label class="form-check-label" for="razorpay">
                     <i class="fas fa-mobile-alt me-2"></i>Razorpay
                   </label>
+                </div>
+
+                {{!-- ✅ WALLET PAYMENT OPTION --}}
+                <div class="form-check">
+                  <input class="form-check-input" type="radio" name="payment_method" id="wallet" value="wallet">
+                  <label class="form-check-label" for="wallet">
+                    <i class="fas fa-wallet me-2"></i>Pay with Wallet
+                    <span class="badge bg-primary ms-2">
+                      Balance: ₹{{user.walletBalance}}
+                    </span>
+                  </label>
+                  <div id="walletBalanceCheck" class="text-danger small mt-1 ms-4" style="display: none;">
+                    <i class="fas fa-exclamation-triangle me-1"></i>
+                    <span id="walletErrorMessage"></span>
+                  </div>
                 </div>
               </div>
 
@@ -1095,6 +1110,56 @@
           }
         }
       }
+      else if (paymentMethod === "wallet") {
+        // ✅ WALLET PAYMENT PROCESSING
+        const response = await fetch("/checkout", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            shippingAddress,
+            paymentMethod,
+            totalAmount,
+            orderedItems,
+            couponCode: appliedCouponCode,
+            discountAmount
+          })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          await Swal.fire({
+            title: 'Payment Successful!',
+            text: 'Your order has been placed successfully using wallet payment!',
+            icon: 'success',
+            timer: 1500,
+            showConfirmButton: false
+          });
+          window.location.href = `/viewOrder/${data.orderId}`;
+        } else {
+          if (data.unavailableItems && data.unavailableItems.length > 0) {
+            let unavailableMessage = 'Some items became unavailable:<br><ul>';
+            data.unavailableItems.forEach(item => {
+              unavailableMessage += `<li>${item.name}: ${item.reason}</li>`;
+            });
+            unavailableMessage += '</ul><br>Please try again.';
+
+            Swal.fire({
+              title: 'Items Unavailable',
+              html: unavailableMessage,
+              icon: 'warning',
+              confirmButtonText: 'OK'
+            });
+          } else {
+            Swal.fire({
+              title: 'Payment Failed!',
+              text: data.message || 'Wallet payment failed. Please try again.',
+              icon: 'error',
+              confirmButtonText: 'OK'
+            });
+          }
+        }
+      }
       else if (paymentMethod === "razorpay") {
 
 
@@ -1319,6 +1384,42 @@
 
   let currentCouponCode = '';
 
+  // ✅ WALLET BALANCE VALIDATION
+  function checkWalletBalance() {
+    const walletBalance = {{user.walletBalance}};
+
+    // Get current total from the page (after coupons)
+    const totalElement = document.getElementById('total');
+    const totalText = totalElement ? totalElement.innerText.replace('₹', '').trim() : '{{cart.cartTotal}}';
+    const currentTotal = parseFloat(totalText) || {{cart.cartTotal}};
+
+    const walletRadio = document.getElementById('wallet');
+    const walletLabel = document.querySelector('label[for="wallet"]');
+    const walletError = document.getElementById('walletBalanceCheck');
+    const walletErrorMessage = document.getElementById('walletErrorMessage');
+
+    if (walletBalance < currentTotal) {
+      walletRadio.disabled = true;
+      walletLabel.style.color = '#999';
+      walletError.style.display = 'block';
+      walletErrorMessage.textContent = `Insufficient wallet balance. Need ₹${currentTotal - walletBalance} more.`;
+
+      // If wallet is currently selected, switch to COD
+      if (walletRadio.checked) {
+        document.getElementById('cod').checked = true;
+      }
+    } else {
+      walletRadio.disabled = false;
+      walletLabel.style.color = '';
+      walletError.style.display = 'none';
+    }
+  }
+
+  // Check wallet balance on page load
+  document.addEventListener('DOMContentLoaded', function() {
+    checkWalletBalance();
+  });
+
   async function applyCoupons() {
 
     const couponInputElement = document.getElementById("couponCode");
@@ -1361,6 +1462,9 @@
 
         // Clear input
         couponInputElement.value = '';
+
+        // ✅ RECHECK WALLET BALANCE AFTER COUPON APPLIED
+        checkWalletBalance();
 
         Swal.fire({
           title: 'Success!',
@@ -1407,6 +1511,9 @@
         document.getElementById("couponMessage").innerText = "";
         document.getElementById("removeCouponSection").style.display = "none";
         currentCouponCode = '';
+
+        // ✅ RECHECK WALLET BALANCE AFTER COUPON REMOVED
+        checkWalletBalance();
 
         Swal.fire({
           title: 'Coupon Removed',
