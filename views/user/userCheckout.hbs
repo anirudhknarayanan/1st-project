@@ -746,6 +746,10 @@
                     <i class="fas fa-money-bill me-2"></i>Cash on Delivery
                     <span class="badge bg-success ms-2">No charges</span>
                   </label>
+                  <div id="codRestrictionMessage" class="text-danger small mt-1 ms-4" style="display: none;">
+                    <i class="fas fa-exclamation-triangle me-1"></i>
+                    <span>COD is not available for orders above ₹1000. Please choose online payment or wallet.</span>
+                  </div>
                 </div>
                 <div class="form-check mb-2">
                   <input class="form-check-input" type="radio" name="payment_method" id="razorpay" value="razorpay">
@@ -1384,6 +1388,33 @@
 
   let currentCouponCode = '';
 
+  // ✅ COD RESTRICTION VALIDATION
+  function checkCODEligibility() {
+    // Get current total from the page (after coupons)
+    const totalElement = document.getElementById('total');
+    const totalText = totalElement ? totalElement.innerText.replace('₹', '').trim() : '{{cart.cartTotal}}';
+    const currentTotal = parseFloat(totalText) || {{cart.cartTotal}};
+
+    const codRadio = document.getElementById('cod');
+    const codLabel = document.querySelector('label[for="cod"]');
+    const codError = document.getElementById('codRestrictionMessage');
+
+    if (currentTotal > 1000) {
+      codRadio.disabled = true;
+      codLabel.style.color = '#999';
+      codError.style.display = 'block';
+
+      // If COD is currently selected, switch to Razorpay
+      if (codRadio.checked) {
+        document.getElementById('razorpay').checked = true;
+      }
+    } else {
+      codRadio.disabled = false;
+      codLabel.style.color = '';
+      codError.style.display = 'none';
+    }
+  }
+
   // ✅ WALLET BALANCE VALIDATION
   function checkWalletBalance() {
     const walletBalance = {{user.walletBalance}};
@@ -1404,9 +1435,14 @@
       walletError.style.display = 'block';
       walletErrorMessage.textContent = `Insufficient wallet balance. Need ₹${currentTotal - walletBalance} more.`;
 
-      // If wallet is currently selected, switch to COD
+      // If wallet is currently selected, switch to available option
       if (walletRadio.checked) {
-        document.getElementById('cod').checked = true;
+        const codRadio = document.getElementById('cod');
+        if (!codRadio.disabled) {
+          codRadio.checked = true;
+        } else {
+          document.getElementById('razorpay').checked = true;
+        }
       }
     } else {
       walletRadio.disabled = false;
@@ -1415,9 +1451,15 @@
     }
   }
 
-  // Check wallet balance on page load
-  document.addEventListener('DOMContentLoaded', function() {
+  // ✅ CHECK ALL PAYMENT METHOD ELIGIBILITY
+  function checkPaymentMethodEligibility() {
+    checkCODEligibility();
     checkWalletBalance();
+  }
+
+  // Check payment method eligibility on page load
+  document.addEventListener('DOMContentLoaded', function() {
+    checkPaymentMethodEligibility();
   });
 
   async function applyCoupons() {
@@ -1463,8 +1505,8 @@
         // Clear input
         couponInputElement.value = '';
 
-        // ✅ RECHECK WALLET BALANCE AFTER COUPON APPLIED
-        checkWalletBalance();
+        // ✅ RECHECK PAYMENT METHOD ELIGIBILITY AFTER COUPON APPLIED
+        checkPaymentMethodEligibility();
 
         Swal.fire({
           title: 'Success!',
@@ -1512,8 +1554,8 @@
         document.getElementById("removeCouponSection").style.display = "none";
         currentCouponCode = '';
 
-        // ✅ RECHECK WALLET BALANCE AFTER COUPON REMOVED
-        checkWalletBalance();
+        // ✅ RECHECK PAYMENT METHOD ELIGIBILITY AFTER COUPON REMOVED
+        checkPaymentMethodEligibility();
 
         Swal.fire({
           title: 'Coupon Removed',

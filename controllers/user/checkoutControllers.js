@@ -367,6 +367,14 @@ module.exports = {
                 });
             }
 
+            // ✅ COD RESTRICTION VALIDATION
+            if (paymentMethod === "cod" && cleanedTotal > 1000) {
+                return res.status(400).json({
+                    success: false,
+                    error: `COD is not available for orders above ₹1000. Your order total: ₹${cleanedTotal}. Please choose online payment or wallet.`
+                });
+            }
+
             // ✅ WALLET PAYMENT VALIDATION
             if (paymentMethod === "wallet") {
                 const wallet = await Wallet.findOne({ userId });
