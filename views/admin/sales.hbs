@@ -1,3 +1,7 @@
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+
+
 <style>
     h2 {
         text-align: center;
@@ -115,18 +119,45 @@
     }
 
     .summary {
-        display: flex;
-        justify-content: space-between;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 15px;
         margin-top: 20px;
     }
 
     .box {
         background: #f0f0f0;
         padding: 15px;
-        border-radius: 5px;
+        border-radius: 8px;
         text-align: center;
-        width: 30%;
-        box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+        box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        transition: transform 0.2s ease;
+    }
+
+    .box:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+
+    /* ✅ NEW: Coupon box specific styles */
+    .coupon-box {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+
+    .admin-coupon-box {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        color: white;
+    }
+
+    .referral-coupon-box {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        color: white;
+    }
+
+    .savings-box {
+        background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+        color: white;
     }
 
     .box h4 {
@@ -139,6 +170,98 @@
         font-weight: bold;
         margin-bottom: 0;
         color: #444;
+    }
+
+    /* ✅ NEW: Small text styling for coupon boxes */
+    .box small {
+        display: block;
+        margin-top: 5px;
+        font-size: 12px;
+        opacity: 0.8;
+        font-weight: normal;
+    }
+
+    /* Override text color for colored boxes */
+    .coupon-box p, .admin-coupon-box p, .referral-coupon-box p, .savings-box p {
+        color: white;
+    }
+
+    /* ✅ NEW: Coupon Analytics Table Styles */
+    .coupon-analytics {
+        margin-top: 30px;
+        background: white;
+        border-radius: 8px;
+        padding: 20px;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+    }
+
+    .coupon-analytics h3 {
+        color: #333;
+        margin-bottom: 20px;
+        text-align: center;
+        font-size: 24px;
+    }
+
+    .coupon-table-container {
+        overflow-x: auto;
+    }
+
+    .coupon-table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+    }
+
+    .coupon-table th {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 12px;
+        text-align: left;
+        font-weight: bold;
+    }
+
+    .coupon-table td {
+        padding: 12px;
+        border-bottom: 1px solid #eee;
+    }
+
+    .coupon-table tr:hover {
+        background-color: #f8f9fa;
+    }
+
+    .coupon-code {
+        font-family: monospace;
+        font-weight: bold;
+        color: #2c3e50;
+    }
+
+    .coupon-type {
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 12px;
+        font-weight: bold;
+    }
+
+    .admin-type {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        color: white;
+    }
+
+    .referral-type {
+        background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+        color: white;
+    }
+
+    .usage-count {
+        text-align: center;
+        font-weight: bold;
+        color: #e74c3c;
+    }
+
+    .savings-amount {
+        text-align: right;
+        font-weight: bold;
+        color: #27ae60;
     }
 
     table {
@@ -323,6 +446,27 @@
             <h4>Overall Sales Amount</h4>
             <p>₹{{formatNumber totalSales}}.00</p>
         </div>
+        <!-- ✅ NEW: Coupon Usage Analytics -->
+        <div class="box coupon-box">
+            <h4>Total Coupons Used</h4>
+            <p>{{totalCouponsUsed}}</p>
+            <small>All coupon types</small>
+        </div>
+        <div class="box admin-coupon-box">
+            <h4>Admin Coupons</h4>
+            <p>{{adminCouponsUsed}}</p>
+            <small>Regular discount coupons</small>
+        </div>
+        <div class="box referral-coupon-box">
+            <h4>Referral Coupons</h4>
+            <p>{{referralCouponsUsed}}</p>
+            <small>Referral rewards used</small>
+        </div>
+        <div class="box savings-box">
+            <h4>Total Savings Given</h4>
+            <p>₹{{formatNumber totalAllCouponSavings}}.00</p>
+            <small>Through all coupons</small>
+        </div>
     </div>
 
     {{#if orders.length}}
@@ -385,6 +529,38 @@
 
 
 
+    <!-- ✅ NEW: Top Used Coupons Section -->
+    {{#if topCoupons}}
+    <div class="coupon-analytics">
+        <h3>Top Used Coupons</h3>
+        <div class="coupon-table-container">
+            <table class="coupon-table">
+                <thead>
+                    <tr>
+                        <th>Coupon Code</th>
+                        <th>Type</th>
+                        <th>Usage Count</th>
+                        <th>Total Savings</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {{#each topCoupons}}
+                    <tr>
+                        <td class="coupon-code">{{this.code}}</td>
+                        <td>
+                            <span class="coupon-type {{#ifEquals this.type 'Admin Coupon'}}admin-type{{else}}referral-type{{/ifEquals}}">
+                                {{this.type}}
+                            </span>
+                        </td>
+                        <td class="usage-count">{{this.usageCount}}</td>
+                        <td class="savings-amount">₹{{formatNumber this.totalSavings}}</td>
+                    </tr>
+                    {{/each}}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    {{/if}}
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {
@@ -424,3 +600,4 @@
         });
     });
 </script>
+

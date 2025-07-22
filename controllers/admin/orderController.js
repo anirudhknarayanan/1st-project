@@ -407,15 +407,117 @@ module.exports = {
                 .limit(limit).lean();
 
             console.log("orders : ", orders);
+
+            // ✅ NEW: Calculate coupon usage statistics
+            let totalCouponsUsed = 0;
+            let adminCouponsUsed = 0;
+            let referralCouponsUsed = 0;
+            let totalCouponSavings = 0;
+            let totalReferralSavings = 0;
+            let totalAllCouponSavings = 0;
+            let allTopCoupons = [];
+
+            try {
+                const Referral = require("../../models/referralSchema");
+
+                // Count admin coupons used (orders with coupons applied, excluding "false")
+                adminCouponsUsed = await Order.countDocuments({
+                    ...query,
+                    coupenApplied: { $ne: "false" }
+                });
+
+                // Count referral coupons used
+                referralCouponsUsed = await Referral.countDocuments({
+                    status: "used"
+                });
+
+                // Total coupons used
+                totalCouponsUsed = adminCouponsUsed + referralCouponsUsed;
+
+                // Calculate total savings from coupons
+                const ordersWithCoupons = await Order.find({
+                    ...query,
+                    coupenApplied: { $ne: "false" }
+                });
+
+                totalCouponSavings = ordersWithCoupons.reduce((sum, order) => {
+                    return sum + (order.discount || 0);
+                }, 0);
+
+                // Get referral coupon savings
+                const referralSavings = await Referral.aggregate([
+                    { $match: { status: "used" } },
+                    { $group: { _id: null, total: { $sum: "$discount" } } }
+                ]);
+
+                totalReferralSavings = referralSavings.length > 0 ? referralSavings[0].total : 0;
+                totalAllCouponSavings = totalCouponSavings + totalReferralSavings;
+
+                // ✅ NEW: Get top used coupons details
+                const topAdminCoupons = await Order.aggregate([
+                    { $match: { ...query, coupenApplied: { $ne: "false" } } },
+                    { $group: {
+                        _id: "$coupenApplied",
+                        usageCount: { $sum: 1 },
+                        totalSavings: { $sum: "$discount" }
+                    }},
+                    { $sort: { usageCount: -1 } },
+                    { $limit: 5 },
+                    { $project: {
+                        code: "$_id",
+                        type: "Admin Coupon",
+                        usageCount: 1,
+                        totalSavings: 1,
+                        _id: 0
+                    }}
+                ]);
+
+                const topReferralCoupons = await Referral.aggregate([
+                    { $match: { status: "used" } },
+                    { $group: {
+                        _id: "$couponCode",
+                        usageCount: { $sum: 1 },
+                        totalSavings: { $sum: "$discount" }
+                    }},
+                    { $sort: { usageCount: -1 } },
+                    { $limit: 5 },
+                    { $project: {
+                        code: "$_id",
+                        type: "Referral Coupon",
+                        usageCount: 1,
+                        totalSavings: 1,
+                        _id: 0
+                    }}
+                ]);
+
+                // Combine and sort all coupons
+                allTopCoupons = [...topAdminCoupons, ...topReferralCoupons]
+                    .sort((a, b) => b.usageCount - a.usageCount)
+                    .slice(0, 10);
+
+            } catch (couponError) {
+                console.log("Error calculating coupon analytics:", couponError);
+                // Use default values if coupon analytics fail
+            }
+
             res.render("admin/sales", {
-                admin: true, orders,
+                layout: false, // ✅ NO LAYOUT - Standalone page
+                orders,
                 totalSales,
                 totalOrders,
                 currentPage: page,
                 totalPages,
                 filterType,
                 fromDate,
-                toDate
+                toDate,
+                // ✅ NEW: Coupon analytics data
+                totalCouponsUsed,
+                adminCouponsUsed,
+                referralCouponsUsed,
+                totalCouponSavings,
+                totalReferralSavings,
+                totalAllCouponSavings,
+                topCoupons: allTopCoupons
             })
         } catch (error) {
 
@@ -449,6 +551,8 @@ module.exports = {
 
             const totalSales = orders.reduce((sum, order) => sum + order.total, 0);
             const totalOrders = orders.length;
+
+
 
 
             const doc = new PDFDocument({
