@@ -264,6 +264,17 @@
         color: #27ae60;
     }
 
+    /* ✅ NEW: Discount column styling */
+    .discount-amount {
+        text-align: center;
+        font-weight: bold;
+        color: #e74c3c;
+        background-color: #f8f9fa; /* Same as th background */
+    }
+
+    /* Style discount column header */
+   
+
     table {
         width: 100%;
         border-collapse: collapse;
@@ -478,6 +489,7 @@
                 <th>Customer Name</th>
                 <th>Product</th>
                 <th>Order Status</th>
+                <th>Discount</th>
                 <th>Amount</th>
             </tr>
         </thead>
@@ -494,6 +506,13 @@
                 </td>
                 <td class="status {{dashCase this.status}}">
                     {{this.status}}
+                </td>
+                <td class="discount-amount">
+                    {{#if this.discount}}
+                        ₹{{formatNumberFixed this.discount}}
+                    {{else}}
+                        ₹0
+                    {{/if}}
                 </td>
                 <td>₹ {{#if this.finalAmount}}{{formatNumberFixed this.finalAmount}}{{else}}{{formatNumberFixed
                     this.total}}{{/if}}</td>
