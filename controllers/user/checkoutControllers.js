@@ -659,25 +659,43 @@ module.exports = {
                 .font('Helvetica').text(`Payment Method: ${order.payment_method}`)
                 .text(`Payment Status: ${order.status}`).moveDown(1);
 
-            // 📦 Order Items Table
+            // 📦 Order Items Table with Offer Details
             doc.font('Helvetica-Bold').fontSize(12).text('Order Summary');
             const startX = 50;
-            const columnWidths = { product: 250, quantity: 80, price: 80, total: 80 };
+            const columnWidths = { product: 200, quantity: 60, originalPrice: 80, discount: 80, finalPrice: 80, total: 80 };
             let y = doc.y + 10;
 
-            doc.font('Helvetica-Bold')
+            doc.font('Helvetica-Bold').fontSize(9)
                 .text('Product', startX, y, { width: columnWidths.product })
-                .text('Quantity', startX + columnWidths.product, y, { width: columnWidths.quantity, align: 'right' })
-                .text('Price', startX + columnWidths.product + columnWidths.quantity, y, { width: columnWidths.price, align: 'right' })
-                .text('Total', startX + columnWidths.product + columnWidths.quantity + columnWidths.price, y, { width: columnWidths.total, align: 'right' })
+                .text('Qty', startX + columnWidths.product, y, { width: columnWidths.quantity, align: 'center' })
+                .text('Original Price', startX + columnWidths.product + columnWidths.quantity, y, { width: columnWidths.originalPrice, align: 'right' })
+                .text('Discount', startX + columnWidths.product + columnWidths.quantity + columnWidths.originalPrice, y, { width: columnWidths.discount, align: 'right' })
+                .text('Final Price', startX + columnWidths.product + columnWidths.quantity + columnWidths.originalPrice + columnWidths.discount, y, { width: columnWidths.finalPrice, align: 'right' })
+                .text('Total', startX + columnWidths.product + columnWidths.quantity + columnWidths.originalPrice + columnWidths.discount + columnWidths.finalPrice, y, { width: columnWidths.total, align: 'right' })
                 .moveDown(0.5)
-                .moveTo(startX, doc.y).lineTo(550, doc.y).stroke();
+                .moveTo(startX, doc.y).lineTo(580, doc.y).stroke();
 
             let runningTotal = 0;
             order.order_items.forEach((item) => {
                 y = doc.y + 5;
                 const itemTotal = item.price * item.quantity;
                 runningTotal += itemTotal;
+
+                // ✅ CALCULATE ORIGINAL PRICE AND DISCOUNT (SMART LOGIC)
+                let originalPrice = item.originalPrice || item.price;
+                let discountAmount = 0;
+
+                // Smart calculation for both old and new orders
+                if (item.appliedOffer && item.appliedOffer > 0) {
+                    if (originalPrice > item.price) {
+                        // New orders: originalPrice is correct
+                        discountAmount = originalPrice - item.price;
+                    } else {
+                        // Old orders: calculate original price from offer percentage
+                        originalPrice = item.price / (1 - item.appliedOffer / 100);
+                        discountAmount = originalPrice - item.price;
+                    }
+                }
 
                 // Product name with offer info
                 let productText = item.productName;
@@ -686,15 +704,17 @@ module.exports = {
                     productText += `\n(${offerType} Offer: ${item.appliedOffer}% OFF)`;
                 }
 
-                doc.font('Helvetica')
+                doc.font('Helvetica').fontSize(8)
                     .text(productText, startX, y, { width: columnWidths.product })
-                    .text(`${item.quantity}`, startX + columnWidths.product, y, { width: columnWidths.quantity, align: 'right' })
-                    .text(`₹${item.price.toFixed(2)}`, startX + columnWidths.product + columnWidths.quantity, y, { width: columnWidths.price, align: 'right' })
-                    .text(`₹${itemTotal.toFixed(2)}`, startX + columnWidths.product + columnWidths.quantity + columnWidths.price, y, { width: columnWidths.total, align: 'right' })
+                    .text(`${item.quantity}`, startX + columnWidths.product, y, { width: columnWidths.quantity, align: 'center' })
+                    .text(`₹${originalPrice.toFixed(0)}`, startX + columnWidths.product + columnWidths.quantity, y, { width: columnWidths.originalPrice, align: 'right' })
+                    .text(`-₹${discountAmount.toFixed(0)}`, startX + columnWidths.product + columnWidths.quantity + columnWidths.originalPrice, y, { width: columnWidths.discount, align: 'right' })
+                    .text(`₹${item.price.toFixed(0)}`, startX + columnWidths.product + columnWidths.quantity + columnWidths.originalPrice + columnWidths.discount, y, { width: columnWidths.finalPrice, align: 'right' })
+                    .text(`₹${itemTotal.toFixed(0)}`, startX + columnWidths.product + columnWidths.quantity + columnWidths.originalPrice + columnWidths.discount + columnWidths.finalPrice, y, { width: columnWidths.total, align: 'right' })
                     .moveDown(item.appliedOffer > 0 ? 0.8 : 0.5); // Extra space if offer text is shown
             });
 
-            doc.moveDown(1).moveTo(startX, doc.y).lineTo(550, doc.y).stroke().moveDown(0.5);
+            doc.moveDown(1).moveTo(startX, doc.y).lineTo(580, doc.y).stroke().moveDown(0.5);
 
             // 📋 Order Totals
             const summaryY = doc.y;
