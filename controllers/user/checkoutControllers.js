@@ -528,7 +528,7 @@ module.exports = {
 
             const order = await Order.findById(orderId).populate({
                 path: "order_items.productId",
-                select: "productName productImage price"
+                select: "productName productImage price regularPrice salePrice"
             });
 
             if (!order) {
@@ -541,8 +541,39 @@ module.exports = {
                 return res.redirect('/profile');
             }
 
+            // ✅ NEW: Calculate offer savings for each order item
+            const orderObject = order.toObject();
+
+            // Calculate savings for each item
+            if (orderObject.order_items) {
+                orderObject.order_items = orderObject.order_items.map(item => {
+                    if (item.productId && item.productId.regularPrice && item.productId.salePrice) {
+                        const regularPrice = item.productId.regularPrice;
+                        const salePrice = item.productId.salePrice;
+                        const savingsPerItem = regularPrice - salePrice;
+                        const totalSavingsForItem = savingsPerItem * item.quantity;
+                        const offerPercentage = ((savingsPerItem / regularPrice) * 100).toFixed(0);
+
+                        return {
+                            ...item,
+                            offerSavings: totalSavingsForItem,
+                            offerPercentage: offerPercentage,
+                            hasOffer: savingsPerItem > 0,
+                            savingsPerItem: savingsPerItem
+                        };
+                    }
+                    return {
+                        ...item,
+                        offerSavings: 0,
+                        offerPercentage: 0,
+                        hasOffer: false,
+                        savingsPerItem: 0
+                    };
+                });
+            }
+
             const orderData = {
-                ...order.toObject(),
+                ...orderObject,
                 address: order.shippingAddress || null,
                 totalAmount: order.finalAmount || order.total || 0,
                 orderStatus: order.status
@@ -705,21 +736,32 @@ module.exports = {
                     }
                 }
 
-                // Product name with offer info
-                let productText = item.productName;
-                if (item.appliedOffer && item.appliedOffer > 0) {
-                    const offerType = item.appliedOfferType === 'product' ? 'Product' : 'Category';
-                    productText += `\n(${offerType} Offer: ${item.appliedOffer}% OFF)`;
-                }
+                // ✅ ENHANCED PRODUCT TEXT WITH PROPER ALIGNMENT
+                const productName = item.productName;
 
+                // First, render the product name and all other columns aligned to the same row
                 doc.font('Helvetica').fontSize(8)
-                    .text(productText, startX, y, { width: columnWidths.product })
+                    .text(productName, startX, y, { width: columnWidths.product })
                     .text(`${item.quantity}`, startX + columnWidths.product, y, { width: columnWidths.quantity, align: 'center' })
                     .text(`₹${originalPrice.toFixed(0)}`, startX + columnWidths.product + columnWidths.quantity, y, { width: columnWidths.originalPrice, align: 'right' })
                     .text(`-₹${discountAmount.toFixed(0)}`, startX + columnWidths.product + columnWidths.quantity + columnWidths.originalPrice, y, { width: columnWidths.discount, align: 'right' })
                     .text(`₹${item.price.toFixed(0)}`, startX + columnWidths.product + columnWidths.quantity + columnWidths.originalPrice + columnWidths.discount, y, { width: columnWidths.finalPrice, align: 'right' })
-                    .text(`₹${itemTotal.toFixed(0)}`, startX + columnWidths.product + columnWidths.quantity + columnWidths.originalPrice + columnWidths.discount + columnWidths.finalPrice, y, { width: columnWidths.total, align: 'right' })
-                    .moveDown(item.appliedOffer > 0 ? 0.8 : 0.5); // Extra space if offer text is shown
+                    .text(`₹${itemTotal.toFixed(0)}`, startX + columnWidths.product + columnWidths.quantity + columnWidths.originalPrice + columnWidths.discount + columnWidths.finalPrice, y, { width: columnWidths.total, align: 'right' });
+
+                // Then, add offer details below the product name (if applicable)
+                if (item.appliedOffer && item.appliedOffer > 0 && discountAmount > 0) {
+                    const offerType = item.appliedOfferType === 'product' ? 'Product' : 'Category';
+                    const currentY = doc.y;
+
+                    doc.font('Helvetica').fontSize(7)
+                        .text(`Original: ₹${originalPrice.toFixed(0)}`, startX, currentY + 12, { width: columnWidths.product })
+                        .text(`${offerType} Offer`, startX, currentY + 24, { width: columnWidths.product })
+                        .text(`You saved ₹${discountAmount.toFixed(0)} (${item.appliedOffer}% off)`, startX, currentY + 36, { width: columnWidths.product });
+
+                    doc.moveDown(1.8); // Extra space for offer details
+                } else {
+                    doc.moveDown(0.5); // Normal spacing for products without offers
+                }
             });
 
             doc.moveDown(1).moveTo(startX, doc.y).lineTo(580, doc.y).stroke().moveDown(0.5);

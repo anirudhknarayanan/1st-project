@@ -160,6 +160,12 @@
         color: white;
     }
 
+    /* ✅ NEW: Total Offer Savings box style */
+    .total-offer-savings-box {
+        background: linear-gradient(135deg, #fd7e14 0%, #e55100 100%);
+        color: white;
+    }
+
     .box h4 {
         margin-top: 0;
         color: #333;
@@ -182,7 +188,8 @@
     }
 
     /* Override text color for colored boxes */
-    .coupon-box p, .admin-coupon-box p, .referral-coupon-box p, .savings-box p {
+    .coupon-box p, .admin-coupon-box p, .referral-coupon-box p, .savings-box p,
+    .total-offer-savings-box p {
         color: white;
     }
 
@@ -213,7 +220,7 @@
     }
 
     .coupon-table th {
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background: linear-gradient(135deg, #77c7c0 0%, #000000 100%);
         color: white;
         padding: 12px;
         text-align: left;
@@ -388,6 +395,57 @@
         font-weight: bold;
     }
 
+    /* ✅ NEW: Offer column styling */
+    .offer-applied {
+        text-align: center;
+        font-weight: bold;
+    }
+
+    .offer-amount {
+        background-color: #493e40;
+        color: white;
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: bold;
+        display: block;
+        margin-bottom: 2px;
+    }
+
+    .offer-type {
+        font-size: 9px;
+        color: #666;
+        font-style: italic;
+        display: block;
+    }
+
+    .offer-product {
+        background-color: #6f42c1;
+        color: white;
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: bold;
+    }
+
+    .offer-category {
+        background-color: #fd7e14;
+        color: white;
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: bold;
+    }
+
+    .offer-none {
+        background-color: #6c757d;
+        color: white;
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: bold;
+    }
+
     .pagination {
         display: flex;
         justify-content: center;
@@ -499,6 +557,7 @@
             <h4>Overall Sales Amount</h4>
             <p>₹{{formatNumber totalSales}}.00</p>
         </div>
+       
         <!-- ✅ NEW: Coupon Usage Analytics -->
         <div class="box coupon-box">
             <h4>Total Coupons Used</h4>
@@ -520,6 +579,13 @@
             <p>₹{{formatNumber totalAllCouponSavings}}.00</p>
             <small>Through all coupons</small>
         </div>
+
+         <!-- ✅ NEW: Total Offer Savings -->
+        <div class="box total-offer-savings-box">
+            <h4>Total Offer Savings</h4>
+            <p>₹{{formatNumber totalOfferSavingsAllOrders}}.00</p>
+            <small>Product & category offers</small>
+        </div>
     </div>
 
     {{#if orders.length}}
@@ -532,6 +598,7 @@
                 <th>Product</th>
                 <th>Order Status</th>
                 <th>Payment Method</th>
+                <th>Offer Applied</th>
                 <th>Discount</th>
                 <th>Amount</th>
             </tr>
@@ -563,6 +630,32 @@
                         {{/if}}
                     {{else}}
                         <span class="payment-unknown">Unknown</span>
+                    {{/if}}
+                </td>
+                <td class="offer-applied">
+                    {{#if this.offerSavings}}
+                        {{#if (gt this.offerSavings 0)}}
+                            <span class="offer-amount">₹{{formatNumberFixed this.offerSavings}} Off</span>
+                            <small class="offer-type">Product/Category Offer</small>
+                        {{else if this.discount}}
+                            {{#if (gt this.discount 0)}}
+                                <span class="offer-amount">₹{{formatNumberFixed this.discount}} Off</span>
+                                <small class="offer-type">Coupon Discount</small>
+                            {{else}}
+                                <span class="offer-none">No Offer</span>
+                            {{/if}}
+                        {{else}}
+                            <span class="offer-none">No Offer</span>
+                        {{/if}}
+                    {{else if this.discount}}
+                        {{#if (gt this.discount 0)}}
+                            <span class="offer-amount">₹{{formatNumberFixed this.discount}} Off</span>
+                            <small class="offer-type">Coupon Discount</small>
+                        {{else}}
+                            <span class="offer-none">No Offer</span>
+                        {{/if}}
+                    {{else}}
+                        <span class="offer-none">No Offer</span>
                     {{/if}}
                 </td>
                 <td class="discount-amount">

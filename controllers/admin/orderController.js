@@ -401,10 +401,34 @@ module.exports = {
 
             const orders = await Order.find(query)
                 .populate('user_id', 'name email mobile')
-                .populate('order_items.productId', 'productName price')
+                .populate('order_items.productId', 'productName price regularPrice salePrice')
                 .sort({ createdAt: -1 })
                 .skip(skip)
                 .limit(limit).lean();
+
+            // ✅ NEW: Calculate offer savings for each order
+            let totalOfferSavingsAllOrders = 0;
+
+            for (let order of orders) {
+                let totalOfferSavings = 0;
+
+                for (let item of order.order_items) {
+                    if (item.productId && item.productId.regularPrice && item.productId.salePrice) {
+                        const regularPrice = item.productId.regularPrice;
+                        const salePrice = item.productId.salePrice;
+                        const savingsPerItem = regularPrice - salePrice;
+                        const totalSavingsForItem = savingsPerItem * item.quantity;
+                        totalOfferSavings += totalSavingsForItem;
+                    }
+                }
+
+                // Add to order object
+                order.offerSavings = totalOfferSavings;
+                order.totalSavings = totalOfferSavings + (order.discount || 0);
+
+                // Add to total across all orders
+                totalOfferSavingsAllOrders += totalOfferSavings;
+            }
 
             console.log("orders : ", orders);
 
@@ -517,7 +541,9 @@ module.exports = {
                 totalCouponSavings,
                 totalReferralSavings,
                 totalAllCouponSavings,
-                topCoupons: allTopCoupons
+                topCoupons: allTopCoupons,
+                // ✅ NEW: Total Offer Savings data
+                totalOfferSavingsAllOrders
             })
         } catch (error) {
 
