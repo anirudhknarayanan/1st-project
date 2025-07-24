@@ -909,7 +909,7 @@ module.exports = {
 
             const orders = await Order.find(query)
                 .populate('user_id', 'name email mobile')
-                .populate('order_items.productId', 'productName price')
+                .populate('order_items.productId', 'productName price regularPrice salePrice') // ✅ ADD regularPrice and salePrice
                 .sort({ createdAt: -1 });
 
             console.log("orders in excel : ", orders)
@@ -917,22 +917,88 @@ module.exports = {
             const totalSales = orders.reduce((sum, order) => sum + order.total, 0);
             const totalOrders = orders.length;
 
+            // ✅ ENHANCED SUMMARY STATISTICS (Same as PDF)
+            let totalCouponsUsed = 0;
+            let adminCouponsUsed = 0;
+            let referralCouponsUsed = 0;
+            let totalAllCouponSavings = 0;
+
+            try {
+                const Referral = require("../../models/referralSchema");
+
+                // Count admin coupons used
+                adminCouponsUsed = await Order.countDocuments({
+                    ...query,
+                    coupenApplied: { $ne: "false" }
+                });
+
+                // Count referral coupons used
+                referralCouponsUsed = await Referral.countDocuments({
+                    status: "used"
+                });
+
+                // Total coupons used
+                totalCouponsUsed = adminCouponsUsed + referralCouponsUsed;
+
+                // Calculate total savings from coupons
+                const ordersWithCoupons = await Order.find({
+                    ...query,
+                    coupenApplied: { $ne: "false" }
+                });
+
+                const totalCouponSavings = ordersWithCoupons.reduce((sum, order) => {
+                    return sum + (order.discount || 0);
+                }, 0);
+
+                // Get referral coupon savings
+                const referralSavings = await Referral.aggregate([
+                    { $match: { status: "used" } },
+                    { $group: { _id: null, total: { $sum: "$discount" } } }
+                ]);
+
+                const totalReferralSavings = referralSavings.length > 0 ? referralSavings[0].total : 0;
+                totalAllCouponSavings = totalCouponSavings + totalReferralSavings;
+
+            } catch (error) {
+                console.log("Error calculating coupon statistics:", error);
+            }
+
+            // ✅ ENHANCED OFFER SAVINGS CALCULATION (Same as PDF)
+            let totalOfferSavingsAllOrders = 0;
+
+            for (let order of orders) {
+                let totalOfferSavings = 0;
+
+                for (let item of order.order_items) {
+                    if (item.productId && item.productId.regularPrice && item.productId.salePrice) {
+                        const regularPrice = item.productId.regularPrice;
+                        const salePrice = item.productId.salePrice;
+                        const savingsPerItem = regularPrice - salePrice;
+                        const totalSavingsForItem = savingsPerItem * item.quantity;
+                        totalOfferSavings += totalSavingsForItem;
+                    }
+                }
+
+                totalOfferSavingsAllOrders += totalOfferSavings;
+            }
+
             const workbook = new ExcelJS.Workbook();
             const worksheet = workbook.addWorksheet('Sales Report');
 
-            worksheet.mergeCells('A1:F1');
+            // ✅ WIDER MERGES for 9 columns
+            worksheet.mergeCells('A1:I1');
             worksheet.getCell('A1').value = 'TAKE_YOUR_TIME';
             worksheet.getCell('A1').font = { size: 16, bold: true };
             worksheet.getCell('A1').alignment = { horizontal: 'center' };
 
-            worksheet.mergeCells('A2:F2');
+            worksheet.mergeCells('A2:I2');
             worksheet.getCell('A2').value = `Sales Report - ${filterType}`;
             worksheet.getCell('A2').font = { size: 12 };
             worksheet.getCell('A2').alignment = { horizontal: 'center' };
 
             let rowIndex = 3;
             if (fromDate && toDate) {
-                worksheet.mergeCells(`A${rowIndex}:F${rowIndex}`);
+                worksheet.mergeCells(`A${rowIndex}:I${rowIndex}`); // ✅ WIDER for 9 columns
                 worksheet.getCell(`A${rowIndex}`).value = `Date Range: ${new Date(fromDate).toLocaleDateString()} to ${new Date(toDate).toLocaleDateString()}`;
                 worksheet.getCell(`A${rowIndex}`).alignment = { horizontal: 'center' };
                 rowIndex++;
@@ -953,13 +1019,13 @@ module.exports = {
                         break;
                 }
 
-                worksheet.mergeCells(`A${rowIndex}:F${rowIndex}`);
+                worksheet.mergeCells(`A${rowIndex}:I${rowIndex}`); // ✅ WIDER for 9 columns
                 worksheet.getCell(`A${rowIndex}`).value = `Period: ${periodText}`;
                 worksheet.getCell(`A${rowIndex}`).alignment = { horizontal: 'center' };
                 rowIndex++;
             }
 
-            worksheet.mergeCells(`A${rowIndex}:F${rowIndex}`);
+            worksheet.mergeCells(`A${rowIndex}:I${rowIndex}`); // ✅ WIDER for 9 columns
             worksheet.getCell(`A${rowIndex}`).value = `Generated on: ${new Date().toLocaleDateString('en-US', {
                 year: 'numeric',
                 month: 'long',
@@ -968,20 +1034,45 @@ module.exports = {
             worksheet.getCell(`A${rowIndex}`).alignment = { horizontal: 'center' };
             rowIndex += 2;
 
-            worksheet.mergeCells(`A${rowIndex}:F${rowIndex}`);
+            // ✅ ENHANCED SUMMARY SECTION (7 fields like PDF)
+            worksheet.mergeCells(`A${rowIndex}:I${rowIndex}`); // ✅ WIDER for 9 columns
             worksheet.getCell(`A${rowIndex}`).value = 'Summary';
+            worksheet.getCell(`A${rowIndex}`).font = { bold: true, size: 14 };
+            worksheet.getCell(`A${rowIndex}`).alignment = { horizontal: 'center' };
+            rowIndex++;
+
+            worksheet.mergeCells(`A${rowIndex}:D${rowIndex}`);
+            worksheet.getCell(`A${rowIndex}`).value = `Overall Sales Count: ${totalOrders}`;
             worksheet.getCell(`A${rowIndex}`).font = { bold: true };
             rowIndex++;
 
-            worksheet.mergeCells(`A${rowIndex}:C${rowIndex}`);
-            worksheet.getCell(`A${rowIndex}`).value = `Total Orders: ${totalOrders}`;
+            worksheet.mergeCells(`A${rowIndex}:D${rowIndex}`);
+            worksheet.getCell(`A${rowIndex}`).value = `Overall Sales Amount: ₹${totalSales.toLocaleString()}.00`;
+            worksheet.getCell(`A${rowIndex}`).font = { bold: true };
             rowIndex++;
 
-            worksheet.mergeCells(`A${rowIndex}:C${rowIndex}`);
-            worksheet.getCell(`A${rowIndex}`).value = `Total Sales: RS.${totalSales.toLocaleString()}.00`;
+            worksheet.mergeCells(`A${rowIndex}:D${rowIndex}`);
+            worksheet.getCell(`A${rowIndex}`).value = `Total Coupons Used: ${totalCouponsUsed}`;
+            rowIndex++;
+
+            worksheet.mergeCells(`A${rowIndex}:D${rowIndex}`);
+            worksheet.getCell(`A${rowIndex}`).value = `Admin Coupons: ${adminCouponsUsed}`;
+            rowIndex++;
+
+            worksheet.mergeCells(`A${rowIndex}:D${rowIndex}`);
+            worksheet.getCell(`A${rowIndex}`).value = `Referral Coupons: ${referralCouponsUsed}`;
+            rowIndex++;
+
+            worksheet.mergeCells(`A${rowIndex}:I${rowIndex}`);
+            worksheet.getCell(`A${rowIndex}`).value = `Total Savings Given: ₹${totalAllCouponSavings.toLocaleString()}.00 (Through all coupons)`;
+            rowIndex++;
+
+            worksheet.mergeCells(`A${rowIndex}:I${rowIndex}`);
+            worksheet.getCell(`A${rowIndex}`).value = `Total Offer Savings: ₹${Math.round(totalOfferSavingsAllOrders).toLocaleString()}.00 (Product & category offers)`;
             rowIndex += 2;
 
-            const headers = ['Order ID', 'Date', 'Customer Name', 'Product', 'Status', 'Amount'];
+            // ✅ ENHANCED TABLE HEADERS (9 columns like PDF)
+            const headers = ['Order ID', 'Date', 'Customer Name', 'Product', 'Order Status', 'Payment Method', 'Offer Applied', 'Discount', 'Amount'];
             const headerRow = worksheet.addRow(headers);
             headerRow.eachCell((cell) => {
                 cell.font = { bold: true };
@@ -999,14 +1090,46 @@ module.exports = {
             });
 
             orders.forEach((order, index) => {
-                const product = order.order_items[0]?.productName || 'Product Deleted';
+                // ✅ ENHANCED ROW DATA (9 columns like PDF)
+
+                // 1. Product names (combine all products with null checks)
+                const productNames = order.order_items
+                    .filter(item => item.productId && item.productId.productName)
+                    .map(item => item.productId.productName)
+                    .join(', ');
+                const products = productNames.length > 0 ? productNames : 'Deleted Products';
+
+                // 2. Payment method
+                const paymentMethod = order.payment_method === 'cod' ? 'COD' :
+                                    order.payment_method === 'razorpay' ? 'Razorpay' :
+                                    order.payment_method === 'wallet' ? 'Wallet' :
+                                    order.payment_method || 'Unknown';
+
+                // 3. Offer applied calculation
+                const offerSavings = order.order_items.reduce((sum, item) => {
+                    if (item.productId && item.productId.regularPrice && item.productId.salePrice) {
+                        const regularPrice = item.productId.regularPrice;
+                        const salePrice = item.productId.salePrice;
+                        const savingsPerItem = regularPrice - salePrice;
+                        return sum + (savingsPerItem * item.quantity);
+                    }
+                    return sum;
+                }, 0);
+
+                const offerText = offerSavings > 0 ? `₹${Math.round(offerSavings)} Off` :
+                                order.discount > 0 ? `₹${order.discount} Off` : 'No Offer';
+
+                // 4. Create row with all 9 columns
                 const row = worksheet.addRow([
-                    `#${order._id.toString().slice(-20)}`,
-                    new Date(order.createdAt).toLocaleDateString(),
-                    order.user_id?.name || 'Unknown',
-                    product,
-                    order.status,
-                    `RS.${(order.finalAmount || order.total).toFixed(2)}`
+                    `#${order.orderId}`,                                    // Order ID
+                    new Date(order.createdAt).toLocaleDateString(),        // Date
+                    order.user_id?.name || 'Unknown',                      // Customer Name
+                    products,                                               // Product
+                    order.status,                                           // Order Status
+                    paymentMethod,                                          // Payment Method
+                    offerText,                                              // Offer Applied
+                    `₹${order.discount || 0}`,                             // Discount
+                    `₹${(order.finalAmount || order.total).toFixed(2)}`    // Amount
                 ]);
 
                 if (index % 2 === 0) {
@@ -1030,9 +1153,18 @@ module.exports = {
                 });
             });
 
-            worksheet.columns.forEach(column => {
-                column.width = 20;
-            });
+            // ✅ ENHANCED COLUMN WIDTHS for 9 columns
+            worksheet.columns = [
+                { width: 15 },  // Order ID
+                { width: 12 },  // Date
+                { width: 18 },  // Customer Name
+                { width: 25 },  // Product (wider for multiple products)
+                { width: 15 },  // Order Status
+                { width: 15 },  // Payment Method
+                { width: 18 },  // Offer Applied
+                { width: 12 },  // Discount
+                { width: 15 }   // Amount
+            ];
 
             const fileName = 'TAKE_YOUR_TIME_sales_report.xlsx';
 
