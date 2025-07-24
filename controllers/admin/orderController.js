@@ -570,7 +570,7 @@ module.exports = {
 
             const orders = await Order.find(query)
                 .populate('user_id', 'name email phone')
-                .populate('order_items.productId', 'productName price')
+                .populate('order_items.productId', 'productName price regularPrice salePrice')
                 .sort({ createdAt: -1 });
 
             console.log(orders);
@@ -578,12 +578,86 @@ module.exports = {
             const totalSales = orders.reduce((sum, order) => sum + order.total, 0);
             const totalOrders = orders.length;
 
+            // ✅ CALCULATE ALL SUMMARY STATISTICS (Same as sales page)
+
+            // ✅ FIXED: Coupon analytics (using same logic as sales page)
+            let totalCouponsUsed = 0;
+            let adminCouponsUsed = 0;
+            let referralCouponsUsed = 0;
+            let totalAllCouponSavings = 0;
+
+            try {
+                const Referral = require("../../models/referralSchema");
+
+                // Count admin coupons used (orders with coupons applied, excluding "false")
+                adminCouponsUsed = await Order.countDocuments({
+                    ...query,
+                    coupenApplied: { $ne: "false" }
+                });
+
+                // Count referral coupons used
+                referralCouponsUsed = await Referral.countDocuments({
+                    status: "used"
+                });
+
+                // Total coupons used
+                totalCouponsUsed = adminCouponsUsed + referralCouponsUsed;
+
+                // Calculate total savings from coupons
+                const ordersWithCoupons = await Order.find({
+                    ...query,
+                    coupenApplied: { $ne: "false" }
+                });
+
+                const totalCouponSavings = ordersWithCoupons.reduce((sum, order) => {
+                    return sum + (order.discount || 0);
+                }, 0);
+
+                // Get referral coupon savings
+                const referralSavings = await Referral.aggregate([
+                    { $match: { status: "used" } },
+                    { $group: { _id: null, total: { $sum: "$discount" } } }
+                ]);
+
+                const totalReferralSavings = referralSavings.length > 0 ? referralSavings[0].total : 0;
+                totalAllCouponSavings = totalCouponSavings + totalReferralSavings;
+
+            } catch (error) {
+                console.log("Error calculating coupon statistics:", error);
+                // Set defaults if calculation fails
+                totalCouponsUsed = 0;
+                adminCouponsUsed = 0;
+                referralCouponsUsed = 0;
+                totalAllCouponSavings = 0;
+            }
+
+            // ✅ FIXED: Offer savings calculation (matching sales page logic)
+            let totalOfferSavingsAllOrders = 0;
+
+            for (let order of orders) {
+                let totalOfferSavings = 0;
+
+                for (let item of order.order_items) {
+                    if (item.productId && item.productId.regularPrice && item.productId.salePrice) {
+                        const regularPrice = item.productId.regularPrice;
+                        const salePrice = item.productId.salePrice;
+                        const savingsPerItem = regularPrice - salePrice;
+                        const totalSavingsForItem = savingsPerItem * item.quantity;
+                        totalOfferSavings += totalSavingsForItem;
+                    }
+                }
+
+                // Add to total across all orders
+                totalOfferSavingsAllOrders += totalOfferSavings;
+            }
+
 
 
 
             const doc = new PDFDocument({
                 margin: 50,
-                size: 'A4'
+                size: 'A3',        // ✅ LARGER PAGE SIZE
+                layout: 'landscape' // ✅ LANDSCAPE ORIENTATION for more width
             });
 
             const filePath = path.join(__dirname, '../publics/sales_report.pdf');
@@ -636,90 +710,169 @@ module.exports = {
                 })}`, { align: 'center' })
                 .moveDown(1);
 
-            doc.rect(50, doc.y, 500, 60).stroke();
-            doc.fontSize(12)
-                .text('Summary', 60, doc.y + 10)
-                .fontSize(10)
-                .text(`Total Orders: ${totalOrders}`, 60, doc.y + 5)
-                .text(`Total Sales: RS.${totalSales.toLocaleString()}.00`, 60, doc.y + 5)
-                .moveDown(2);
+            // ✅ CENTERED SUMMARY SECTION (A3 landscape = ~1190px width, center at ~595px)
+            const summaryHeight = 160;
+            const summaryWidth = 700;
+            const pageWidth = 1190; // A3 landscape width
+            const summaryStartX = (pageWidth - summaryWidth) / 2; // Center horizontally
+
+            doc.rect(summaryStartX, doc.y, summaryWidth, summaryHeight).stroke();
+
+            const summaryStartY = doc.y + 15;
+            const textStartX = summaryStartX + 20; // Padding inside the box
+
+            doc.fontSize(16)
+                .text('Summary', textStartX, summaryStartY)
+                .fontSize(12)
+                .text(`Overall Sales Count: ${totalOrders}`, textStartX, summaryStartY + 30)
+                .text(`Overall Sales Amount: ₹${totalSales.toLocaleString()}.00`, textStartX, summaryStartY + 50)
+                .text(`Total Coupons Used: ${totalCouponsUsed}`, textStartX, summaryStartY + 70)
+                .text(`Admin Coupons: ${adminCouponsUsed}`, textStartX, summaryStartY + 90)
+                .text(`Referral Coupons: ${referralCouponsUsed}`, textStartX, summaryStartY + 110)
+                .text(`Total Savings Given: ₹${totalAllCouponSavings.toLocaleString()}.00 (Through all coupons)`, textStartX, summaryStartY + 130)
+                .text(`Total Offer Savings: ₹${Math.round(totalOfferSavingsAllOrders).toLocaleString()}.00 (Product & category offers)`, textStartX + 350, summaryStartY + 130)
+                .moveDown(4);
 
             const tableTop = doc.y;
-            const tableHeaders = ['Order ID', 'Date', 'Customer Name', 'Status', 'Amount'];
-            const columnWidths = [120, 80, 140, 80, 80];
-            let xPosition = 50;
+            // ✅ CENTERED TABLE (9 columns with better spacing for A3 landscape)
+            const tableHeaders = ['Order ID', 'Date', 'Customer', 'Product', 'Status', 'Payment', 'Offer Applied', 'Discount', 'Amount'];
+            const columnWidths = [90, 80, 100, 120, 80, 80, 110, 80, 90];
+            const tableWidth = columnWidths.reduce((sum, width) => sum + width, 0); // Total table width = 830
+            const tableStartX = (pageWidth - tableWidth) / 2; // Center the table horizontally
+            let xPosition = tableStartX;
 
-            doc.rect(50, tableTop, 500, 20).fill('#f0f0f0');
+            doc.rect(tableStartX, tableTop, tableWidth, 25).fill('#f0f0f0'); // ✅ CENTERED table header
 
-            doc.font('Helvetica-Bold').fontSize(10);
+            doc.font('Helvetica-Bold').fontSize(11); // ✅ LARGER FONT for better readability
             tableHeaders.forEach((header, i) => {
                 doc.fillColor('black')
-                    .text(header, xPosition, tableTop + 5, {
+                    .text(header, xPosition, tableTop + 7, { // ✅ Better vertical centering
                         width: columnWidths[i],
-                        align: header === 'Amount' ? 'right' : 'left'
+                        align: ['Amount', 'Discount'].includes(header) ? 'right' : 'left'
                     });
                 xPosition += columnWidths[i];
             });
 
-            doc.font('Helvetica').fontSize(9);
-            let yPosition = tableTop + 25;
+            doc.font('Helvetica').fontSize(10); // ✅ LARGER FONT for better readability
+            let yPosition = tableTop + 30; // ✅ More space after header
 
             orders.forEach((order, index) => {
-                if (yPosition > 750) {
+                if (yPosition > 750) { // ✅ A3 landscape has more height, but still need pagination
                     doc.addPage();
                     yPosition = 50;
 
-                    xPosition = 50;
-                    doc.rect(50, yPosition, 500, 20).fill('#f0f0f0');
-                    doc.font('Helvetica-Bold').fontSize(10);
+                    xPosition = tableStartX; // ✅ CENTERED on new page
+                    doc.rect(tableStartX, yPosition, tableWidth, 25).fill('#f0f0f0'); // ✅ CENTERED header on new page
+                    doc.font('Helvetica-Bold').fontSize(11);
                     tableHeaders.forEach((header, i) => {
                         doc.fillColor('black')
-                            .text(header, xPosition, yPosition + 5, {
+                            .text(header, xPosition, yPosition + 7, {
                                 width: columnWidths[i],
-                                align: header === 'Amount' ? 'right' : 'left'
+                                align: ['Amount', 'Discount'].includes(header) ? 'right' : 'left'
                             });
                         xPosition += columnWidths[i];
                     });
-                    doc.font('Helvetica').fontSize(9);
-                    yPosition += 25;
+                    doc.font('Helvetica').fontSize(10);
+                    yPosition += 30;
                 }
 
                 if (index % 2 === 0) {
-                    doc.rect(50, yPosition - 5, 500, 20).fill('#f9f9f9');
+                    doc.rect(tableStartX, yPosition - 5, tableWidth, 25).fill('#f9f9f9'); // ✅ CENTERED alternating row background
                 }
 
-                xPosition = 50;
+                // ✅ ENHANCED TABLE ROWS (9 columns, centered)
+                xPosition = tableStartX; // ✅ START from centered position
+
+                // 1. Order ID
                 doc.fillColor('black')
-                    .text("#" + order._id.toString().slice(-20), xPosition, yPosition, {
+                    .text("#" + order.orderId, xPosition, yPosition, {
                         width: columnWidths[0]
                     });
 
+                // 2. Date
                 xPosition += columnWidths[0];
                 doc.text(new Date(order.createdAt).toLocaleDateString(), xPosition, yPosition, {
                     width: columnWidths[1]
                 });
 
+                // 3. Customer Name
                 xPosition += columnWidths[1];
                 doc.text(order.user_id.name, xPosition, yPosition, {
                     width: columnWidths[2]
                 });
 
+                // 4. Product (combine all products with null checks)
                 xPosition += columnWidths[2];
-                doc.text(order.status, xPosition, yPosition, {
+                const productNames = order.order_items
+                    .filter(item => item.productId && item.productId.productName) // Filter out null/deleted products
+                    .map(item => item.productId.productName)
+                    .join(', ');
+                const truncatedProducts = productNames.length > 25 ? productNames.substring(0, 25) + '...' : // ✅ LONGER TRUNCATION for wider column
+                                        productNames.length > 0 ? productNames : 'Deleted Products';
+                doc.text(truncatedProducts, xPosition, yPosition, {
                     width: columnWidths[3]
                 });
 
+                // 5. Order Status
                 xPosition += columnWidths[3];
-                doc.text(`RS.${order.total.toLocaleString()}.00`, xPosition, yPosition, {
-                    width: columnWidths[4],
+                doc.text(order.status, xPosition, yPosition, {
+                    width: columnWidths[4]
+                });
+
+                // 6. Payment Method
+                xPosition += columnWidths[4];
+                const paymentMethod = order.payment_method === 'cod' ? 'COD' :
+                                    order.payment_method === 'razorpay' ? 'Razorpay' :
+                                    order.payment_method === 'wallet' ? 'Wallet' :
+                                    order.payment_method || 'Unknown';
+                doc.text(paymentMethod, xPosition, yPosition, {
+                    width: columnWidths[5]
+                });
+
+                // 7. Offer Applied (with null checks)
+                xPosition += columnWidths[5];
+                const offerSavings = order.order_items.reduce((sum, item) => {
+                    // Skip items with null/deleted products
+                    if (!item.productId || !item.appliedOffer || item.appliedOffer <= 0) {
+                        return sum;
+                    }
+
+                    let originalPrice = item.originalPrice || item.price;
+                    if (originalPrice <= item.price) {
+                        originalPrice = item.price / (1 - item.appliedOffer / 100);
+                    }
+                    return sum + ((originalPrice - item.price) * item.quantity);
+                }, 0);
+
+                const offerText = offerSavings > 0 ? `₹${Math.round(offerSavings)} Off` :
+                                order.discount > 0 ? `₹${order.discount} Off` : 'No Offer';
+                doc.text(offerText, xPosition, yPosition, {
+                    width: columnWidths[6]
+                });
+
+                // 8. Discount
+                xPosition += columnWidths[6];
+                doc.text(`₹${order.discount || 0}`, xPosition, yPosition, {
+                    width: columnWidths[7],
                     align: 'right'
                 });
 
-                yPosition += 20;
+                // 9. Amount
+                xPosition += columnWidths[7];
+                const finalAmount = order.finalAmount || order.total;
+                doc.text(`₹${finalAmount.toLocaleString()}`, xPosition, yPosition, {
+                    width: columnWidths[8],
+                    align: 'right'
+                });
+
+                yPosition += 25; // ✅ MORE SPACE between rows for better readability
             });
 
-            doc.fontSize(8)
-                .text('© 2025 TAKE YOUR TIME. All rights reserved.', 50, 780, { align: 'center' });
+            doc.fontSize(10) // ✅ LARGER FOOTER for A3
+                .text('© 2025 TAKE YOUR TIME. All rights reserved.', 0, 1000, {
+                    align: 'center',
+                    width: pageWidth // ✅ FULL PAGE WIDTH for proper centering
+                });
 
             doc.end();
 
