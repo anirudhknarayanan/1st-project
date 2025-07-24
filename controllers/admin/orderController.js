@@ -585,6 +585,7 @@ module.exports = {
             let adminCouponsUsed = 0;
             let referralCouponsUsed = 0;
             let totalAllCouponSavings = 0;
+            let allTopCoupons = []; // ✅ NEW: For top used coupons in PDF
 
             try {
                 const Referral = require("../../models/referralSchema");
@@ -622,6 +623,48 @@ module.exports = {
                 const totalReferralSavings = referralSavings.length > 0 ? referralSavings[0].total : 0;
                 totalAllCouponSavings = totalCouponSavings + totalReferralSavings;
 
+                // ✅ NEW: Get top used coupons details for PDF
+                const topAdminCoupons = await Order.aggregate([
+                    { $match: { ...query, coupenApplied: { $ne: "false" } } },
+                    { $group: {
+                        _id: "$coupenApplied",
+                        usageCount: { $sum: 1 },
+                        totalSavings: { $sum: "$discount" }
+                    }},
+                    { $sort: { usageCount: -1 } },
+                    { $limit: 5 },
+                    { $project: {
+                        code: "$_id",
+                        type: "Admin Coupon",
+                        usageCount: 1,
+                        totalSavings: 1,
+                        _id: 0
+                    }}
+                ]);
+
+                const topReferralCoupons = await Referral.aggregate([
+                    { $match: { status: "used" } },
+                    { $group: {
+                        _id: "$couponCode",
+                        usageCount: { $sum: 1 },
+                        totalSavings: { $sum: "$discount" }
+                    }},
+                    { $sort: { usageCount: -1 } },
+                    { $limit: 5 },
+                    { $project: {
+                        code: "$_id",
+                        type: "Referral Coupon",
+                        usageCount: 1,
+                        totalSavings: 1,
+                        _id: 0
+                    }}
+                ]);
+
+                // Combine and sort all coupons for PDF
+                allTopCoupons = [...topAdminCoupons, ...topReferralCoupons]
+                    .sort((a, b) => b.usageCount - a.usageCount)
+                    .slice(0, 10);
+
             } catch (error) {
                 console.log("Error calculating coupon statistics:", error);
                 // Set defaults if calculation fails
@@ -629,6 +672,7 @@ module.exports = {
                 adminCouponsUsed = 0;
                 referralCouponsUsed = 0;
                 totalAllCouponSavings = 0;
+                allTopCoupons = []; // Default empty array for top coupons
             }
 
             // ✅ FIXED: Offer savings calculation (matching sales page logic)
@@ -867,6 +911,108 @@ module.exports = {
 
                 yPosition += 25; // ✅ MORE SPACE between rows for better readability
             });
+
+            // ✅ NEW: Add Top Used Coupons Section
+            if (allTopCoupons && allTopCoupons.length > 0) {
+                // Add some space before the coupon section
+                yPosition += 40;
+
+                // Check if we need a new page for the coupon table
+                if (yPosition > 650) {
+                    doc.addPage();
+                    yPosition = 50;
+                }
+
+                // Coupon section title
+                doc.fontSize(16)
+                    .font('Helvetica-Bold')
+                    .text('Top Used Coupons', tableStartX, yPosition, { align: 'left' })
+                    .moveDown(1);
+
+                yPosition = doc.y + 10;
+
+                // Coupon table headers
+                const couponHeaders = ['Coupon Code', 'Type', 'Usage Count', 'Total Savings'];
+                const couponColumnWidths = [200, 150, 120, 150];
+                const couponTableWidth = couponColumnWidths.reduce((sum, width) => sum + width, 0);
+                const couponTableStartX = (pageWidth - couponTableWidth) / 2;
+
+                // Draw coupon table header
+                doc.rect(couponTableStartX, yPosition, couponTableWidth, 25).fill('#e8f4f8');
+
+                let couponXPosition = couponTableStartX;
+                doc.font('Helvetica-Bold').fontSize(11);
+                couponHeaders.forEach((header, i) => {
+                    doc.fillColor('black')
+                        .text(header, couponXPosition, yPosition + 7, {
+                            width: couponColumnWidths[i],
+                            align: ['Usage Count', 'Total Savings'].includes(header) ? 'center' : 'left'
+                        });
+                    couponXPosition += couponColumnWidths[i];
+                });
+
+                doc.font('Helvetica').fontSize(10);
+                yPosition += 30;
+
+                // Draw coupon table rows
+                allTopCoupons.slice(0, 10).forEach((coupon, index) => {
+                    // Check if we need a new page
+                    if (yPosition > 750) {
+                        doc.addPage();
+                        yPosition = 50;
+
+                        // Redraw header on new page
+                        doc.rect(couponTableStartX, yPosition, couponTableWidth, 25).fill('#e8f4f8');
+                        couponXPosition = couponTableStartX;
+                        doc.font('Helvetica-Bold').fontSize(11);
+                        couponHeaders.forEach((header, i) => {
+                            doc.fillColor('black')
+                                .text(header, couponXPosition, yPosition + 7, {
+                                    width: couponColumnWidths[i],
+                                    align: ['Usage Count', 'Total Savings'].includes(header) ? 'center' : 'left'
+                                });
+                            couponXPosition += couponColumnWidths[i];
+                        });
+                        doc.font('Helvetica').fontSize(10);
+                        yPosition += 30;
+                    }
+
+                    // Alternating row background
+                    if (index % 2 === 0) {
+                        doc.rect(couponTableStartX, yPosition - 5, couponTableWidth, 25).fill('#f9f9f9');
+                    }
+
+                    couponXPosition = couponTableStartX;
+
+                    // Coupon Code
+                    doc.fillColor('black')
+                        .text(coupon.code || 'N/A', couponXPosition, yPosition, {
+                            width: couponColumnWidths[0]
+                        });
+
+                    // Type
+                    couponXPosition += couponColumnWidths[0];
+                    doc.text(coupon.type || 'Unknown', couponXPosition, yPosition, {
+                        width: couponColumnWidths[1]
+                    });
+
+                    // Usage Count
+                    couponXPosition += couponColumnWidths[1];
+                    doc.text(coupon.usageCount.toString(), couponXPosition, yPosition, {
+                        width: couponColumnWidths[2],
+                        align: 'center'
+                    });
+
+                    // Total Savings
+                    couponXPosition += couponColumnWidths[2];
+                    doc.text(`₹${coupon.totalSavings.toLocaleString()}`, couponXPosition, yPosition, {
+                        width: couponColumnWidths[3],
+                        align: 'center'
+                    });
+
+                    yPosition += 25;
+                });
+            }
 
             doc.fontSize(10) // ✅ LARGER FOOTER for A3
                 .text('© 2025 TAKE YOUR TIME. All rights reserved.', 0, 1000, {
