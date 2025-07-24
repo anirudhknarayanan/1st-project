@@ -617,11 +617,24 @@
 <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
 
 <script>
-    // ✅ Global Zoom Setup Function
+    // ✅ IMPROVED: Global Zoom Setup Function with better cleanup
     function setupZoom($image) {
+        if (!$image || !$image.length) {
+            console.log('No image provided to setupZoom');
+            return;
+        }
+
+        console.log('Setting up zoom for image:', $image.attr('src'));
+
         const $container = $image.closest('.product__details__pic__item');
+
+        // ✅ IMPROVED: Clean up any existing zoom elements
         $container.find('.zoom-lens').remove();
         $image.off('.zoom');
+
+        // ✅ IMPROVED: Remove zoom from all other images to prevent conflicts
+        $('.product__details__pic__item img').not($image).off('.zoom');
+        $('.zoom-lens').not($container.find('.zoom-lens')).remove();
 
         const $zoomLens = $('<div class="zoom-lens"></div>');
         $container.append($zoomLens);
@@ -631,12 +644,24 @@
             $zoomContainer = $('<div class="image-zoom-container"></div>').appendTo('body');
         }
 
+        // ✅ IMPROVED: Add mouseenter event to ensure zoom is ready
+        $image.on('mouseenter.zoom', function() {
+            console.log('Mouse entered image, zoom ready');
+        });
+
         $image.on('mousemove.zoom', function (e) {
             const offset = $image.offset();
             const x = e.pageX - offset.left;
             const y = e.pageY - offset.top;
             const width = $image.width();
             const height = $image.height();
+
+            // ✅ IMPROVED: Boundary checks
+            if (x < 0 || y < 0 || x > width || y > height) {
+                $zoomLens.hide();
+                $zoomContainer.hide();
+                return;
+            }
 
             $zoomLens.css({
                 left: x - 50,
@@ -656,13 +681,17 @@
             $zoomLens.hide();
             $zoomContainer.hide();
         });
+
+        console.log('Zoom setup completed for:', $image.attr('src'));
     }
 
     document.addEventListener('DOMContentLoaded', function () {
-        // ✅ Handle mobile thumbnail switching
+        // ✅ IMPROVED: Handle mobile thumbnail switching with better zoom setup
         const mobileThumbs = document.querySelectorAll('.product-thumb');
         mobileThumbs.forEach(thumb => {
             thumb.addEventListener('click', function () {
+                console.log('Mobile thumb clicked:', this.getAttribute('data-target'));
+
                 mobileThumbs.forEach(t => t.classList.remove('active'));
                 this.classList.add('active');
 
@@ -675,9 +704,14 @@
                 if (targetPane) {
                     targetPane.classList.add('active', 'show');
 
-                    // ✅ Reapply zoom on new image
-                    const $img = $(targetPane).find('img');
-                    if ($img.length) setupZoom($img);
+                    // ✅ IMPROVED: Reapply zoom with delay to ensure image is loaded
+                    setTimeout(function() {
+                        const $img = $(targetPane).find('img');
+                        if ($img.length) {
+                            console.log('Mobile - Setting up zoom for:', $img.attr('src'));
+                            setupZoom($img);
+                        }
+                    }, 100);
                 }
             });
         });
@@ -720,17 +754,52 @@
         }
     });
 
-    // ✅ Desktop zoom setup on first load
+    // ✅ FIXED: Desktop zoom setup with proper event handling
     $(document).ready(function () {
         $('<div class="image-zoom-container"></div>').appendTo('body');
 
+        // Setup zoom for initially active image
         $('.tab-pane.active img').each(function () {
             setupZoom($(this));
         });
 
-        $('a[data-toggle="tab"]').on('shown.bs.tab', function () {
-            const $activeImage = $($(this).attr('href')).find('img');
-            setupZoom($activeImage);
+        // ✅ FIX: Handle Bootstrap tab switching (desktop thumbnails)
+        $('a[data-toggle="tab"]').on('shown.bs.tab', function (e) {
+            console.log('Tab switched:', e.target.getAttribute('href'));
+
+            // Small delay to ensure tab content is fully loaded
+            setTimeout(function() {
+                const targetHref = e.target.getAttribute('href');
+                const $activeImage = $(targetHref).find('img');
+
+                if ($activeImage.length) {
+                    console.log('Setting up zoom for:', $activeImage.attr('src'));
+                    setupZoom($activeImage);
+                }
+            }, 100);
+        });
+
+        // ✅ FIX: Handle direct tab clicks (alternative approach)
+        $('.nav-link[data-toggle="tab"]').on('click', function(e) {
+            const targetHref = $(this).attr('href');
+
+            // Delay to ensure tab switch completes
+            setTimeout(function() {
+                const $activeImage = $(targetHref).find('img');
+                if ($activeImage.length) {
+                    console.log('Click - Setting up zoom for:', $activeImage.attr('src'));
+                    setupZoom($activeImage);
+                }
+            }, 150);
+        });
+
+        // ✅ FIX: Fallback - setup zoom for all images on load
+        $('.product__details__pic__item img').each(function() {
+            const $img = $(this);
+            // Only setup zoom if the image is in an active tab or if it becomes active
+            if ($img.closest('.tab-pane').hasClass('active')) {
+                setupZoom($img);
+            }
         });
     });
 
