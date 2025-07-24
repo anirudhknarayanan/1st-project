@@ -708,7 +708,7 @@ module.exports = {
                 .text('Product', startX, y, { width: columnWidths.product })
                 .text('Qty', startX + columnWidths.product, y, { width: columnWidths.quantity, align: 'center' })
                 .text('Original Price', startX + columnWidths.product + columnWidths.quantity, y, { width: columnWidths.originalPrice, align: 'right' })
-                .text('Discount', startX + columnWidths.product + columnWidths.quantity + columnWidths.originalPrice, y, { width: columnWidths.discount, align: 'right' })
+                .text('Offer Discount', startX + columnWidths.product + columnWidths.quantity + columnWidths.originalPrice, y, { width: columnWidths.discount, align: 'right' })
                 .text('Final Price', startX + columnWidths.product + columnWidths.quantity + columnWidths.originalPrice + columnWidths.discount, y, { width: columnWidths.finalPrice, align: 'right' })
                 .text('Total', startX + columnWidths.product + columnWidths.quantity + columnWidths.originalPrice + columnWidths.discount + columnWidths.finalPrice, y, { width: columnWidths.total, align: 'right' })
                 .moveDown(0.5)
@@ -777,7 +777,7 @@ module.exports = {
             doc.font('Helvetica-Bold').text('Subtotal', 400, summaryY, { width: 100, align: 'right' });
             doc.font('Helvetica').text(`₹${subtotal.toFixed(2)}`, 500, summaryY, { width: 50, align: 'right' });
 
-            doc.font('Helvetica-Bold').text('Discount', 400, summaryY + lineHeight, { width: 100, align: 'right' });
+            doc.font('Helvetica-Bold').text('Coupon Discount', 400, summaryY + lineHeight, { width: 100, align: 'right' });
             doc.font('Helvetica').text(`₹${discount.toFixed(2)}`, 500, summaryY + lineHeight, { width: 50, align: 'right' });
 
             doc.font('Helvetica-Bold').text('Delivery Charge', 400, summaryY + lineHeight * 2, { width: 100, align: 'right' });

@@ -768,7 +768,7 @@ module.exports = {
             const worksheet = workbook.addWorksheet('Sales Report');
 
             worksheet.mergeCells('A1:F1');
-            worksheet.getCell('A1').value = 'TIMELESS AURA';
+            worksheet.getCell('A1').value = 'TAKE_YOUR_TIME';
             worksheet.getCell('A1').font = { size: 16, bold: true };
             worksheet.getCell('A1').alignment = { horizontal: 'center' };
 
