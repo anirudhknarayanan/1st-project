@@ -488,17 +488,17 @@
             <div class="info-item">
                 <div class="info-label">Payment Status</div>
                 <div class="info-value">
-                    {{#if (and (eq order.payment_method 'razorpay') (eq order.orderStatus 'cancelled'))}}
+                    {{#if (and (eq order.payment_method 'razorpay') (eq order.status 'cancelled'))}}
                     <span class="status status-delivered">Refunded</span>
-                    {{else if (and (eq order.payment_method 'razorpay') (or (eq order.orderStatus 'pending') (eq
-                    order.orderStatus 'shipped') (eq order.orderStatus 'delivered')))}}
+                    {{else if (and (eq order.payment_method 'razorpay') (or (eq order.status 'pending') (eq
+                    order.status 'shipped') (eq order.status 'delivered')))}}
                     <span class="status status-delivered">Paid</span>
-                    {{else if (eq order.orderStatus 'cancelled')}}
+                    {{else if (eq order.status 'cancelled')}}
                     <span class="status status-cancelled">Cancelled</span>
-                    {{else if (or (eq order.orderStatus 'delivered') (eq order.orderStatus 'Return rejected') (eq
-                    order.orderStatus 'Return approved') (eq order.orderStatus 'Return requested'))}}
+                    {{else if (or (eq order.status 'delivered') (eq order.status 'Return rejected') (eq
+                    order.status 'Return approved') (eq order.status 'Return requested'))}}
                     <span class="status status-delivered">Paid</span>
-                    {{else if (eq order.orderStatus 'failed')}}
+                    {{else if (eq order.status 'failed')}}
                     <span class="status status-cancelled">Failed</span>
                     <button class="retry-btn" onclick="retryPayment('{{order._id}}')">Retry</button>
                     {{else}}
@@ -1170,4 +1170,128 @@
             }
         });
     });
+</script>
+
+{{!-- ✅ RETRY PAYMENT FUNCTIONALITY --}}
+<script src="https://checkout.razorpay.com/v1/checkout.js"></script>
+<script>
+    // ✅ RETRY PAYMENT FUNCTION
+    async function retryPayment(orderId) {
+        try {
+            console.log('Retrying payment for order:', orderId);
+
+            // Show loading
+            Swal.fire({
+                title: 'Processing...',
+                text: 'Initiating retry payment',
+                allowOutsideClick: false,
+                didOpen: () => {
+                    Swal.showLoading();
+                }
+            });
+
+            // Call retry payment API
+            const response = await fetch(`/retryPayment/${orderId}`, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+
+            const data = await response.json();
+
+            if (data.success) {
+                // Close loading
+                Swal.close();
+
+                // Initialize Razorpay
+                const options = {
+                    key: data.key,
+                    amount: data.amount,
+                    currency: data.currency,
+                    order_id: data.order_id,
+                    name: "TAKE YOUR TIME",
+                    description: "Retry Payment for Order",
+                    handler: async function (response) {
+                        // Verify retry payment
+                        try {
+                            const verifyResponse = await fetch('/verifyRetryPayment', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json'
+                                },
+                                body: JSON.stringify({
+                                    razorpay_order_id: response.razorpay_order_id,
+                                    razorpay_payment_id: response.razorpay_payment_id,
+                                    razorpay_signature: response.razorpay_signature,
+                                    orderId: orderId
+                                })
+                            });
+
+                            const verifyData = await verifyResponse.json();
+
+                            if (verifyData.success) {
+                                Swal.fire({
+                                    title: 'Payment Successful!',
+                                    text: 'Your payment has been processed successfully.',
+                                    icon: 'success'
+                                }).then(() => {
+                                    // Reload page to show updated order status
+                                    location.reload();
+                                });
+                            } else {
+                                Swal.fire({
+                                    title: 'Payment Verification Failed',
+                                    text: verifyData.message || 'Payment verification failed. Please contact support.',
+                                    icon: 'error'
+                                });
+                            }
+                        } catch (error) {
+                            console.error('Verification error:', error);
+                            Swal.fire({
+                                title: 'Error!',
+                                text: 'Payment verification failed. Please contact support.',
+                                icon: 'error'
+                            });
+                        }
+                    },
+                    prefill: {
+                        name: "{{order.user_id.name}}",
+                        email: "{{order.user_id.email}}",
+                        contact: "{{order.user_id.phone}}"
+                    },
+                    theme: {
+                        color: "#3399cc"
+                    },
+                    modal: {
+                        ondismiss: function () {
+                            Swal.fire({
+                                title: 'Payment Canceled',
+                                text: 'You canceled the retry payment.',
+                                icon: 'warning'
+                            });
+                        }
+                    }
+                };
+
+                const razorpay = new Razorpay(options);
+                razorpay.open();
+
+            } else {
+                Swal.fire({
+                    title: 'Error!',
+                    text: data.message || 'Failed to initiate retry payment.',
+                    icon: 'error'
+                });
+            }
+
+        } catch (error) {
+            console.error('Retry payment error:', error);
+            Swal.fire({
+                title: 'Error!',
+                text: 'Something went wrong. Please try again later.',
+                icon: 'error'
+            });
+        }
+    }
 </script>
