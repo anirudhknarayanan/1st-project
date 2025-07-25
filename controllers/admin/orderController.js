@@ -39,6 +39,12 @@ module.exports = {
             const itemReturnRequests = [];
 
             orders.forEach(order => {
+                // ✅ FIX: Only show item-level returns for orders that haven't been approved for full return
+                // Skip orders with status "Return approved" or "Return rejected"
+                if (order.status === 'Return approved' || order.status === 'Return rejected') {
+                    return; // Skip this entire order
+                }
+
                 order.order_items.forEach(item => {
                     if (item.status === "return requested") {
                         itemReturnRequests.push({
@@ -229,28 +235,34 @@ module.exports = {
                 return res.status(404).json({ success: false, message: "order not found" })
             }
 
-
             const order = await Order.findById(orderId)
-
 
             if (!order) {
                 return res.status(404).json({ success: false, message: "order not found" })
             }
 
-
+            // ✅ FIX: Update order status
             order.status = "Return rejected"
             order.adminReturnStatus = reason
 
+            // ✅ FIX: Update all individual item statuses from "return requested" to "return rejected"
+            for (let item of order.order_items) {
+                if (item.status === 'return requested') {
+                    item.status = 'return rejected';
+                    item.return_reason = reason;
+                    item.returned_at = new Date();
+                }
+            }
+
+            // ✅ Mark the order_items array as modified so MongoDB saves the changes
+            order.markModified('order_items');
             await order.save()
 
             res.status(200).json({ success: true, message: "Return rejected" })
 
-
         } catch (error) {
-
             console.log("error rejecting return", error)
             res.status(500).json({ success: false, message: "internal server error" })
-
         }
     },
 
