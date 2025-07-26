@@ -15,8 +15,8 @@ const userSchema = new Schema({
     phone: {
         type: String,
         required: false,
-        unique: true,
-        sparse: true,
+        // unique: true,  // ✅ Temporarily commented out
+        // sparse: true,
         default: null
     }
     ,
