@@ -31,7 +31,7 @@ const cartSchema = new Schema({
         },
         appliedOfferType: { // 'product', 'category', or null
             type: String,
-            enum: ['product', 'category', null],
+            enum: ['product', 'category', 'none'],
             default: null
         },
         status: {

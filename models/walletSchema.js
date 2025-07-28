@@ -1,41 +1,41 @@
 const mongoose = require('mongoose');
-const {Schema} = mongoose
+const { Schema } = mongoose
 
 const walletSchema = new Schema({
-   userId: { 
+   userId: {
       type: Schema.Types.ObjectId,
       ref: 'User',
       required: true,
       unique: true
    },
-   balance:{
+   balance: {
       type: Number,
       default: 0
    },
    transactions: [
-       {
-           type: {
+      {
+         type: {
             type: String,
             enum: ['credit', 'debit'],
             required: true
          },
-           amount: {
+         amount: {
             type: Number,
             required: true
          },
-           description: {
+         description: {
             type: String
          },
-           status: {
+         status: {
             type: String,
             enum: ['pending', 'completed', 'failed'],
             default: 'completed'
          },
-           createdAt: {
+         createdAt: {
             type: Date,
             default: Date.now
          }
-       }
+      }
    ]
 }, { timestamps: true });
 
