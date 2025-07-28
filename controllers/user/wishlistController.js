@@ -18,12 +18,16 @@ module.exports = {
           populate: { path: "category" }
         }).lean();
 
+        const relatedProducts = await Product.find({isBlocked : false}).limit(4).lean();
+                  console.log("related products:",relatedProducts)
+
       if (!wishlist || wishlist.items.length === 0) {
         return res.render("user/wishlist", {
           user: req.session.userData,
           wishlist: [],
           currentPage: 1,
-          totalPages: 0
+          totalPages: 0,
+          relatedProducts
         });
       }
 
@@ -41,13 +45,16 @@ module.exports = {
       const totalPages = Math.ceil(totalItems / limit);
       console.log(wishlist);
 
+        
+
 
       res.render("user/wishlist", {
         user: req.session.userData,
         wishlist: { ...wishlist, items: paginatedItems },
         currentPage: page,
         totalPages: totalPages,
-        totalItems: totalItems
+        totalItems: totalItems,
+        relatedProducts
       });
     } catch (error) {
       console.error("Error in load wishlist:", error);
