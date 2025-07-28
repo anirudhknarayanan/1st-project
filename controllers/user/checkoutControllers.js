@@ -13,7 +13,7 @@ const { v4: uuidv4 } = require('uuid');
 
 const fs = require('fs');
 const path = require('path');
-const { log } = require("console");
+
 const { param } = require("../../app");
 
 

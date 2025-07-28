@@ -985,14 +985,7 @@ background: linear-gradient(to bottom, #7ccdc4, #2b2626);
         document.querySelector('.summary-card:nth-child(1) .summary-info h3').textContent = 
             '₹' + Math.round(summaryData.totalRevenue).toLocaleString();
             
-        // The growth indicators are commented out in the HTML, so we don't need to update them
-        // Uncomment the below if you re-enable growth indicators in the HTML
-        /*
-        const revenueChangeEl = document.querySelector('.summary-card:nth-child(1) .summary-change');
-        if (revenueChangeEl) {
-            revenueChangeEl.innerHTML = getGrowthHTML(summaryData.revenueGrowth);
-        }
-        */
+     
         
         // Update Total Customers
         const customerElement = document.querySelector('.summary-card:nth-child(2) .summary-info h3');
