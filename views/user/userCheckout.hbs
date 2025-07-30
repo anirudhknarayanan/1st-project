@@ -57,6 +57,15 @@
     margin-bottom: 20px;
   }
 
+  /* Labels */
+  .modal-content label {
+    display: block;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 5px;
+    font-size: 14px;
+  }
+
   /* Input Fields */
   .modal-content input {
     width: 100%;
@@ -794,36 +803,65 @@
 
 <!-- Edit Address Modal -->
 <div id="editAddressModal" class="modal">
-  <div class="modal-content">
+  <div class="modal-content p-4">
     <span class="close-btn" onclick="closeModal()">&times;</span>
-    <h2 class="modal-title">Edit Address</h2>
-    <form action="/editCheckoutAddress" method="POST">
-      <div class="form-group">
-        <label for="addressType">Address Type</label>
-        <input type="text" id="edit_addressType" name="addressType" placeholder="Address Type (e.g., Home, Office)"
-          required>
+    <h2 class="modal-title mb-3">Edit Address</h2>
+    
+    <form id="editAddressForm" action="/editCheckoutAddress" method="POST" novalidate>
+      <div class="mb-3">
+        <label for="edit_addressType">Address Type</label>
+        <input type="text" id="edit_addressType" name="addressType" class="form-control" 
+               placeholder="Address Type (e.g., Home, Office)" required>
+        <div class="invalid-feedback">Please enter address type.</div>
+      </div>
 
+      <div class="mb-3">
+        <label for="edit_name">Place Name</label>
+        <input type="text" id="edit_name" name="name" class="form-control" 
+               placeholder="Full Name" required>
+        <div class="invalid-feedback">Please enter place name.</div>
+      </div>
 
-        <label for="name">Place Name</label>
-        <input type="text" id="edit_name" name="name" placeholder="Full Name" required>
+      <div class="mb-3">
+        <label for="edit_city">City</label>
+        <input type="text" id="edit_city" name="city" class="form-control" 
+               placeholder="City" required>
+        <div class="invalid-feedback">Please enter city.</div>
+      </div>
 
-        <label for="city">City</label>
-        <input type="text" id="edit_city" name="city" placeholder="City" required>
+      <div class="mb-3">
+        <label for="edit_state">State</label>
+        <input type="text" id="edit_state" name="state" class="form-control" 
+               placeholder="State" required>
+        <div class="invalid-feedback">Please enter state.</div>
+      </div>
 
-        <label for="state">State</label>
-        <input type="text" id="edit_state" name="state" placeholder="State" required>
+      <div class="mb-3">
+        <label for="edit_landMark">Landmark</label>
+        <input type="text" id="edit_landMark" name="landMark" class="form-control" 
+               placeholder="Landmark" required>
+        <div class="invalid-feedback">Please enter landmark.</div>
+      </div>
 
-        <label for="landMark">Landmark</label>
-        <input type="text" id="edit_landMark" name="landMark" placeholder="Landmark" required>
+      <div class="mb-3">
+        <label for="edit_pincode">Pincode</label>
+        <input type="text" id="edit_pincode" name="pincode" class="form-control" 
+               placeholder="Pincode" required pattern="^[1-9][0-9]{5}$">
+        <div class="invalid-feedback">Enter a valid 6-digit pincode.</div>
+      </div>
 
-        <label for="pincode">Pincode</label>
-        <input type="text" id="edit_pincode" name="pincode" placeholder="Pincode" required>
+      <div class="mb-3">
+        <label for="edit_phone">Phone Number</label>
+        <input type="tel" id="edit_phone" name="phone" class="form-control" 
+               placeholder="Phone Number" required pattern="^[6-9]\d{9}$">
+        <div class="invalid-feedback">Enter a valid 10-digit mobile number.</div>
+      </div>
 
-        <label for="phone">Phone Number</label>
-        <input type="tel" id="edit_phone" name="phone" placeholder="Phone Number" required>
-
-        <label for="altPhone">Alternative Phone Number (Optional)</label>
-        <input type="tel" id="edit_altPhone" name="altPhone" placeholder="Alternative Phone Number (Optional)">
+      <div class="mb-4">
+        <label for="edit_altPhone">Alternative Phone Number (Optional)</label>
+        <input type="tel" id="edit_altPhone" name="altPhone" class="form-control" 
+               placeholder="Alternative Phone Number (Optional)" pattern="^[6-9]\d{9}$">
+        <div class="invalid-feedback">Enter a valid 10-digit alternative number.</div>
       </div>
 
       <input type="hidden" id="edit_address_id" name="address_id">
@@ -1688,6 +1726,57 @@
         form.submit(); // All validation passed → submit form
       }
     });
+  });
+
+  // Edit Address Form Validation
+  document.addEventListener('DOMContentLoaded', function () {
+    const editForm = document.getElementById('editAddressForm');
+
+    if (editForm) {
+      editForm.addEventListener('submit', function (event) {
+        event.preventDefault(); // Prevent default initially
+        let isValid = true;
+
+        // Reset all previous invalid styles
+        const inputs = editForm.querySelectorAll('input');
+        inputs.forEach(input => input.classList.remove('is-invalid'));
+
+        // Validate required fields
+        editForm.querySelectorAll('input[required]').forEach(input => {
+          if (!input.value.trim()) {
+            input.classList.add('is-invalid');
+            isValid = false;
+          }
+        });
+
+        // Validate specific patterns
+        const phoneRegex = /^[6-9]\d{9}$/;
+        const pinRegex = /^[1-9][0-9]{5}$/;
+
+        const phone = editForm.edit_phone.value.trim();
+        const altPhone = editForm.edit_altPhone.value.trim();
+        const pincode = editForm.edit_pincode.value.trim();
+
+        if (!phoneRegex.test(phone)) {
+          editForm.edit_phone.classList.add('is-invalid');
+          isValid = false;
+        }
+
+        if (altPhone && !phoneRegex.test(altPhone)) {
+          editForm.edit_altPhone.classList.add('is-invalid');
+          isValid = false;
+        }
+
+        if (!pinRegex.test(pincode)) {
+          editForm.edit_pincode.classList.add('is-invalid');
+          isValid = false;
+        }
+
+        if (isValid) {
+          editForm.submit(); // All validation passed → submit form
+        }
+      });
+    }
   });
 
 
