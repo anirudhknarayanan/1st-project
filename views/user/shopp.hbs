@@ -1,3 +1,54 @@
+<style>
+/* Out of stock product styles */
+.product-entry.out-of-stock {
+	position: relative;
+	opacity: 0.8;
+}
+
+.stock-overlay {
+	position: absolute;
+	top: 10px;
+	right: 10px;
+	z-index: 10;
+}
+
+.out-of-stock-badge {
+	background-color: #dc3545;
+	color: white;
+	padding: 4px 8px;
+	border-radius: 12px;
+	font-size: 10px;
+	font-weight: bold;
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+}
+
+.stock-status {
+	margin: 8px 0;
+	font-size: 14px;
+	font-weight: 500;
+}
+
+.in-stock {
+	color: #28a745;
+	font-weight: 600;
+}
+
+.out-of-stock-text {
+	color: #dc3545;
+	font-weight: 600;
+}
+
+.add-to-cart-btn:disabled {
+	cursor: not-allowed;
+	opacity: 0.6;
+}
+
+.product-entry.out-of-stock .prod-img img {
+	filter: grayscale(30%);
+}
+</style>
+
 <div class="colorlib-loader"></div>
 
 <div id="page">
@@ -147,14 +198,30 @@
 					<div class="row row-pb-md">
 						{{#each products}}
 						<div class="col-lg-4 mb-4 text-center">
-							<div class="product-entry border">
+							<div class="product-entry border {{#unless quantity}}out-of-stock{{/unless}}">
+								{{!-- Stock status overlay --}}
+								{{#unless quantity}}
+								<div class="stock-overlay">
+									<span class="out-of-stock-badge">OUT OF STOCK</span>
+								</div>
+								{{/unless}}
+								
 								<a href="/productDetails?id={{this._id}}" class="prod-img">
 									<img src="/uploads/product-images/{{productImage.[0]}}" class="img-fluid"
-										alt="{{productName}}">
+										alt="{{productName}}" {{#unless quantity}}style="opacity: 0.6;"{{/unless}}>
 								</a>
 								<div class="desc">
 									<h2><a href="#">{{productName}}</a></h2>
 									<p>{{brand}}</p>
+
+									{{!-- Stock status indicator --}}
+									<div class="stock-status">
+										{{#if quantity}}
+										<span class="in-stock">✅ In Stock ({{quantity}} available)</span>
+										{{else}}
+										<span class="out-of-stock-text">❌ Out of Stock</span>
+										{{/if}}
+									</div>
 
 									{{!-- ✅ SHOW OFFER INFORMATION --}}
 									{{#if hasOffer}}
@@ -173,8 +240,13 @@
 										<span class="text-muted"><strike>{{formatINR regularPrice}}</strike></span>
 										{{/if}}
 									</p>
-									<button class="add-to-cart-btn btn-dark" onclick="addToCart('{{this._id}}')">Add To
-										Cart</button>
+									
+									{{!-- Add to Cart Button with stock check --}}
+									{{#if quantity}}
+										<button class="add-to-cart-btn btn-dark" onclick="addToCart('{{this._id}}')">Add To Cart</button>
+									{{else}}
+										<button class="add-to-cart-btn btn-secondary" disabled>Out of Stock</button>
+									{{/if}}
 								</div>
 								<div class="text-center" style="margin-bottom: 15px;">
 									<a href="#" onclick="event.preventDefault(); addToWishlist('{{this._id}}')"
