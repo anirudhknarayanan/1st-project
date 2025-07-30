@@ -42,21 +42,22 @@
                                 <!-- Cart Items Section -->
                                 <div class="col-lg-8">
                                     <div class="shopping__cart__table">
-                                        <table>
+                                        <table style="width: 100%; border-collapse: collapse; background: #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.1); border-radius: 8px; overflow: hidden;">
                                             <thead>
-                                                <tr>
-                                                    <th>Product</th>
-                                                    <th>Quantity</th>
-                                                    <th>Total</th>
-                                                    <th></th>
+                                                <tr style="background: #f8f9fa; border-bottom: 2px solid #dee2e6;">
+                                                    <th style="padding: 15px 20px; text-align: left; font-weight: 600; color: #495057;">Product</th>
+                                                    <th style="padding: 15px 20px; text-align: center; font-weight: 600; color: #495057;">Quantity</th>
+                                                    <th style="padding: 15px 20px; text-align: center; font-weight: 600; color: #495057;">Total</th>
+                                                    <th style="padding: 15px 20px; text-align: center; font-weight: 600; color: #495057;"></th>
                                                 </tr>
                                             </thead>
                                             <tbody>
                                                 {{#if cart.items.length}}
                                                 {{#each cart.items}}
                                                 <tr
-                                                    class="{{#unless this.productId.isListed}}unavailable-product{{/unless}}">
-                                                    <td class="product__cart__item">
+                                                    class="{{#unless this.productId.isListed}}unavailable-product{{/unless}}"
+                                                    style="border-bottom: 1px solid #dee2e6;">
+                                                    <td class="product__cart__item" style="padding: 15px 20px;">
                                                         <div class="product__cart__item__pic">
                                                             <img class="cart-img"
                                                                 src="/uploads/product-images/{{this.productId.productImage.[0]}}"
@@ -107,7 +108,7 @@
                                                             </h5>
                                                         </div>
                                                     </td>
-                                                    <td class="quantity__item">
+                                                    <td class="quantity__item" style="padding: 15px 20px; text-align: center;">
                                                         <div class="custom-quantity-input">
                                                             <button class="quantity-btn"
                                                                 onclick="updateItemQuantity('{{this.productId._id}}', 'decrease')">-</button>
@@ -119,8 +120,8 @@
                                                                 onclick="updateItemQuantity('{{this.productId._id}}', 'increase')">+</button>
                                                         </div>
                                                     </td>
-                                                    <td class="cart__price">₹{{this.totalPrice}}</td>
-                                                    <td class="cart__close">
+                                                    <td class="cart__price" style="padding: 15px 20px; text-align: center;">₹{{this.totalPrice}}</td>
+                                                    <td class="cart__close" style="padding: 15px 20px; text-align: center;">
                                                         <a href="javascript:void(0);"
                                                             onclick="confirmRemove('{{this.productId._id}}')">
                                                             <i class="fa fa-close"></i>
@@ -130,7 +131,7 @@
                                                 {{/each}}
                                                 {{else}}
                                                 <tr>
-                                                    <td colspan="4" class="text-center">No products in the cart</td>
+                                                    <td colspan="4" class="text-center" style="padding: 15px 20px; border-bottom: 1px solid #dee2e6;">No products in the cart</td>
                                                 </tr>
                                                 {{/if}}
                                             </tbody>
@@ -152,19 +153,18 @@
                                     <div class="total">
                                         <div class="cart__total">
                                             <h6>Cart total</h6>
-                                            <ul>
-                                                <li>Subtotal <span>₹{{cart.cartTotal}}</span></li>
+                                            <ul style="list-style: none; padding-left: 0; color: #333; font-weight: 500;">
+                                                <li style="color: #333; font-weight: 500;">Subtotal <span style="color: #333; font-weight: 600;">₹{{cart.cartTotal}}</span></li>
                                                 <br>
                                                 {{#each cart.items}}
-                                                <li>Applied Offer <span>{{this.productId.appliedOffer}}%</span></li>
+                                                <li style="color: #333; font-weight: 500;">Applied Offer <span style="color: #333; font-weight: 600;">{{this.productId.appliedOffer}}%</span></li>
                                                 {{/each}}
                                                 <br>
-                                                <li>Total <span id="cart-total">₹</span></li>
+                                                <li style="color: #333; font-weight: 500;">Total <span id="cart-total" style="color: #333; font-weight: 600;">₹</span></li>
                                             </ul>
 
                                             {{#if cart.items.length}}
-                                            <a href="/checkout" id="checkout-btn" class="primary-btn">Proceed to
-                                                checkout</a>
+                                            <a href="/checkout" id="checkout-btn" class="primary-btn" style="background-color: #88c8bc; color: #fff; padding: 12px 24px; border-radius: 5px; text-decoration: none; display: inline-block; font-weight: 600; text-align: center; border: none; transition: background-color 0.3s ease;">Proceed to checkout</a>
                                             {{/if}}
                                         </div>
 
