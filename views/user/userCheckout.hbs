@@ -835,41 +835,64 @@
 
 
 <div id="addAddressModal" class="modal">
-  <div class="modal-content">
+  <div class="modal-content p-4">
     <span class="close-btn" onclick="closeModal()">&times;</span>
-    <h2 class="modal-title">Add Address</h2>
-    <form action="/addCheckoutAddress" method="POST">
-      <div class="form-group">
+    <h2 class="modal-title mb-3">Add Address</h2>
+
+    <form id="addressForm" action="/addCheckoutAddress" method="POST" novalidate>
+      <div class="mb-3">
         <label for="addressType">Address Type</label>
-        <input type="text" name="addressType" placeholder="Address Type (e.g., Home, Office)" required>
+        <input type="text" name="addressType" id="addressType" class="form-control" required>
+        <div class="invalid-feedback">Please enter address type.</div>
+      </div>
 
+      <div class="mb-3">
         <label for="name">Place Name</label>
-        <input type="text" name="name" placeholder="Full Name" required>
+        <input type="text" name="name" id="name" class="form-control" required>
+        <div class="invalid-feedback">Please enter place name.</div>
+      </div>
 
-        <label for="city">City</label>
-        <input type="text" name="city" placeholder="City" required>
+      <div class="mb-3">
+        <label for="city" >City</label>
+        <input type="text" name="city" id="city" class="form-control" required>
+        <div class="invalid-feedback">Please enter city.</div>
+      </div>
 
+      <div class="mb-3">
         <label for="state">State</label>
-        <input type="text" name="state" placeholder="State" required>
+        <input type="text" name="state" id="state" class="form-control" required>
+        <div class="invalid-feedback">Please enter state.</div>
+      </div>
 
+      <div class="mb-3">
         <label for="landMark">Landmark</label>
-        <input type="text" name="landMark" placeholder="Landmark" required>
+        <input type="text" name="landMark" id="landMark" class="form-control" required>
+        <div class="invalid-feedback">Please enter landmark.</div>
+      </div>
 
+      <div class="mb-3">
         <label for="pincode">Pincode</label>
-        <input type="text" name="pincode" placeholder="Pincode" required>
+        <input type="text" name="pincode" id="pincode" class="form-control" required pattern="^[1-9][0-9]{5}$">
+        <div class="invalid-feedback">Enter a valid 6-digit pincode.</div>
+      </div>
 
-        <label for="phone">Phone Number</label>
-        <input type="tel" name="phone" placeholder="Phone Number" required>
+      <div class="mb-3">
+         <label for="phone">Phone Number</label>
+        <input type="tel" name="phone" id="phone" class="form-control" required pattern="^[6-9]\d{9}$">
+        <div class="invalid-feedback">Enter a valid 10-digit mobile number.</div>
+      </div>
 
+      <div class="mb-4">
         <label for="altPhone">Alternative Phone Number (Optional)</label>
-        <input type="tel" name="altPhone" placeholder="Alternative Phone Number (Optional)">
+        <input type="tel" name="altPhone" id="altPhone" class="form-control" pattern="^[6-9]\d{9}$">
+        <div class="invalid-feedback">Enter a valid 10-digit alternative number.</div>
       </div>
 
       <button type="submit" class="save-btn">Save Changes</button>
-
     </form>
   </div>
 </div>
+
 
 
 <script id="cartItemsJSON" type="application/json">
@@ -1619,7 +1642,61 @@
 
 
 
+   document.addEventListener('DOMContentLoaded', function () {
+    const form = document.getElementById('addressForm');
+
+    form.addEventListener('submit', function (event) {
+      event.preventDefault(); // Prevent default initially
+      let isValid = true;
+
+      // Reset all previous invalid styles
+      const inputs = form.querySelectorAll('input');
+      inputs.forEach(input => input.classList.remove('is-invalid'));
+
+      // Validate required fields
+      form.querySelectorAll('input[required]').forEach(input => {
+        if (!input.value.trim()) {
+          input.classList.add('is-invalid');
+          isValid = false;
+        }
+      });
+
+      // Validate specific patterns
+      const phoneRegex = /^[6-9]\d{9}$/;
+      const pinRegex = /^[1-9][0-9]{5}$/;
+
+      const phone = form.phone.value.trim();
+      const altPhone = form.altPhone.value.trim();
+      const pincode = form.pincode.value.trim();
+
+      if (!phoneRegex.test(phone)) {
+        form.phone.classList.add('is-invalid');
+        isValid = false;
+      }
+
+      if (altPhone && !phoneRegex.test(altPhone)) {
+        form.altPhone.classList.add('is-invalid');
+        isValid = false;
+      }
+
+      if (!pinRegex.test(pincode)) {
+        form.pincode.classList.add('is-invalid');
+        isValid = false;
+      }
+
+      if (isValid) {
+        form.submit(); // All validation passed → submit form
+      }
+    });
+  });
+
+
+
+
 
 
 
 </script>
+
+
+
