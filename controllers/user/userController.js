@@ -81,16 +81,30 @@ module.exports = {
 
       const user = req.session.user;
       if (user) {
-        const userData = await User.findOne({ _id: user._id })
-        return res.render("home", { user: userData, products: productData })
+        const userData = await User.findOne({ _id: user._id });
+        
+        // Get cart data for the user
+        const Cart = require("../../models/cartSchema");
+        const cart = await Cart.findOne({ userId: user }).lean();
+        const cartProductIds = cart ? cart.items.map(item => item.productId.toString()) : [];
+        
+        // Get wishlist data for the user
+        const Wishlist = require("../../models/wishlistSchema");
+        const wishlist = await Wishlist.findOne({ userId: user }).lean();
+        const wishlistProductIds = wishlist ? wishlist.items.map(item => item.productId.toString()) : [];
+        
+        return res.render("home", { 
+          user: userData, 
+          products: productData,
+          cartProductIds: cartProductIds,
+          wishlistProductIds: wishlistProductIds
+        });
       } else {
-        return res.render("home", { products: productData })
-
+        return res.render("home", { products: productData });
       }
     } catch (error) {
       console.log("home page not found");
-      res.status(500).send("server error")
-
+      res.status(500).send("server error");
     }
   },
 
@@ -306,7 +320,7 @@ module.exports = {
         category: { $in: categoryIds },
 
       })
-        .populate('category') // ✅ ADD: Populate category to get category offers
+        .populate('category') // Populate category to get category offers
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
@@ -328,7 +342,7 @@ module.exports = {
       }));
       console.log("cate dshhsdgds", categoriesWithIds)
 
-      // ✅ ADD: Calculate offer information for each product
+      // Calculate offer information for each product
       const { getDiscountPrice } = require("../../helpers/offerHelpers");
       const productsWithOffers = products.map(product => {
         const offerData = getDiscountPrice(product);
@@ -340,14 +354,26 @@ module.exports = {
         };
       });
 
+      // Get wishlist data for the user
+      const Wishlist = require("../../models/wishlistSchema");
+      const wishlist = await Wishlist.findOne({ userId: user }).lean();
+      const wishlistProductIds = wishlist ? wishlist.items.map(item => item.productId.toString()) : [];
+
+      // Get cart data for the user
+      const Cart = require("../../models/cartSchema");
+      const cart = await Cart.findOne({ userId: user }).lean();
+      const cartProductIds = cart ? cart.items.map(item => item.productId.toString()) : [];
+
       res.render("user/shopp", {
         user: UserData,
-        products: productsWithOffers, // ✅ UPDATED: Use products with offer information
+        products: productsWithOffers, // Use products with offer information
         category: categoriesWithIds,
         brand: brands,
         totalProducts: totalProducts,
         currentPage: page,
         totalPages: totalPages,
+        wishlistProductIds: wishlistProductIds, // Pass wishlist product IDs
+        cartProductIds: cartProductIds // Pass cart product IDs
       });
     } catch (error) {
       console.error(error);
@@ -423,6 +449,11 @@ module.exports = {
         };
       });
 
+      // Fetch wishlist data
+      const Wishlist = require('../../models/wishlistSchema');
+      const wishlist = await Wishlist.findOne({ userId: user }).lean();
+      const wishlistProductIds = wishlist ? wishlist.items.map(item => item.productId.toString()) : [];
+
       res.render("user/shopp", {
         user: userData,
         products: productsWithOffers, // ✅ UPDATED: Use products with offer information
@@ -432,6 +463,7 @@ module.exports = {
         currentPage: currentPage,
         selectedCategory: category || null,
         selectedBrand: brand || null,
+        wishlistProductIds: wishlistProductIds
       });
 
     } catch (error) {
@@ -482,6 +514,11 @@ module.exports = {
         };
       });
 
+      // Fetch wishlist data
+      const Wishlist = require('../../models/wishlistSchema');
+      const wishlist = await Wishlist.findOne({ userId: user }).lean();
+      const wishlistProductIds = wishlist ? wishlist.items.map(item => item.productId.toString()) : [];
+
       res.render("user/shopp", {
         user: userData,
         products: productsWithOffers, // ✅ UPDATED: Use products with offer information
@@ -489,6 +526,7 @@ module.exports = {
         brand: brands,
         totalPages,
         currentPage,
+        wishlistProductIds: wishlistProductIds
       });
     } catch (error) {
       console.error(error);
@@ -578,6 +616,11 @@ module.exports = {
         };
       });
 
+      // Fetch wishlist data
+      const Wishlist = require('../../models/wishlistSchema');
+      const wishlist = await Wishlist.findOne({ userId: user }).lean();
+      const wishlistProductIds = wishlist ? wishlist.items.map(item => item.productId.toString()) : [];
+
       res.render("user/shopp", {
         user: userData,
         products: productsWithOffers, // ✅ UPDATED: Use products with offer information
@@ -585,7 +628,8 @@ module.exports = {
         brand: brands,
         totalPages,
         currentPage,
-        count: searchResult.length
+        count: searchResult.length,
+        wishlistProductIds: wishlistProductIds
       })
 
     }

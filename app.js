@@ -95,6 +95,16 @@ app.engine(
         return options.inverse(this);
       },
 
+      isInWishlist: function (productId, wishlistProductIds) {
+        if (!wishlistProductIds || !Array.isArray(wishlistProductIds)) return false;
+        return wishlistProductIds.includes(productId.toString());
+      },
+
+      includes: function (array, value) {
+        if (!array || !Array.isArray(array)) return false;
+        return array.includes(value.toString());
+      },
+
       ifCond: function (v1, operator, v2, options) {
         v1 = v1?.toString?.();
         v2 = v2?.toString?.();

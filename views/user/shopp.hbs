@@ -47,6 +47,26 @@
 .product-entry.out-of-stock .prod-img img {
 	filter: grayscale(30%);
 }
+
+/* Wishlist button styles */
+.wishlist-btn {
+	color: #6c757d;
+	text-decoration: none;
+	font-size: 14px;
+	transition: all 0.3s ease;
+}
+
+.wishlist-btn:hover {
+	color: #dc3545;
+}
+
+.wishlist-btn.in-wishlist {
+	color: #dc3545;
+}
+
+.wishlist-btn.in-wishlist:hover {
+	color: #dc3545;
+}
 </style>
 
 <div class="colorlib-loader"></div>
@@ -243,15 +263,19 @@
 									
 									{{!-- Add to Cart Button with stock check --}}
 									{{#if quantity}}
-										<button class="add-to-cart-btn btn-dark" onclick="addToCart('{{this._id}}')">Add To Cart</button>
+										{{#if (includes cartProductIds this._id)}}
+											<button class="add-to-cart-btn btn-success" disabled onclick="addToCart('{{this._id}}', this)">Added to Cart</button>
+										{{else}}
+											<button class="add-to-cart-btn btn-dark" onclick="addToCart('{{this._id}}', this)">Add To Cart</button>
+										{{/if}}
 									{{else}}
 										<button class="add-to-cart-btn btn-secondary" disabled>Out of Stock</button>
 									{{/if}}
 								</div>
 								<div class="text-center" style="margin-bottom: 15px;">
-									<a href="#" onclick="event.preventDefault(); addToWishlist('{{this._id}}')"
-										class="wishlist-btn">
-										<i class="fa fa-heart"></i> Add to wishlist
+									<a href="#" onclick="event.preventDefault(); toggleWishlist('{{this._id}}', this)"
+										class="wishlist-btn {{#if (isInWishlist this._id ../wishlistProductIds)}}in-wishlist{{/if}}">
+										<i class="fa fa-heart"></i> {{#if (isInWishlist this._id ../wishlistProductIds)}}Wishlisted{{else}}Add to wishlist{{/if}}
 									</a>
 								</div>
 
@@ -324,7 +348,7 @@
 </div>
 
 <script>
-	async function addToCart(productId) {
+	async function addToCart(productId, buttonElement) {
 		try {
 			const response = await fetch('/addToCart', {
 				method: 'POST',
@@ -338,6 +362,13 @@
 			});
 			const data = await response.json();
 			if (data.success) {
+				// Change button text to "Added to Cart" and disable it
+				if (buttonElement) {
+					buttonElement.textContent = "Added to Cart";
+					buttonElement.disabled = true;
+					buttonElement.classList.remove("btn-dark");
+					buttonElement.classList.add("btn-success");
+				}
 
 				Toastify({
 					text: "Success\nProduct added to cart ",
@@ -451,6 +482,132 @@
 
 			Toastify({
 				text: "Error\n" + (error.message || 'Failed to add product to Wishlist'),
+				duration: 2000,
+				close: true,
+				gravity: "top",
+				position: "right",
+				stopOnFocus: true,
+				style: {
+					background: "#ffffff",
+					color: "#dc3545",
+					boxShadow: "0px 5px 15px rgba(0, 0, 0, 0.2)",
+					padding: "12px 20px",
+					borderRadius: "10px",
+					borderLeft: "5px solid #dc3545",
+					fontSize: "14px",
+					fontWeight: "bold",
+					textAlign: "left",
+					animation: "fadeInUp 0.5s ease-in-out"
+				},
+				avatar: "https://cdn-icons-png.flaticon.com/512/190/190406.png",
+			}).showToast();
+		}
+	}
+
+	async function toggleWishlist(productId, element) {
+		try {
+			const response = await fetch("/addToWishlist", {
+				method: "POST",
+				headers: { "Content-Type": "application/json" },
+				body: JSON.stringify({ productId })
+			});
+
+			const data = await response.json();
+
+			if (data.success) {
+				// Add to wishlist success
+				element.classList.add('in-wishlist');
+				element.innerHTML = '<i class="fa fa-heart"></i> Wishlisted';
+				
+				Toastify({
+					text: "Success\nProduct added to wishlist successfully",
+					duration: 2000,
+					close: true,
+					gravity: "top",
+					position: "right",
+					stopOnFocus: true,
+					style: {
+						background: "#ffffff",
+						color: "#28a745",
+						boxShadow: "0px 5px 15px rgba(0, 0, 0, 0.2)",
+						padding: "12px 20px",
+						borderRadius: "10px",
+						borderLeft: "5px solid #28a745",
+						fontSize: "14px",
+						fontWeight: "bold",
+						textAlign: "left",
+						animation: "fadeInUp 0.5s ease-in-out"
+					},
+					avatar: "https://cdn-icons-png.flaticon.com/512/845/845646.png",
+				}).showToast();
+			} else {
+				// Check if item is already in cart
+				if (data.message === "Item is already in the cart") {
+					Toastify({
+						text: "Info\n" + data.message,
+						duration: 2000,
+						close: true,
+						gravity: "top",
+						position: "right",
+						stopOnFocus: true,
+						style: {
+							background: "#ffffff",
+							color: "#17a2b8",
+							boxShadow: "0px 5px 15px rgba(0, 0, 0, 0.2)",
+							padding: "12px 20px",
+							borderRadius: "10px",
+							borderLeft: "5px solid #17a2b8",
+							fontSize: "14px",
+							fontWeight: "bold",
+							textAlign: "left",
+							animation: "fadeInUp 0.5s ease-in-out"
+						},
+						avatar: "https://cdn-icons-png.flaticon.com/512/5753/5753454.png",
+					}).showToast();
+				} else {
+					// Item already in wishlist, so remove it
+					const removeResponse = await fetch(`/removeFromWishlist/${productId}`, {
+						method: "DELETE"
+					});
+					
+					const removeData = await removeResponse.json();
+					
+					if (removeData.success) {
+						// Remove from wishlist success
+						element.classList.remove('in-wishlist');
+						element.innerHTML = '<i class="fa fa-heart"></i> Add to wishlist';
+						
+						Toastify({
+							text: "Success\nProduct removed from wishlist",
+							duration: 2000,
+							close: true,
+							gravity: "top",
+							position: "right",
+							stopOnFocus: true,
+							style: {
+								background: "#ffffff",
+								color: "#28a745",
+								boxShadow: "0px 5px 15px rgba(0, 0, 0, 0.2)",
+								padding: "12px 20px",
+								borderRadius: "10px",
+								borderLeft: "5px solid #28a745",
+								fontSize: "14px",
+								fontWeight: "bold",
+								textAlign: "left",
+								animation: "fadeInUp 0.5s ease-in-out"
+							},
+							avatar: "https://cdn-icons-png.flaticon.com/512/845/845646.png",
+						}).showToast();
+					} else {
+						throw new Error(removeData.message || 'Failed to remove product from Wishlist');
+					}
+				}
+			}
+		} catch (error) {
+			console.error('Error:', error);
+
+			Toastify({
+				text: "Error\n" + (error.message || 'Failed to update wishlist'),
 				duration: 2000,
 				close: true,
 				gravity: "top",

@@ -102,7 +102,8 @@ module.exports = {
   },
   removeFromWishlist: async (req, res) => {
     try {
-      const { productId } = req.query;
+      // Handle both GET (query param) and DELETE (URL param) requests
+      const productId = req.query.productId || req.params.productId;
       const userId = req.session.user;
 
       const wishlist = await Wishlist.findOne({ userId });

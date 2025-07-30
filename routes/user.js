@@ -100,6 +100,7 @@ router.get("/productDetails", userAuth, productController.productDetails)
 router.get("/wishlist", userAuth, wishlistController.getWishlist)
 router.post("/addToWishlist", userAuth, wishlistController.addToWishlist)
 router.get("/removeFromWishlist", userAuth, wishlistController.removeFromWishlist)
+router.delete("/removeFromWishlist/:productId", userAuth, wishlistController.removeFromWishlist)
 
 
 

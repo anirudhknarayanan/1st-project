@@ -1,6 +1,7 @@
 const Product = require("../../models/productSchema");
 const User = require("../../models/userSchema");
-const Cart = require("../../models/cartSchema")
+const Cart = require("../../models/cartSchema");
+const Wishlist = require("../../models/wishlistSchema");
 const { getDiscountPrice, getDiscountPriceCart } = require("../../helpers/offerHelpers")
 
 module.exports = {
@@ -184,6 +185,15 @@ module.exports = {
 
             await cart.save();
 
+            // Remove item from wishlist if it exists there
+            try {
+              await Wishlist.findOneAndUpdate(
+                { userId },
+                { $pull: { items: { productId: productId } } }
+              );
+            } catch (wishlistError) {
+              console.error("Error removing item from wishlist:", wishlistError);
+            }
 
             res.status(200).json({
                 success: true,
