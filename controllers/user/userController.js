@@ -2,7 +2,9 @@
 const User = require("../../models/userSchema")
 const Category = require("../../models/categorySchema")
 const Product = require("../../models/productSchema")
-const Brand = require("../../models/brandSchema")
+const Brand = require("../../models/brandSchema");
+const Wishlist = require("../../models/wishlistSchema");
+const Cart = require("../../models/cartSchema");
 const env = require("dotenv").config()
 const bcrypt = require("bcrypt")
 const nodemailer = require("nodemailer")
@@ -355,12 +357,12 @@ module.exports = {
       });
 
       // Get wishlist data for the user
-      const Wishlist = require("../../models/wishlistSchema");
+      
       const wishlist = await Wishlist.findOne({ userId: user }).lean();
       const wishlistProductIds = wishlist ? wishlist.items.map(item => item.productId.toString()) : [];
 
       // Get cart data for the user
-      const Cart = require("../../models/cartSchema");
+      
       const cart = await Cart.findOne({ userId: user }).lean();
       const cartProductIds = cart ? cart.items.map(item => item.productId.toString()) : [];
 
