@@ -263,7 +263,7 @@
 									
 									{{!-- Add to Cart Button with stock check --}}
 									{{#if quantity}}
-										{{#if (includes cartProductIds this._id)}}
+										{{#if isInCart}}
 											<button class="add-to-cart-btn btn-success" disabled onclick="addToCart('{{this._id}}', this)">Added to Cart</button>
 										{{else}}
 											<button class="add-to-cart-btn btn-dark" onclick="addToCart('{{this._id}}', this)">Add To Cart</button>

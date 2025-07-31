@@ -93,7 +93,7 @@
 						</div>
 						<div class="one-eight text-center">
 							<div class="display-tc">
-								<button onclick="addToCart('{{this.productId._id}}')" class="add-to-cart-btn">
+								<button onclick="event.preventDefault(); addToCart('{{this.productId._id}}')" class="add-to-cart-btn">
 									Add to Cart
 								</button>
 							</div>
@@ -146,7 +146,30 @@
 				cancelButtonText: "Cancel"
 			}).then((result) => {
 				if (result.isConfirmed) {
-					window.location.href = `/removeFromWishlist?productId=${productId}`;
+					fetch(`/removeFromWishlist?productId=${productId}`, {
+						method: "GET"
+					})
+						.then(response => response.json())
+						.then(data => {
+							if (data.success) {
+								Swal.fire({
+									title: "Removed!",
+									text: data.message,
+									icon: "success",
+									timer: 1500,
+									showConfirmButton: false
+								}).then(() => {
+									// ✅ Redirect after short delay
+									window.location.href = "/wishlist";
+								});
+							} else {
+								Swal.fire("Error", data.message, "error");
+							}
+						})
+						.catch(err => {
+							console.error("Fetch error:", err);
+							Swal.fire("Error", "Something went wrong!", "error");
+						});
 				} else {
 					Swal.fire({
 						title: "Cancelled",
@@ -159,6 +182,7 @@
 			});
 		}
 
+
 		async function addToCart(productId) {
 			try {
 				// First add to cart
@@ -170,53 +194,63 @@
 					body: JSON.stringify({
 						productId: productId,
 						quantity: 1
-					})
+					}),
+					credentials: 'include'  // Include cookies (session) with request
 				});
 
 				const data = await response.json();
 
 				if (data.success) {
+					// Show success toast immediately when item is added to cart
+					Toastify({
+						text: "Success\nProduct added to cart",
+						duration: 2000,
+						close: true,
+						gravity: "top",
+						position: "right",
+						stopOnFocus: true,
+						style: {
+							background: "#ffffff",
+							color: "#28a745",
+							boxShadow: "0px 5px 15px rgba(0, 0, 0, 0.2)",
+							padding: "12px 20px",
+							borderRadius: "10px",
+							borderLeft: "5px solid #28a745",
+							fontSize: "14px",
+							fontWeight: "bold",
+							textAlign: "left",
+							animation: "fadeInUp 0.5s ease-in-out"
+						},
+						avatar: "https://cdn-icons-png.flaticon.com/512/845/845646.png",
+					}).showToast();
 
-					const removeResponse = await fetch(`/removeFromWishlist?productId=${productId}`, {
-						method: 'GET',
-						headers: {
-							'Content-Type': 'application/json'
-						}
-					});
-
-					const removeData = await removeResponse.json();
-
-					if (removeData.success) {
-
-
-						Toastify({
-							text: "Success\nProduct added to cart ",
-							duration: 2000,
-							close: true,
-							gravity: "top",
-							position: "right",
-							stopOnFocus: true,
-							style: {
-								background: "#ffffff",
-								color: "#28a745",
-								boxShadow: "0px 5px 15px rgba(0, 0, 0, 0.2)",
-								padding: "12px 20px",
-								borderRadius: "10px",
-								borderLeft: "5px solid #28a745",
-								fontSize: "14px",
-								fontWeight: "bold",
-								textAlign: "left",
-								animation: "fadeInUp 0.5s ease-in-out"
+					// Try to remove from wishlist (but don't wait for it to redirect)
+					try {
+						const removeResponse = await fetch(`/removeFromWishlist?productId=${productId}`, {
+							method: 'GET',
+							headers: {
+								'Content-Type': 'application/json'
 							},
-							avatar: "https://cdn-icons-png.flaticon.com/512/845/845646.png",
-						}).showToast();
+							credentials: 'include'  // Include cookies (session) with request
+						});
 
-						setTimeout(() => {
-							window.location.href = "/wishlist";
-						}, 2000);
+						const removeData = await removeResponse.json();
+						
+						// Log removal result but don't block redirect
+						if (!removeData.success) {
+							console.warn('Failed to remove item from wishlist:', removeData.message);
+						}
+					} catch (removeError) {
+						console.warn('Error removing item from wishlist:', removeError);
 					}
 
-				} else {
+					// Redirect to wishlist after showing toast
+					setTimeout(() => {
+						window.location.href = "/wishlist";
+					}, 2000);
+				}
+
+				else {
 					Toastify({
 						text: "Error\n" + (data.message || 'Failed to add product to cart'),
 						duration: 2000,

@@ -364,9 +364,18 @@ module.exports = {
       const cart = await Cart.findOne({ userId: user }).lean();
       const cartProductIds = cart ? cart.items.map(item => item.productId.toString()) : [];
 
+      console.log('Cart Product IDs:', cartProductIds);
+      console.log('First few product IDs from products:', productsWithOffers.slice(0, 3).map(p => ({ id: p._id.toString(), name: p.name })));
+
+      // Add isInCart flag to each product for easier template logic
+      const productsWithCartStatus = productsWithOffers.map(product => ({
+        ...product,
+        isInCart: cartProductIds.includes(product._id.toString())
+      }));
+
       res.render("user/shopp", {
         user: UserData,
-        products: productsWithOffers, // Use products with offer information
+        products: productsWithCartStatus, // Use products with cart status
         category: categoriesWithIds,
         brand: brands,
         totalProducts: totalProducts,
