@@ -13,6 +13,13 @@ module.exports = {
             const product = await Product.findById(productId).populate('category').lean()
             console.log(product);
 
+             if (!product || product.isBlocked) {
+      return res.status(404).render("user/page-404", {
+        user: userData,
+        message: "Product not found or is blocked",
+      });
+    }
+
             const findCategory = product.category;
             const categoryOffer = findCategory?.categoryOffer || 0;
             const productOffer = product.productOffer || 0;
