@@ -834,6 +834,9 @@
             const data = await response.json();
 
             if (data.success) {
+                // Update cart badge
+                updateCartBadge();
+
                 Toastify({
                     text: "Success\nProduct added to cart successfully",
                     duration: 2000,

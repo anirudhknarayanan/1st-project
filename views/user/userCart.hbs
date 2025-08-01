@@ -260,6 +260,10 @@
                         if (data.success) {
                             catRow.remove();
                             calculateTotalPrice();
+                            
+                            // Update cart badge
+                            updateCartBadge();
+                            
                             const remainingItems = document.querySelectorAll('tr').length;
                             if (remainingItems <= 1) {
                                 location.reload(); // reload if cart becomes empty
@@ -359,7 +363,10 @@
             const totalPriceElement = quantityInput.closest('tr').querySelector('.cart__price');
             totalPriceElement.textContent = `₹${(pricePerUnit * newQuantity).toFixed(2)}`;
 
-            calculateTotalPrice()
+            calculateTotalPrice();
+            
+            // Update cart badge
+            updateCartBadge();
         }
     }
 </script>

@@ -245,5 +245,45 @@ module.exports = {
             console.error("Error in removeCartItem:", error);
             res.status(500).json({ success: false, message: 'Internal server error' });
         }
+    },
+
+    getCartCount: async (req, res) => {
+        try {
+            const userId = req.session.user;
+            
+            if (!userId) {
+                return res.status(200).json({
+                    success: true,
+                    count: 0
+                });
+            }
+
+            const cart = await Cart.findOne({ userId });
+            
+            if (!cart || !cart.items) {
+                return res.status(200).json({
+                    success: true,
+                    count: 0
+                });
+            }
+
+            // Calculate total quantity of all items in cart
+            const totalCount = cart.items.reduce((total, item) => {
+                return total + (item.quantity || 0);
+            }, 0);
+
+            res.status(200).json({
+                success: true,
+                count: totalCount
+            });
+
+        } catch (error) {
+            console.error("Error getting cart count:", error);
+            res.status(500).json({
+                success: false,
+                message: "Failed to get cart count",
+                count: 0
+            });
+        }
     }
 }

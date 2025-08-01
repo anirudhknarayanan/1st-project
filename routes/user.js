@@ -106,6 +106,7 @@ router.delete("/removeFromWishlist/:productId", userAuth, wishlistController.rem
 
 //cart mnagement
 router.get("/cart", userAuth, cartControllers.loadCart)
+router.get("/cart/count", userAuth, cartControllers.getCartCount)
 router.post("/addToCart", userAuth, cartControllers.addToCart)
 router.delete("/cart/remove/:productId", userAuth, cartControllers.removeCartItem)
 
