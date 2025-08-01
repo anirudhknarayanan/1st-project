@@ -317,8 +317,8 @@
     }
 
     /* Buttons */
-    .btn-cancel,
-    .btn-confirm {
+    .modal-footer .btn-cancel,
+    .modal-footer .btn-confirm {
         min-width: 100px;
         padding: 0.5rem 1rem;
         border-radius: 6px;
@@ -326,28 +326,46 @@
         font-weight: 500;
         cursor: pointer;
         transition: all 0.2s;
+        margin: 0;
     }
 
-    .btn-cancel {
+    .modal-footer .btn-cancel {
         background-color: #e53e3e;
         color: #fff;
         border: 2px solid #e53e3e;
     }
 
-    .btn-cancel:hover {
+    .modal-footer .btn-cancel:hover {
         background-color: #c53030;
         border-color: #c53030;
     }
 
-    .btn-confirm {
+    .modal-footer .btn-confirm {
         background-color: #fff;
         color: #4a5568;
         border: 2px solid #e2e8f0;
     }
 
-    .btn-confirm:hover {
+    .modal-footer .btn-confirm:hover {
         background-color: #f7fafc;
         border-color: #cbd5e0;
+    }
+
+    /* Override for table action buttons */
+    .products-table .btn-cancel {
+        background-color: #dc3545;
+        color: white;
+        padding: 10px 20px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+        font-size: 14px;
+        margin-top: 0;
+        transition: background-color 0.3s;
+    }
+
+    .products-table .btn-cancel:hover {
+        background-color: #c82333;
     }
 
     @media (max-width: 640px) {
