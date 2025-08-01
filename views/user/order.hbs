@@ -724,7 +724,7 @@
             <p>Are you sure you want to cancel this order? This action cannot be undone.</p>
             <div class="form-group">
                 <label for="cancelReason">Reason for cancellation:</label>
-                <select id="cancelReason">
+                <select id="cancelReason" onchange="toggleCustomReason()">
                     <option value="">Select a reason</option>
                     <option value="changed_mind">Changed my mind</option>
                     <option value="wrong_item">Ordered wrong item</option>
@@ -732,6 +732,11 @@
                     <option value="price_issue">Found better price elsewhere</option>
                     <option value="other">Other</option>
                 </select>
+            </div>
+            {{!-- ✅ Custom reason textarea (hidden by default) --}}
+            <div class="form-group" id="customReasonGroup" style="display: none;">
+                <label for="customReason">Please specify your reason:</label>
+                <textarea id="customReason" placeholder="Enter your custom reason for cancellation..." rows="3" style="width: 100%; padding: 10px; border: 2px solid #e2e8f0; border-radius: 6px; font-size: 0.95rem; resize: vertical; min-height: 80px;"></textarea>
             </div>
         </div>
         <div class="modal-footer">
@@ -776,7 +781,7 @@
             <p>Are you sure you want to cancel this item? This action cannot be undone.</p>
             <div class="form-group">
                 <label for="itemCancelReason">Reason for cancellation:</label>
-                <select id="itemCancelReason">
+                <select id="itemCancelReason" onchange="toggleItemCustomReason()">
                     <option value="">Select a reason</option>
                     <option value="changed_mind">Changed my mind</option>
                     <option value="wrong_item">Ordered wrong item</option>
@@ -784,6 +789,11 @@
                     <option value="price_issue">Found better price elsewhere</option>
                     <option value="other">Other</option>
                 </select>
+            </div>
+            {{!-- ✅ Custom reason textarea for item cancel (hidden by default) --}}
+            <div class="form-group" id="itemCustomReasonGroup" style="display: none;">
+                <label for="itemCustomReason">Please specify your reason:</label>
+                <textarea id="itemCustomReason" placeholder="Enter your custom reason for cancellation..." rows="3" style="width: 100%; padding: 10px; border: 2px solid #e2e8f0; border-radius: 6px; font-size: 0.95rem; resize: vertical; min-height: 80px;"></textarea>
             </div>
         </div>
         <div class="modal-footer">
@@ -873,6 +883,25 @@
 
     function closeModal() {
         document.getElementById('cancelOrderModal').style.display = 'none';
+        // ✅ Reset form when closing modal
+        document.getElementById('cancelReason').value = '';
+        document.getElementById('customReason').value = '';
+        document.getElementById('customReasonGroup').style.display = 'none';
+    }
+
+    // ✅ Toggle custom reason textarea based on dropdown selection
+    function toggleCustomReason() {
+        const reasonSelect = document.getElementById('cancelReason');
+        const customReasonGroup = document.getElementById('customReasonGroup');
+        const customReasonTextarea = document.getElementById('customReason');
+
+        if (reasonSelect.value === 'other') {
+            customReasonGroup.style.display = 'block';
+            customReasonTextarea.focus(); // Auto-focus the textarea
+        } else {
+            customReasonGroup.style.display = 'none';
+            customReasonTextarea.value = ''; // Clear the textarea when hidden
+        }
     }
 
     // Close modal when clicking outside
@@ -884,8 +913,11 @@
     }
 
     async function confirmCancel() {
-        const reason = document.getElementById('cancelReason').value;
-        if (!reason) {
+        const reasonSelect = document.getElementById('cancelReason').value;
+        const customReason = document.getElementById('customReason').value.trim();
+
+        // ✅ Validation logic
+        if (!reasonSelect) {
             Swal.fire({
                 icon: 'error',
                 title: 'Error',
@@ -893,6 +925,29 @@
             });
             return;
         }
+
+        // ✅ If "Other" is selected, validate custom reason
+        if (reasonSelect === 'other') {
+            if (!customReason) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Please enter a custom reason for cancellation'
+                });
+                return;
+            }
+            if (customReason.length < 10) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Custom reason must be at least 10 characters long'
+                });
+                return;
+            }
+        }
+
+        // ✅ Determine final reason to send
+        const finalReason = reasonSelect === 'other' ? customReason : reasonSelect;
         try {
             const orderId = "{{order._id}}"
             const response = await fetch(`/cancelOrder/${orderId}`, {
@@ -900,7 +955,7 @@
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ reason })
+                body: JSON.stringify({ reason: finalReason })
             });
             const data = await response.json();
 
@@ -952,6 +1007,25 @@
     function closeItemCancelModal() {
         document.getElementById('itemCancelModal').style.display = 'none';
         document.body.style.overflow = '';
+        // ✅ Reset item cancel form when closing modal
+        document.getElementById('itemCancelReason').value = '';
+        document.getElementById('itemCustomReason').value = '';
+        document.getElementById('itemCustomReasonGroup').style.display = 'none';
+    }
+
+    // ✅ Toggle custom reason textarea for item cancel
+    function toggleItemCustomReason() {
+        const reasonSelect = document.getElementById('itemCancelReason');
+        const customReasonGroup = document.getElementById('itemCustomReasonGroup');
+        const customReasonTextarea = document.getElementById('itemCustomReason');
+
+        if (reasonSelect.value === 'other') {
+            customReasonGroup.style.display = 'block';
+            customReasonTextarea.focus(); // Auto-focus the textarea
+        } else {
+            customReasonGroup.style.display = 'none';
+            customReasonTextarea.value = ''; // Clear the textarea when hidden
+        }
     }
 
     window.onclick = function (event) {
@@ -962,9 +1036,11 @@
     }
 
     async function confirmItemCancel() {
-        const reason = document.getElementById('itemCancelReason').value;
+        const reasonSelect = document.getElementById('itemCancelReason').value;
+        const customReason = document.getElementById('itemCustomReason').value.trim();
 
-        if (!reason) {
+        // ✅ Validation logic for item cancel
+        if (!reasonSelect) {
             Swal.fire({
                 icon: 'error',
                 title: 'Error',
@@ -972,6 +1048,29 @@
             });
             return;
         }
+
+        // ✅ If "Other" is selected, validate custom reason
+        if (reasonSelect === 'other') {
+            if (!customReason) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Please enter a custom reason for cancellation'
+                });
+                return;
+            }
+            if (customReason.length < 10) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'Custom reason must be at least 10 characters long'
+                });
+                return;
+            }
+        }
+
+        // ✅ Determine final reason to send
+        const finalReason = reasonSelect === 'other' ? customReason : reasonSelect;
 
         try {
             // ✅ Fetch current quantity from DOM (you can pass this value while opening modal too)
@@ -1012,7 +1111,7 @@
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ reason, quantity: quantityToCancel })
+                body: JSON.stringify({ reason: finalReason, quantity: quantityToCancel })
             });
 
             const data = await response.json();
