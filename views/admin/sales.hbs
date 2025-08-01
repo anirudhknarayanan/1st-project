@@ -732,12 +732,18 @@
     </div>
     {{/if}}
 
-<script>
-    document.addEventListener('DOMContentLoaded', function () {
+<script>document.addEventListener('DOMContentLoaded', function () {
         const filterType = document.getElementById('filterType');
         const dateRangeFields = document.getElementById('dateRangeFields');
         const fromDate = document.getElementById('fromDate');
         const toDate = document.getElementById('toDate');
+
+        // Get today's date in YYYY-MM-DD format
+        const today = new Date().toISOString().split('T')[0];
+
+        // Set max date for both fromDate and toDate to today (prevent future dates)
+        fromDate.setAttribute('max', today);
+        toDate.setAttribute('max', today);
 
         // Show/hide date fields based on filter type
         filterType.addEventListener('change', function () {
@@ -753,8 +759,44 @@
                 // Clear date values when switching to a preset filter
                 fromDate.value = '';
                 toDate.value = '';
+                // Reset toDate min attribute when clearing but keep max
+                toDate.removeAttribute('min');
+                toDate.setAttribute('max', today);
             }
         });
+
+        // Set minimum date for toDate based on fromDate selection
+        fromDate.addEventListener('change', function () {
+            const selectedFromDate = this.value;
+            if (selectedFromDate) {
+                // Set the minimum date for toDate to be the selected fromDate
+                // and maximum date to today
+                toDate.setAttribute('min', selectedFromDate);
+                toDate.setAttribute('max', today);
+                
+                // If toDate is already selected and is before the new fromDate, clear it
+                if (toDate.value && toDate.value < selectedFromDate) {
+                    toDate.value = '';
+                    alert('To date has been cleared as it was before the selected from date. Please select a new to date.');
+                }
+                
+                // If toDate is already selected and is after today, clear it
+                if (toDate.value && toDate.value > today) {
+                    toDate.value = '';
+                    alert('To date has been cleared as future dates are not allowed. Please select a valid to date.');
+                }
+            } else {
+                // Remove min attribute if fromDate is cleared but keep max
+                toDate.removeAttribute('min');
+                toDate.setAttribute('max', today);
+            }
+        });
+
+        // Initialize min date for toDate if fromDate already has a value (for page reload scenarios)
+        if (fromDate.value) {
+            toDate.setAttribute('min', fromDate.value);
+            toDate.setAttribute('max', today);
+        }
 
         // Form validation
         document.getElementById('filterForm').addEventListener('submit', function (e) {
@@ -765,6 +807,9 @@
                 } else if (new Date(fromDate.value) > new Date(toDate.value)) {
                     e.preventDefault();
                     alert('Start date cannot be after end date');
+                } else if (new Date(fromDate.value) > new Date(today) || new Date(toDate.value) > new Date(today)) {
+                    e.preventDefault();
+                    alert('Future dates are not allowed. Please select valid dates.');
                 }
             }
         });
