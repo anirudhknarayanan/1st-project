@@ -579,7 +579,7 @@ module.exports = {
                 orderStatus: order.status
             };
 
-            console.log("order", order);
+            console.log("order : ", orderData);
 
 
             return res.render("user/order", {
