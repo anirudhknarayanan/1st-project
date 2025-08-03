@@ -18,9 +18,7 @@ const uploads = multer({ storage: storage })
 
 
 
-// router.get("/women",(req,res)=>{
-//     res.render("user/women")
-// })
+
 router.get("/about", (req, res) => {
     res.render("user/about")
 })

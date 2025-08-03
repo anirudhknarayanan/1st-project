@@ -448,7 +448,7 @@
 
     {{#if returnRequests.length}}
     <div class="container" style="margin-top: 23px;">
-        <h2>Order Return Requests</h2>
+        <h2>Full Order Return Requests</h2>
         <table>
             <thead>
                 <tr>
@@ -479,11 +479,10 @@
     </div>
     {{/if}}
 
-
     {{#if itemReturnRequests.length}}
     <div class="container" style="margin-top: 30px;">
-        <h2>Item-Level Return Requests</h2>
-        <table>
+        <h2>Individual Item Return Requests</h2>
+        <table class="orders-table">
             <thead>
                 <tr>
                     <th>Order ID</th>
@@ -493,7 +492,6 @@
                     <th>Reason</th>
                     <th>Status</th>
                     <th>Actions</th>
-                    
                 </tr>
             </thead>
             <tbody>
@@ -502,18 +500,28 @@
                     <td>#{{this.orderUniqueId}}</td>
                     <td>
                         <img src="/uploads/product-images/{{this.product.productImage.[0]}}"
-                            alt="{{this.product.productName}}" style="width: 60px; height: 60px; object-fit: cover;">
-                        <div>{{this.product.productName}}</div>
+                            alt="{{this.product.productName}}" style="width: 60px; height: 60px; object-fit: cover; border-radius: 4px;">
+                        <div style="margin-top: 5px;">{{this.product.productName}}</div>
                     </td>
                     <td>{{this.user.name}}</td>
                     <td>{{formatDate this.returnDate}}</td>
-                    <td><a href="#" class="view-reason">{{this.return_reason}}</a></td>
-                    <td><span class="status pending">{{this.status}}</span></td>
+                    <td>
+                        <div class="reason-preview">
+                            {{truncate this.return_reason 50}}
+                        </div>
+                        <a href="#" class="view-reason" style="font-size: 12px; color: #3498db;" 
+                           onclick="showFullReason(event, '{{this.return_reason}}')">View Full Reason</a>
+                    </td>
+                    <td><span class="status {{this.status}}">{{this.status}}</span></td>
                     <td>
                         <button class="approve-btn"
-                            onclick="approveItemReturn('{{this.orderId}}', '{{this.productId}}')">Approve</button>
+                            onclick="approveItemReturn('{{this.orderId}}', '{{this.productId}}')">
+                            <i class="fas fa-check"></i> Approve
+                        </button>
                         <button class="reject-btn"
-                            onclick="rejectItemReturn('{{this.orderId}}', '{{this.productId}}')">Reject</button>
+                            onclick="rejectItemReturn('{{this.orderId}}', '{{this.productId}}')">
+                            <i class="fas fa-times"></i> Reject
+                        </button>
                     </td>
                 </tr>
                 {{/each}}
@@ -521,13 +529,6 @@
         </table>
     </div>
     {{/if}}
-
-
-
-
-
-
-
 
     <div id="orderModal" class="modal">
         <div class="modal-content">

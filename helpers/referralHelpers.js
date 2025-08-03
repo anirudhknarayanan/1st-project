@@ -143,10 +143,10 @@ const markReferralCouponAsUsed = async (couponCode, orderId) => {
                 orderId: orderId
             }
         );
-        console.log("✅ Referral coupon marked as used successfully:", result);
+        console.log(" Referral coupon marked as used successfully:", result);
         return true;
     } catch (error) {
-        console.error("❌ Error marking referral coupon as used:", error);
+        console.error(" Error marking referral coupon as used:", error);
         return false;
     }
 };
