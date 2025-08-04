@@ -199,20 +199,20 @@
                     </td>
                     <td>{{quantity}}</td>
                     <td>
-                        <a href="/admin/editProduct?id={{_id}}" class="btn btn-info"
+                        <a href="/admin/products/editProduct?id={{_id}}" class="btn btn-info"
                             style="text-decoration: none;">Edit</a>
                     </td>
                     <td>
 
                         {{#if isBlocked}}
                         <button class="btn btn-success btn-sm">
-                            <a href="/admin/unblockProduct/{{_id}}">unblock</a>
+                            <a href="/admin/products/unblockProduct/{{_id}}">unblock</a>
                         </button>
 
 
                         {{else}}
                         <button class="btn btn-danger btn-sm">
-                            <a href="/admin/blockProduct/{{_id}}">block</a>
+                            <a href="/admin/products/blockProduct/{{_id}}">block</a>
                         </button>
                         {{/if}}
                     </td>
@@ -307,7 +307,7 @@
 
         if (amount) {
             $.ajax({
-                url: "/admin/addProductOffer",
+                url: "/admin/products/addProductOffer",
                 method: "POST",
                 data: {
                     percentage: amount,
@@ -344,7 +344,7 @@
 
             if (result.isConfirmed) {
                 $.ajax({
-                    url: "/admin/removeProductOffer", // ✅ ensure backend route is correct
+                    url: "/admin/products/removeProductOffer", // ✅ ensure backend route is correct
                     method: "POST",
                     data: {
                         productId: productId
@@ -383,7 +383,7 @@
             })
             if(result.isConfirmed){
                 $.ajax({
-                    url : "/admin/deleteProduct",
+                    url : "/admin/products/deleteProduct",
                     method : "POST",
                     data : {
                         productId : productId

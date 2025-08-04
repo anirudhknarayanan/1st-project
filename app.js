@@ -14,8 +14,8 @@ app.use((req, res, next) => {
   next();
 });
 
-const userRouter = require("./routes/user");
-const adminRouter = require("./routes/admin");
+const userRouter = require("./routes/user/index");
+const adminRouter = require("./routes/admin/index");
 
 db(); // Connect DB
 

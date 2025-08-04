@@ -14,69 +14,67 @@ const storage = require("../helpers/multer");
 const uploads = multer({ storage: storage })
 
 
-router.get("/pageerror", adminController.getPageerror)
-router.get("/", adminAuth, adminController.loadDashBoard)
-router.get("/login", adminController.adminLogin)
-router.post("/login", adminController.login)
-router.get("/logout", adminController.logout)
+//router.get("/pageerror", adminController.getPageerror)
+//router.get("/", adminAuth, adminController.loadDashBoard)
+// router.get("/login", adminController.adminLogin)
+//router.post("/login", adminController.login)
+// router.get("/logout", adminController.logout)
 
-router.get('/dashboard-data',adminController.getDashboardDataAPI);
+//router.get('/dashboard-data',adminController.getDashboardDataAPI);
 
-router.get("/users", adminAuth, customerController.getAllusers)
-router.post("/block/:id", adminAuth, customerController.userBlock)
-router.post("/unblock/:id", adminAuth, customerController.userUnblock)
+// router.get("/users", adminAuth, customerController.getAllusers)
+// router.post("/block/:id", adminAuth, customerController.userBlock)
+// router.post("/unblock/:id", adminAuth, customerController.userUnblock)
 
- router.get("/category", adminAuth, categoryController.categoryInfo)
-router.post("/addCategory", adminAuth, categoryController.addCategory)
-router.post("/addCategoryOffer", adminAuth, categoryController.addCategoryOffer)
-router.post("/removeCategoryOffer", adminAuth, categoryController.removeCategoryOffer)
-router.patch("/toggleCategory/:id", adminAuth, categoryController.toggleCategoryStatus);
-router.get("/editCategory/:id", adminAuth, categoryController.getEditCategory)
-router.post("/editCategory/:id", adminAuth, categoryController.updateCategory)
-
-
-router.get("/brand", adminAuth, brandController.getBrandPage);
-router.post("/addBrand", adminAuth, uploads.single("image"), brandController.addBrand)
-router.get("/blockBrand", adminAuth, brandController.blockBrand)
-router.get("/unblockBrand", adminAuth, brandController.unblockBrand)
-router.get("/deleteBrand", adminAuth, brandController.deleteBrand)
-
-router.get("/orders",adminAuth,orderController.getOrderPage)
-router.post("/updateOrder",adminAuth,orderController.updateOrder)
-router.post("/cancelOrder",adminAuth,orderController.cancelOrder)
-router.post("/approveReturn",adminAuth,orderController.approveReturn)
-router.post("/rejectReturn/:orderId",adminAuth,orderController.rejectReturn)
+//  router.get("/category", adminAuth, categoryController.categoryInfo)
+// router.post("/addCategory", adminAuth, categoryController.addCategory)
+// router.post("/addCategoryOffer", adminAuth, categoryController.addCategoryOffer)
+// router.post("/removeCategoryOffer", adminAuth, categoryController.removeCategoryOffer)
+// router.patch("/toggleCategory/:id", adminAuth, categoryController.toggleCategoryStatus);
+// router.get("/editCategory/:id", adminAuth, categoryController.getEditCategory)
+// router.post("/editCategory/:id", adminAuth, categoryController.updateCategory)
 
 
-router.post('/approveItemReturn',adminAuth, orderController.approveItemReturn);
-router.post('/rejectItemReturn',adminAuth, orderController.rejectItemReturn);
+// router.get("/brand", adminAuth, brandController.getBrandPage);
+// router.post("/addBrand", adminAuth, uploads.single("image"), brandController.addBrand)
+// router.get("/blockBrand", adminAuth, brandController.blockBrand)
+// router.get("/unblockBrand", adminAuth, brandController.unblockBrand)
+// router.get("/deleteBrand", adminAuth, brandController.deleteBrand)
+
+// router.get("/orders",adminAuth,orderController.getOrderPage)
+// router.post("/updateOrder",adminAuth,orderController.updateOrder)
+// router.post("/cancelOrder",adminAuth,orderController.cancelOrder)
+// router.post("/approveReturn",adminAuth,orderController.approveReturn)
+// router.post("/rejectReturn/:orderId",adminAuth,orderController.rejectReturn)
+
+
+// router.post('/approveItemReturn',adminAuth, orderController.approveItemReturn);
+// router.post('/rejectItemReturn',adminAuth, orderController.rejectItemReturn);
 
 
 
-router.get("/products", adminAuth, productController.getAllProducts);
-router.get("/addProduct", adminAuth, productController.addProductpage)
-router.post("/addProduct", adminAuth, uploads.array("images", 3), productController.addProduct)
-router.post("/addProductOffer", adminAuth, productController.addProductOffer)
-router.post("/removeProductOffer", adminAuth, productController.removeProductOffer)
-router.get("/blockProduct/:id", adminAuth, productController.blockProduct)
-router.get("/unblockProduct/:id", adminAuth, productController.unblockProduct)
-router.get("/editProduct", adminAuth, productController.getEditProduct);
-router.post("/editProduct/:id", adminAuth, uploads.any(), productController.editProduct)
-router.post("/deleteImage", adminAuth, productController.deleteSigleImage)
-router.post("/deleteProduct",adminAuth,productController.deleteProduct)
+//router.get("/products", adminAuth, productController.getAllProducts);
+//router.get("/addProduct", adminAuth, productController.addProductpage)
+//router.post("/addProduct", adminAuth, uploads.array("images", 3), productController.addProduct)
+//router.post("/addProductOffer", adminAuth, productController.addProductOffer)
+// router.post("/removeProductOffer", adminAuth, productController.removeProductOffer)
+// router.get("/blockProduct/:id", adminAuth, productController.blockProduct)
+// router.get("/unblockProduct/:id", adminAuth, productController.unblockProduct)
+//router.get("/editProduct", adminAuth, productController.getEditProduct);
+//router.post("/editProduct/:id", adminAuth, uploads.any(), productController.editProduct)
+// router.post("/deleteImage", adminAuth, productController.deleteSigleImage)
+// router.post("/deleteProduct",adminAuth,productController.deleteProduct)
 
 //coupen mangmnt
 
 
-router.get("/coupons",adminAuth,coupenController.getCouponpage);
-router.post("/addCoupon",adminAuth,coupenController.addCoupon)
-router.patch("/toggle-coupon/:id",adminAuth,coupenController.toggleCoupon)
+//  
 
 //sales report
 
-router.get('/salesReport',adminAuth,orderController.getSalesReport);
-router.get("/salesReportPDF/pdf",adminAuth,orderController.getSalesReportPDF)
-router.get("/salesReportExcel/excel",adminAuth,orderController.getSalesReportExcel)
+// router.get('/salesReport',adminAuth,orderController.getSalesReport);
+// router.get("/salesReportPDF/pdf",adminAuth,orderController.getSalesReportPDF)
+// router.get("/salesReportExcel/excel",adminAuth,orderController.getSalesReportExcel)
 
 
 

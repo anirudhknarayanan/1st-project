@@ -360,7 +360,7 @@
             const usageLimit = document.querySelector("input[name='usageLimit']").value;
 
             try {
-                const response = await fetch("/admin/addCoupon", {
+                const response = await fetch("/admin/coupons/addCoupon", {
                     method: "POST",
                     headers: {
                         "Content-Type": "application/json"
@@ -453,7 +453,7 @@
                     }).then((result) => {
                         if (result.isConfirmed) {
 
-                            fetch(`/admin/toggle-coupon/${couponId}`, {
+                            fetch(`/admin/coupons/toggle-coupon/${couponId}`, {
                                 method: 'PATCH',
                                 headers: {
                                     'Content-Type': 'application/json'

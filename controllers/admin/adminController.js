@@ -23,7 +23,7 @@ module.exports = {
     login: async (req, res) => {
         try {
             const { email, password } = req.body;
-            console.log("hii", req.body);
+
 
             const admin = await User.findOne({ email: email, isAdmin: true })
             if (admin) {
@@ -32,17 +32,11 @@ module.exports = {
                 const passwordMatch = await bcrypt.compare(password, admin.password)
                 if (passwordMatch) {
                     req.session.admin = admin._id;
-                    console.log("hey thre");
-
                     res.redirect("/admin")
                 } else {
-                    console.log("uighis");
-
                     return res.redirect("/admin/login")
                 }
             } else {
-                console.log("hii");
-
                 return res.redirect("/admin/login")
             }
         } catch (error) {
@@ -75,16 +69,10 @@ module.exports = {
 
             console.log("dashBordData : ", dashboardData)
 
-
-
-
-
             res.render("admin/dashboard", {
                 dashboardData,
                 admin: true
             })
-
-
 
 
         } catch (error) {
@@ -92,7 +80,6 @@ module.exports = {
             res.redirect("/pageerror");
         }
     },
-
 
     getPageerror: async (req, res) => {
         res.render("admin/admin-error", { admin: true })
@@ -112,7 +99,6 @@ module.exports = {
         } catch (error) {
             console.log("logout error");
             res.redirect("/pageerror")
-
 
         }
     },
@@ -137,8 +123,6 @@ module.exports = {
 async function getDashboardData(timeFilter) {
 
     const currentDate = new Date();
-
-
 
     let startDate, labels, format, aggregateBy;
 

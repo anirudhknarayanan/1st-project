@@ -298,7 +298,7 @@
       const brandTableBody = document.getElementById("brandTableBody");
 
       // Fetch and display brands
-        async function loadBrands() {
+      async function loadBrands() {
         try {
           const res = await fetch("/admin/getBrands");
           const data = await res.json();
@@ -307,14 +307,14 @@
         } catch (err) {
           console.error("Error loading brands:", err);
         }
-      }  
+      }
 
       // Submit form to add a brand
       brandForm.addEventListener("submit", async function (e) {
         e.preventDefault();
         const formData = new FormData(brandForm);
         try {
-          const res = await fetch("/admin/addBrand", {
+          const res = await fetch("/admin/brand/addBrand", {
             method: "POST",
             body: formData
           });
@@ -359,9 +359,13 @@
       // Toggle block/unblock
       window.toggleBlock = function (brandId, btn) {
         const isBlocking = btn.textContent === "Block";
-        const url = isBlocking ? "/admin/blockBrand" : "/admin/unblockBrand";
-        console.log(brandId)
-        fetch(`${url}?id=${brandId}`)
+        const url = isBlocking ? "/admin/brand/blockBrand" : "/admin/brand/unblockBrand";
+
+        fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ id: brandId })
+        })
           .then(res => res.json())
           .then(result => {
             if (result.success) {
@@ -380,7 +384,6 @@
             Swal.fire("Error", "Something went wrong.", "error");
           });
       };
-
       // Delete brand
       window.confirmDelete = function (brandId, brandName, btn) {
         Swal.fire({
@@ -393,7 +396,11 @@
           confirmButtonColor: "#dc3545"
         }).then(result => {
           if (result.isConfirmed) {
-            fetch(`/admin/deleteBrand?id=${brandId}`)
+            fetch("/admin/brand/deleteBrand", {
+              method: "DELETE",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ id: brandId })
+            })
               .then(res => res.json())
               .then(result => {
                 if (result.success) {
@@ -410,8 +417,7 @@
           }
         });
       };
-
-      // Load initial brands
+    // Load initial brands
       loadBrands();
     });
   </script>

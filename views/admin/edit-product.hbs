@@ -268,7 +268,7 @@
                 <div class="card mb-4">
                     <div class="card-body">
                         {{#if product}}
-                        <form method="POST" action="/admin/editProduct/{{product._id}}" enctype="multipart/form-data"
+                        <form method="POST" action="/admin/products/editProduct/{{product._id}}" enctype="multipart/form-data"
                             onsubmit="return validateForm(event)">
                             <div class="mb-4" id="flexy">
                                 <label for="product_name" class="form-label">Product Name</label>
@@ -533,7 +533,7 @@
         }).then((result) => {
             if (result.isConfirmed) {
                 $.ajax({
-                    url: "/admin/deleteImage",
+                    url: "/admin/products/deleteImage",
                     method: "POST",
                     data: {
                         imageNameToServer: imageId,

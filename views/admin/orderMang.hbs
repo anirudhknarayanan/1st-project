@@ -751,7 +751,7 @@
         try {
             const status = selectElement.value;
 
-            const response = await fetch('/admin/updateOrder', {
+            const response = await fetch('/admin/orders/updateOrder', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -849,7 +849,7 @@
                 return;
             }
 
-            const response = await fetch('/admin/cancelOrder', {
+            const response = await fetch('/admin/orders/cancelOrder', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -924,7 +924,7 @@
             if (!result.isConfirmed) {
                 return;
             }
-            const response = await fetch('/admin/approveReturn', {
+            const response = await fetch('/admin/orders/approveReturn', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -988,7 +988,7 @@
         const orderId = document.getElementById("rejectOrderId").value;
         const reason = document.getElementById("rejectReason").value;
 
-        const response = await fetch(`/admin/rejectReturn/${orderId}`, {
+        const response = await fetch(`/admin/orders/rejectReturn/${orderId}`, {
             method: "POST",
             headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ reason })
@@ -1040,7 +1040,7 @@ async function approveItemReturn(orderId, productId) {
 
     if (!result.isConfirmed) return;
 
-    const response = await fetch('/admin/approveItemReturn', {
+    const response = await fetch('/admin/orders/approveItemReturn', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ orderId, productId })
@@ -1088,7 +1088,7 @@ async function rejectItemReturn(orderId, productId) {
 
     if (!reason) return;
 
-    const response = await fetch('/admin/rejectItemReturn', {
+    const response = await fetch('/admin/orders/rejectItemReturn', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ orderId, productId, reason })

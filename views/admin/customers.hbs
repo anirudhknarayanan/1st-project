@@ -18,11 +18,11 @@
             <td>{{this.phone}}</td>
             <td>
               {{#if this.isBlocked}}
-                <form action="/admin/unblock/{{this._id}}" method="POST" style="display:inline-block;">
+                <form action="/admin/users/unblock/{{this._id}}" method="POST" style="display:inline-block;">
                   <button type="submit" class="btn btn-success btn-sm">Unblock</button>
                 </form>
               {{else}}
-                <form action="/admin/block/{{this._id}}" method="POST" style="display:inline-block;">
+                <form action="/admin/users/block/{{this._id}}" method="POST" style="display:inline-block;">
                   <button type="submit" class="btn btn-danger btn-sm">Block</button>
                 </form>
               {{/if}}

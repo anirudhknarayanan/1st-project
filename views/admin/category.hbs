@@ -302,7 +302,7 @@
               </td>
 
               <td class="text-end">
-                <a href="/admin/editCategory/{{this._id}}">
+                <a href="/admin/category/editCategory/{{this._id}}">
                   <button class="btn btn-sm btn-outline-primary edit-category" title="Edit Category"
                     style="background-color: black; color: wheat; width: 64px; height: 58px;">
                     <i class="fas fa-edit me-1"></i> Edit
@@ -383,7 +383,7 @@
       categoryOffer: offer
     };
 
-    fetch('/admin/addCategory', {
+    fetch('/admin/category/addCategory', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(data)
@@ -444,7 +444,7 @@
     );
     if (amount) {
       try {
-        const response = await fetch("/admin/addCategoryOffer", {
+        const response = await fetch("/admin/category/addCategoryOffer", {
           method: "POST",
           headers: {
             'content-type': "application/json",
@@ -488,7 +488,7 @@
 
   async function removeOffer(categoryId) {
     try {
-      const response = await fetch("/admin/removeCategoryOffer", {
+      const response = await fetch("/admin/category/removeCategoryOffer", {
         method: "POST",
         headers: {
           "content-type": "application/json"
@@ -540,7 +540,7 @@
         cancelButtonText: 'Cancel'
       }).then(result => {
         if (result.isConfirmed) {
-          fetch(`/admin/toggleCategory/${categoryId}`, {
+          fetch(`/admin/category/toggleCategory/${categoryId}`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ isListed })
