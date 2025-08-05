@@ -9,7 +9,7 @@ module.exports = {
 
       let search = ""
       if (req.query.search) {
-         search = req.query.search; //backendil llath access  cheyth serchik vekknnu
+         search = req.query.search; 
 
       }
       let page = 1

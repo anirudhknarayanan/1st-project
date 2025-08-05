@@ -54,11 +54,11 @@ module.exports = {
             });
 
             await newCategory.save();
-            return res.json({ success: true, message: "Category added successfully" }); // ✅ consistent success response
+            return res.json({ success: true, message: "Category added successfully" });
 
         } catch (error) {
 
-            console.error("Error adding category:", error); // ✅ Optional: log for debugging
+            console.error("Error adding category:", error); 
             return res.status(500).json({ error: "Internal server error" });
         }
     },
@@ -75,10 +75,10 @@ module.exports = {
 
             const products = await Product.find({ category: category._id })
 
-            // ✅ NEW LOGIC: Update category offer (don't check or reset product offers)
+            
             await Category.updateOne({ _id: categoryId }, { $set: { categoryOffer: percentage } })
 
-            // ✅ AUTO-UPDATE: Recalculate salePrice for all products using max(productOffer, categoryOffer)
+            
             await updateMultipleProductsSalePrice(products, percentage);
 
             res.json({ status: true })
@@ -100,14 +100,12 @@ module.exports = {
 
             const products = await Product.find({ category: category._id })
 
-            // ✅ Reset category offer only
+            
             category.categoryOffer = 0;
             await category.save()
 
-            // ✅ NEW LOGIC: Don't reset product offers, let them keep their individual offers
-            // Products will now use their productOffer (if any) or regularPrice (if no offers)
-
-            // ✅ AUTO-UPDATE: Recalculate salePrice for all products (categoryOffer = 0, but productOffer may exist)
+           
+          
             await updateMultipleProductsSalePrice(products, 0);
 
             res.json({ status: true })

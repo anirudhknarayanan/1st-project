@@ -102,7 +102,7 @@ module.exports = {
   },
   removeFromWishlist: async (req, res) => {
     try {
-      // Handle both GET (query param) and DELETE (URL param) requests
+      
       const productId = req.query.productId || req.params.productId;
       const userId = req.session.user;
 
@@ -117,12 +117,12 @@ module.exports = {
           wishlist.items.splice(index, 1);
           await wishlist.save();
 
-          // ✅ Return success response
+        
           return res.json({ success: true, message: "Item removed from wishlist." });
         }
       }
 
-      // ✅ Even if item not found, return JSON
+    
       return res.json({ success: false, message: "Item not found in wishlist." });
 
     } catch (error) {

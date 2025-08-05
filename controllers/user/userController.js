@@ -8,6 +8,7 @@ const Cart = require("../../models/cartSchema");
 const env = require("dotenv").config()
 const bcrypt = require("bcrypt")
 const nodemailer = require("nodemailer")
+const { getDiscountPrice } = require("../../helpers/offerHelpers");
 // Import our referral helper functions
 const {
     generateReferralCode,
@@ -85,13 +86,11 @@ module.exports = {
       if (user) {
         const userData = await User.findOne({ _id: user._id });
         
-        // Get cart data for the user
-        const Cart = require("../../models/cartSchema");
+     
         const cart = await Cart.findOne({ userId: user }).lean();
         const cartProductIds = cart ? cart.items.map(item => item.productId.toString()) : [];
         
-        // Get wishlist data for the user
-        const Wishlist = require("../../models/wishlistSchema");
+      
         const wishlist = await Wishlist.findOne({ userId: user }).lean();
         const wishlistProductIds = wishlist ? wishlist.items.map(item => item.productId.toString()) : [];
         
@@ -178,7 +177,7 @@ module.exports = {
       if (otp === req.session.userOtp) {
         const user = req.session.userData
         const passwordHash = await securePassword(user.password)
-        // Generate unique referral code for new user
+        
         const userReferralCode = await generateReferralCode(user.name);
 
         const saveUserDaTa = new User({
@@ -186,20 +185,20 @@ module.exports = {
           email: user.email,
           phone: user.phone,
           password: passwordHash,
-          referralCode: userReferralCode  // Give new user their own referral code
+          referralCode: userReferralCode  
         })
 
         await saveUserDaTa.save()
 
-        // If user was referred by someone, give reward to referrer
+        
         if (user.referrerData) {
           try {
             const rewardResult = await processReferralReward(user.referrerData._id, saveUserDaTa._id);
             if (rewardResult.success) {
-              console.log("✅ Referral reward given! Coupon:", rewardResult.couponCode);
+              console.log("Referral reward given! Coupon:", rewardResult.couponCode);
             }
           } catch (error) {
-            console.error("❌ Error processing referral rewards:", error);
+            console.error("Error processing referral rewards:", error);
           }
         }
         // req.session.user = saveUserDaTa._id;
@@ -322,7 +321,7 @@ module.exports = {
         category: { $in: categoryIds },
 
       })
-        .populate('category') // Populate category to get category offers
+        .populate('category') 
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
@@ -344,8 +343,8 @@ module.exports = {
       }));
       console.log("cate dshhsdgds", categoriesWithIds)
 
-      // Calculate offer information for each product
-      const { getDiscountPrice } = require("../../helpers/offerHelpers");
+      
+      
       const productsWithOffers = products.map(product => {
         const offerData = getDiscountPrice(product);
         return {
@@ -356,12 +355,12 @@ module.exports = {
         };
       });
 
-      // Get wishlist data for the user
+      
       
       const wishlist = await Wishlist.findOne({ userId: user }).lean();
       const wishlistProductIds = wishlist ? wishlist.items.map(item => item.productId.toString()) : [];
 
-      // Get cart data for the user
+      
       
       const cart = await Cart.findOne({ userId: user }).lean();
       const cartProductIds = cart ? cart.items.map(item => item.productId.toString()) : [];
@@ -369,7 +368,7 @@ module.exports = {
       console.log('Cart Product IDs:', cartProductIds);
       console.log('First few product IDs from products:', productsWithOffers.slice(0, 3).map(p => ({ id: p._id.toString(), name: p.name })));
 
-      // Add isInCart flag to each product for easier template logic
+      
       const productsWithCartStatus = productsWithOffers.map(product => ({
         ...product,
         isInCart: cartProductIds.includes(product._id.toString())
@@ -377,14 +376,14 @@ module.exports = {
 
       res.render("user/shopp", {
         user: UserData,
-        products: productsWithCartStatus, // Use products with cart status
+        products: productsWithCartStatus, 
         category: categoriesWithIds,
         brand: brands,
         totalProducts: totalProducts,
         currentPage: page,
         totalPages: totalPages,
-        wishlistProductIds: wishlistProductIds, // Pass wishlist product IDs
-        cartProductIds: cartProductIds // Pass cart product IDs
+        wishlistProductIds: wishlistProductIds, 
+        cartProductIds: cartProductIds 
       });
     } catch (error) {
       console.error(error);
@@ -448,8 +447,8 @@ module.exports = {
       }
       req.session.filteredProduct = currentProduct;
 
-      // ✅ ADD: Calculate offer information for filtered products
-      const { getDiscountPrice } = require("../../helpers/offerHelpers");
+      
+      
       const productsWithOffers = currentProduct.map(product => {
         const offerData = getDiscountPrice(product);
         return {
@@ -460,14 +459,13 @@ module.exports = {
         };
       });
 
-      // Fetch wishlist data
-      const Wishlist = require('../../models/wishlistSchema');
+     
       const wishlist = await Wishlist.findOne({ userId: user }).lean();
       const wishlistProductIds = wishlist ? wishlist.items.map(item => item.productId.toString()) : [];
 
       res.render("user/shopp", {
         user: userData,
-        products: productsWithOffers, // ✅ UPDATED: Use products with offer information
+        products: productsWithOffers, 
         category: categories,
         brand: brands,
         totalPages: totalPages,
@@ -513,8 +511,7 @@ module.exports = {
 
       req.session.filteredProduct = findProducts;
 
-      // ✅ ADD: Calculate offer information for price filtered products
-      const { getDiscountPrice } = require("../../helpers/offerHelpers");
+     
       const productsWithOffers = currentProduct.map(product => {
         const offerData = getDiscountPrice(product);
         return {
@@ -525,14 +522,14 @@ module.exports = {
         };
       });
 
-      // Fetch wishlist data
-      const Wishlist = require('../../models/wishlistSchema');
+    
+      
       const wishlist = await Wishlist.findOne({ userId: user }).lean();
       const wishlistProductIds = wishlist ? wishlist.items.map(item => item.productId.toString()) : [];
 
       res.render("user/shopp", {
         user: userData,
-        products: productsWithOffers, // ✅ UPDATED: Use products with offer information
+        products: productsWithOffers, 
         category: categories,
         brand: brands,
         totalPages,
@@ -558,18 +555,18 @@ module.exports = {
 
       let searchResult = [];
 
-      // ✅ ALWAYS SEARCH IN DATABASE, NOT FILTERED PRODUCTS
-      console.log("🔍 SEARCH DEBUG - Searching in database for all products");
 
-      // ✅ IMPROVED: Search in both product name AND brand name
-      const searchRegex = new RegExp(search.trim(), "i"); // More robust regex
+      console.log(" SEARCH DEBUG - Searching in database for all products");
+
+      
+      const searchRegex = new RegExp(search.trim(), "i"); 
 
       searchResult = await Product.find({
         $and: [
           {
             $or: [
-              { productName: { $regex: searchRegex } },  // Search in product name
-              { brand: { $regex: searchRegex } }         // Search in brand name
+              { productName: { $regex: searchRegex } },  
+              { brand: { $regex: searchRegex } }         
             ]
           },
           { isBlocked: false },
@@ -577,33 +574,32 @@ module.exports = {
         ]
       }).populate('category').lean()
 
-      console.log("🔍 SEARCH DEBUG - Search regex pattern:", searchRegex);
-      console.log("🔍 SEARCH DEBUG - Searching for products containing:", search.trim());
+      console.log("SEARCH DEBUG - Search regex pattern:", searchRegex);
+      console.log("SEARCH DEBUG - Searching for products containing:", search.trim());
 
-      console.log("🔍 SEARCH DEBUG - Total products in database:", await Product.countDocuments());
-      console.log("🔍 SEARCH DEBUG - Products matching search:", searchResult.length);
+      console.log("SEARCH DEBUG - Total products in database:", await Product.countDocuments());
+      console.log(" SEARCH DEBUG - Products matching search:", searchResult.length);
 
-      // ✅ DEBUG: Check all products that contain the search term (ignoring other filters)
       const allMatchingProducts = await Product.find({
         $or: [
           { productName: { $regex: searchRegex } },
           { brand: { $regex: searchRegex } }
         ]
       }).lean();
-      console.log("🔍 SEARCH DEBUG - All products/brands containing '" + search + "' (ignoring filters):", allMatchingProducts.length);
+      console.log(" SEARCH DEBUG - All products/brands containing '" + search + "' (ignoring filters):", allMatchingProducts.length);
       allMatchingProducts.forEach(p => {
         console.log(`  - ${p.productName} | Brand: ${p.brand} (blocked: ${p.isBlocked}, category: ${p.category})`);
       });
 
-      // ✅ DEBUG: Show final results
+    
       console.log("🔍 SEARCH DEBUG - Final filtered results:");
       searchResult.forEach(p => {
-        console.log(`  ✅ ${p.productName} | Brand: ${p.brand}`);
+        console.log(`   ${p.productName} | Brand: ${p.brand}`);
       });
-      console.log("🔍 SEARCH DEBUG - Search results found:", searchResult.length);
+      console.log("SEARCH DEBUG - Search results found:", searchResult.length);
 
       if (searchResult.length > 0) {
-        console.log("🔍 SEARCH DEBUG - First result:", searchResult[0].productName);
+        console.log("SEARCH DEBUG - First result:", searchResult[0].productName);
       }
 
       searchResult.sort((a, b) => new Date(b.createdOn) - new Date(a.createdOn));
@@ -615,8 +611,8 @@ module.exports = {
       const totalPages = Math.ceil(searchResult.length / itemsPerPage);
       const currentProduct = searchResult.slice(startIndex, endIndex);
 
-      // ✅ ADD: Calculate offer information for search results
-      const { getDiscountPrice } = require("../../helpers/offerHelpers");
+      
+      
       const productsWithOffers = currentProduct.map(product => {
         const offerData = getDiscountPrice(product);
         return {
@@ -627,14 +623,13 @@ module.exports = {
         };
       });
 
-      // Fetch wishlist data
-      const Wishlist = require('../../models/wishlistSchema');
+      
       const wishlist = await Wishlist.findOne({ userId: user }).lean();
       const wishlistProductIds = wishlist ? wishlist.items.map(item => item.productId.toString()) : [];
 
       res.render("user/shopp", {
         user: userData,
-        products: productsWithOffers, // ✅ UPDATED: Use products with offer information
+        products: productsWithOffers, 
         category: categories,
         brand: brands,
         totalPages,

@@ -101,7 +101,7 @@ module.exports = {
     },
     formatNumber: function (value) {
         if (typeof value !== 'number') value = Number(value);
-        return value.toLocaleString('en-IN'); // Adds commas based on Indian numbering system
+        return value.toLocaleString('en-IN'); 
     },
     dashCase: function (str) {
         if (!str || typeof str !== 'string') return '';

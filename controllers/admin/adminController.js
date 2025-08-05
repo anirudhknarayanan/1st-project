@@ -6,13 +6,17 @@ const moment = require("moment");
 
 
 
+
 module.exports = {
     adminLogin: async (req, res) => {
         try {
             if (req.session.admin) {
                 res.redirect("/")
             }
-            res.render("admin/admin-login", { hideFooter: true })
+            res.render("admin/admin-login", {
+                layout: "layout",
+                adminLoginPage: true  
+            });
         } catch (error) {
             res.status(404).send("server error")
 
@@ -23,7 +27,6 @@ module.exports = {
     login: async (req, res) => {
         try {
             const { email, password } = req.body;
-
 
             const admin = await User.findOne({ email: email, isAdmin: true })
             if (admin) {
@@ -76,7 +79,7 @@ module.exports = {
 
 
         } catch (error) {
-            console.error("Dashboard load error:", error); // Add this
+            console.error("Dashboard load error:", error);
             res.redirect("/pageerror");
         }
     },
@@ -444,7 +447,7 @@ async function getDashboardData(timeFilter) {
                 as: 'brand'
             }
         },
-        { $unwind: { path: '$brand', preserveNullAndEmptyArrays: false } }, // Only include matched brands
+        { $unwind: { path: '$brand', preserveNullAndEmptyArrays: false } },
         {
             $group: {
                 _id: '$brand._id',
@@ -459,12 +462,12 @@ async function getDashboardData(timeFilter) {
 
 
 
-    // Map data to chart format with labels
+
     const salesData = mapDataToLabels(salesByPeriod, labels, timeFilter, 'total');
     const customersData = mapDataToLabels(customersByPeriod, labels, timeFilter, 'count');
     const ordersData = mapDataToLabels(ordersByPeriod, labels, timeFilter, 'count');
 
-    // Prepare category data
+
     const categoryLabels = categoryPerformance.map(cat => cat.categoryName);
     const categoryData = categoryPerformance.map(cat => cat.totalSales);
 

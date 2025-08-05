@@ -7,4 +7,4 @@ router.get("/login", adminController.adminLogin);
 router.post("/login",adminController.login);
 router.get("/logout", adminController.logout);
 
-module.exports = router; // ✅ Don't wrap it in an object
+module.exports = router; 

@@ -8,9 +8,7 @@ const sharp = require("sharp")
 const { updateProductSalePrice } = require("../../helpers/offerHelpers")
 
 module.exports = {
-    // getAllproducts :async (req,res)=>{
-
-    // }
+    
     addProductpage: async (req, res) => {
         try {
             const category = await Category.find({ isListed: true }).lean();
@@ -34,7 +32,7 @@ module.exports = {
             }
 
 
-            // Check if product already exists
+            
             const productExists = await Product.findOne({ productName: product.productName });
             if (productExists) {
                 return res.status(400).json("Product already exists, try another name");
@@ -74,7 +72,7 @@ module.exports = {
             const newProduct = new Product({
                 productName: product.productName,
                 description: product.description,
-                brand: brandDoc.brandName, // Store name instead of ObjectId
+                brand: brandDoc.brandName, 
                 category: categoryDoc._id,
                 regularPrice: product.regularPrice,
                 salePrice: product.salePrice,
@@ -164,11 +162,10 @@ module.exports = {
                 return res.status(404).json({ status: false, message: "Category not found" });
             }
 
-            // ✅ NEW LOGIC: Allow both offers to coexist, just set product offer
+            
             findProduct.productOffer = parseInt(percentage)
             await findProduct.save();
 
-            // ✅ AUTO-UPDATE: Calculate salePrice using max(productOffer, categoryOffer)
             await updateProductSalePrice(findProduct, findCategory.categoryOffer);
 
             res.json({ status: true });
@@ -186,11 +183,11 @@ module.exports = {
                 return res.json({ status: false, message: "Product not found" });
             }
 
-            // ✅ Remove product offer
+         
             findProduct.productOffer = 0;
             await findProduct.save()
 
-            // ✅ AUTO-UPDATE: Recalculate salePrice (will use category offer if exists)
+            
             await updateProductSalePrice(findProduct);
 
             res.json({ status: true })
@@ -294,7 +291,7 @@ module.exports = {
                 })
             }
 
-            // const categoryId = await Category.findOne({ name: data.category });
+            
             const categoryId = await Category.findOne({ _id: data.category });
 
             if (!categoryId) {
@@ -399,7 +396,6 @@ module.exports = {
                 { $pull: { productImage: imageNameToServer } }
             );
 
-            // Delete image file from disk
             const imagePath = path.join("public", "uploads", "product-images", imageNameToServer);
 
             if (fs.existsSync(imagePath)) {
@@ -426,13 +422,13 @@ module.exports = {
                 return res.status(404).json({ status: false, message: "Product not found" });
             }
 
-            // Get product images array
+            
             const productImages = product.productImage;
 
-            // Construct directory path
+            
             const imageDir = path.join(__dirname, '..', '..', 'public', 'uploads', 'product-images');
 
-            // Loop and delete each image
+            
             for (let image of productImages) {
                 const imagePath = path.join(imageDir, image);
                 if (fs.existsSync(imagePath)) {
@@ -440,7 +436,7 @@ module.exports = {
                 }
             }
 
-            // Delete product document
+            
             await Product.deleteOne({ _id: productId });
 
             return res.status(200).json({ status: true, message: "Product and images deleted successfully" });

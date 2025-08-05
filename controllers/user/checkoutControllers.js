@@ -6,7 +6,6 @@ const Order = require('../../models/orderSchema')
 const Coupon = require('../../models/coupenSchema')
 const Wallet = require('../../models/walletSchema')
 const { getDiscountPrice, getDiscountPriceCart } = require("../../helpers/offerHelpers");
-// Import referral helpers
 const { getUserReferralCoupons, validateReferralCoupon, markReferralCouponAsUsed } = require("../../helpers/referralHelpers");
 const PDFDocument = require('pdfkit');
 const { v4: uuidv4 } = require('uuid');
@@ -33,27 +32,27 @@ module.exports = {
                 return res.redirect("/cart");
             }
 
-            // Filter out unavailable products
+
             const availableItems = cart.items.filter(item =>
                 item.productId &&
                 !item.productId.isBlocked &&
                 item.productId.category &&
                 item.productId.category.isListed
             ).map(item => {
-                // ✅ RECALCULATE: Get current offer information for each product
+
                 const currentOfferData = getDiscountPrice(item.productId);
 
-                // ✅ DEBUG: Log checkout offer information
+
                 console.log(`CHECKOUT DEBUG - Product: ${item.productId.productName}`);
                 console.log(`CHECKOUT DEBUG - Current Offer Data:`, currentOfferData);
 
-                // ✅ CALCULATE: Amount saved per item (same as cart controller)
+
                 const regularPrice = item.productId.regularPrice;
                 const salePrice = item.productId.salePrice;
                 const savedPerItem = regularPrice - salePrice;
                 const totalSaved = savedPerItem * item.quantity;
 
-                // ✅ UPDATE: Use current offer data instead of stored cart data
+
                 const updatedItem = {
                     ...item,
                     appliedOffer: currentOfferData?.appliedOffer || 0,
@@ -73,19 +72,19 @@ module.exports = {
                 req.flash("error", "Some unavailable products or categories have been removed from your cart.");
             }
 
-            // Update cart and recalculate total
+
             cart.items = availableItems;
             cart.cartTotal = cart.items.reduce((total, item) =>
                 total + item.quantity * item.price, 0
             );
 
 
-            // Fetch user and address
+
             const user = await User.findById(userId).lean();
             const addressDoc = await Address.findOne({ userId }).lean();
             const userAddress = addressDoc ? addressDoc.address : [];
 
-            // ✅ FETCH WALLET BALANCE FROM WALLET SCHEMA
+
             const wallet = await Wallet.findOne({ userId }).lean();
             const walletBalance = wallet ? wallet.balance : 0;
 
@@ -110,10 +109,10 @@ module.exports = {
             console.log("available coupon : ,", coupon)
             console.log("available referral coupons : ,", availableReferralCoupons)
 
-            //Render checkout page
+
             res.render("user/userCheckout", {
                 cart,
-                user: { ...user, walletBalance }, // ✅ ADD WALLET BALANCE TO USER OBJECT
+                user: { ...user, walletBalance },
                 coupon,
                 referralCoupons: availableReferralCoupons,
                 userAddress,
@@ -257,7 +256,7 @@ module.exports = {
             const userId = req.session.user;
             const { shippingAddress, paymentMethod, totalAmount, couponCode, discountAmount } = req.body;
 
-            // Validate totalAmount
+
             if (totalAmount < 0) {
                 return res.status(400).json({
                     success: false,
@@ -265,7 +264,7 @@ module.exports = {
                 });
             }
 
-            // Validate address
+
             const address = await Address.findOne({
                 userId,
                 "address._id": shippingAddress,
@@ -285,16 +284,16 @@ module.exports = {
             const orderedItems = JSON.parse(JSON.stringify(req.body.orderedItems));
             const unavailableItems = [];
 
-            // Check product availability
+
             for (const item of orderedItems) {
                 const productId = item.productId;
-                console.log("🔍 Checking productId:", productId);
+                console.log("Checking productId:", productId);
 
                 const product = await Product.findById(productId).populate("category");
-                console.log("📦 Found product:", product ? product.productName : "❌ Not found");
+                console.log("Found product:", product ? product.productName : " Not found");
 
                 if (!product || product.isBlocked) {
-                    console.log("❌ Blocked or Not Found:", productId);
+                    console.log("Blocked or Not Found:", productId);
                     unavailableItems.push({
                         id: productId,
                         name: "Unknown product",
@@ -304,7 +303,7 @@ module.exports = {
                 }
 
                 if (!product.category || !product.category.isListed) {
-                    console.log("❌ Category Unlisted or Missing for:", product.productName);
+                    console.log("Category Unlisted or Missing for:", product.productName);
                     unavailableItems.push({
                         id: productId,
                         name: product.productName,
@@ -314,7 +313,7 @@ module.exports = {
                 }
 
                 if (product.quantity < item.quantity) {
-                    console.log("❌ Not enough stock for:", product.productName);
+                    console.log("Not enough stock for:", product.productName);
                     unavailableItems.push({
                         id: productId,
                         name: product.productName,
@@ -336,10 +335,10 @@ module.exports = {
             let coupon = "";
             let isReferralCoupon = false;
             if (couponCode) {
-                // First check if it's a regular coupon
+
                 coupon = await Coupon.findOne({ couponCode: couponCode });
 
-                // If not a regular coupon, check if it's a referral coupon
+
                 if (!coupon) {
                     const referralValidation = await validateReferralCoupon(userId, couponCode);
                     if (!referralValidation.valid) {
@@ -367,7 +366,6 @@ module.exports = {
                 });
             }
 
-            // ✅ COD RESTRICTION VALIDATION
             if (paymentMethod === "cod" && cleanedTotal > 1000) {
                 return res.status(400).json({
                     success: false,
@@ -375,7 +373,7 @@ module.exports = {
                 });
             }
 
-            // ✅ WALLET PAYMENT VALIDATION
+
             if (paymentMethod === "wallet") {
                 const wallet = await Wallet.findOne({ userId });
                 if (!wallet) {
@@ -390,7 +388,7 @@ module.exports = {
                 }
             }
 
-            // Re-confirm product data from DB
+
             const orderedItemsWithDetails = await Promise.all(
                 orderedItems.map(async (item) => {
                     const product = await Product.findById(item.productId).populate('category');
@@ -399,7 +397,7 @@ module.exports = {
                         throw new Error(`Product not found for ID: ${item.productId}`);
                     }
 
-                    // ✅ Calculate the actual discounted price (same as what customer pays)
+
                     const discountedProduct = getDiscountPrice(product);
                     const actualPrice = discountedProduct ? discountedProduct.finalPrice : product.salePrice;
                     const appliedOffer = discountedProduct ? discountedProduct.appliedOffer : 0;
@@ -408,11 +406,11 @@ module.exports = {
                     return {
                         productId: product._id,
                         quantity: item.quantity,
-                        price: actualPrice, // ✅ Store the discounted price, not original price
-                        originalPrice: product.salePrice, // ✅ Keep original price for reference
+                        price: actualPrice,
+                        originalPrice: product.salePrice,
                         productName: product.productName,
-                        appliedOffer: appliedOffer, // ✅ Store offer percentage
-                        appliedOfferType: appliedOfferType // ✅ Store offer type (product/category)
+                        appliedOffer: appliedOffer,
+                        appliedOfferType: appliedOfferType
                     };
                 })
             );
@@ -420,11 +418,11 @@ module.exports = {
             const formattedItems = orderedItemsWithDetails.map(item => ({
                 productId: item.productId,
                 quantity: item.quantity,
-                price: item.price, // ✅ This is now the discounted price
-                originalPrice: item.originalPrice, // ✅ Store original price for reference
+                price: item.price,
+                originalPrice: item.originalPrice,
                 productName: item.productName,
-                appliedOffer: item.appliedOffer, // ✅ Store offer percentage
-                appliedOfferType: item.appliedOfferType // ✅ Store offer type
+                appliedOffer: item.appliedOffer,
+                appliedOfferType: item.appliedOfferType
             }));
 
 
@@ -457,11 +455,11 @@ module.exports = {
             });
 
             if (isReferralCoupon && couponCode) {
-                // Mark referral coupon as used
+
                 await markReferralCouponAsUsed(couponCode, newOrder._id);
-                console.log("✅ Referral coupon marked as used:", couponCode);
+                console.log("Referral coupon marked as used:", couponCode);
             } else if (coupon && !isReferralCoupon) {
-                // Update regular coupon usage
+
                 await Coupon.findOneAndUpdate(
                     { couponCode },
                     { $inc: { usageCount: 1 } }
@@ -470,9 +468,9 @@ module.exports = {
 
             await newOrder.save();
 
-            // ✅ WALLET PAYMENT PROCESSING
+
             if (paymentMethod === "wallet") {
-                // Deduct amount from wallet and add transaction
+
                 const wallet = await Wallet.findOne({ userId });
                 if (wallet) {
                     wallet.balance -= cleanedTotal;
@@ -485,7 +483,7 @@ module.exports = {
                     await wallet.save();
                 }
 
-                console.log(`✅ Wallet payment successful. Deducted ₹${cleanedTotal} from wallet. New balance: ₹${wallet.balance}`);
+                console.log(`Wallet payment successful. Deducted ₹${cleanedTotal} from wallet. New balance: ₹${wallet.balance}`);
             }
 
             // Reduce stock
@@ -541,10 +539,9 @@ module.exports = {
                 return res.redirect('/profile');
             }
 
-            // ✅ NEW: Calculate offer savings for each order item
+
             const orderObject = order.toObject();
 
-            // Calculate savings for each item
             if (orderObject.order_items) {
                 orderObject.order_items = orderObject.order_items.map(item => {
                     if (item.productId && item.productId.regularPrice && item.productId.salePrice) {
@@ -588,7 +585,7 @@ module.exports = {
             });
 
         } catch (error) {
-            console.error("❌ viewOrder Error:", error);
+            console.error("viewOrder Error:", error);
             return res.redirect('/profile');
         }
     },
@@ -680,7 +677,7 @@ module.exports = {
 
             doc.pipe(writeStream);
 
-            // 🧾 Header
+
             doc.font('Helvetica-Bold').fontSize(25).text('Take Your Time', { align: 'center' })
                 .fontSize(16).text('Tax Invoice', { align: 'center' }).moveDown(1.5);
 
@@ -688,17 +685,17 @@ module.exports = {
                 .text(`Invoice Number: ${order._id}`)
                 .text(`Date of Issue: ${order.createdAt.toLocaleDateString()}`).moveDown(1);
 
-            // 🧍 Billing Info
+
             const customerName = order.user_id?.name || 'Customer';
             doc.font('Helvetica-Bold').text('Billing Details:').moveDown(0.5)
                 .font('Helvetica').text(`Customer Name: ${customerName}`).moveDown(1);
 
-            // 💳 Payment Info
+
             doc.font('Helvetica-Bold').text('Payment Details:').moveDown(0.5)
                 .font('Helvetica').text(`Payment Method: ${order.payment_method}`)
                 .text(`Payment Status: ${order.status}`).moveDown(1);
 
-            // 📦 Order Items Table with Offer Details
+
             doc.font('Helvetica-Bold').fontSize(12).text('Order Summary');
             const startX = 50;
             const columnWidths = { product: 200, quantity: 60, originalPrice: 80, discount: 80, finalPrice: 80, total: 80 };
@@ -720,26 +717,25 @@ module.exports = {
                 const itemTotal = item.price * item.quantity;
                 runningTotal += itemTotal;
 
-                // ✅ CALCULATE ORIGINAL PRICE AND DISCOUNT (SMART LOGIC)
+
                 let originalPrice = item.originalPrice || item.price;
                 let discountAmount = 0;
 
-                // Smart calculation for both old and new orders
+
                 if (item.appliedOffer && item.appliedOffer > 0) {
                     if (originalPrice > item.price) {
-                        // New orders: originalPrice is correct
+
                         discountAmount = originalPrice - item.price;
                     } else {
-                        // Old orders: calculate original price from offer percentage
+
                         originalPrice = item.price / (1 - item.appliedOffer / 100);
                         discountAmount = originalPrice - item.price;
                     }
                 }
 
-                // ✅ ENHANCED PRODUCT TEXT WITH PROPER ALIGNMENT
+
                 const productName = item.productName;
 
-                // First, render the product name and all other columns aligned to the same row
                 doc.font('Helvetica').fontSize(8)
                     .text(productName, startX, y, { width: columnWidths.product })
                     .text(`${item.quantity}`, startX + columnWidths.product, y, { width: columnWidths.quantity, align: 'center' })
@@ -748,7 +744,6 @@ module.exports = {
                     .text(`₹${item.price.toFixed(0)}`, startX + columnWidths.product + columnWidths.quantity + columnWidths.originalPrice + columnWidths.discount, y, { width: columnWidths.finalPrice, align: 'right' })
                     .text(`₹${itemTotal.toFixed(0)}`, startX + columnWidths.product + columnWidths.quantity + columnWidths.originalPrice + columnWidths.discount + columnWidths.finalPrice, y, { width: columnWidths.total, align: 'right' });
 
-                // Then, add offer details below the product name (if applicable)
                 if (item.appliedOffer && item.appliedOffer > 0 && discountAmount > 0) {
                     const offerType = item.appliedOfferType === 'product' ? 'Product' : 'Category';
                     const currentY = doc.y;
@@ -758,15 +753,12 @@ module.exports = {
                         .text(`${offerType} Offer`, startX, currentY + 24, { width: columnWidths.product })
                         .text(`You saved ₹${discountAmount.toFixed(0)} (${item.appliedOffer}% off)`, startX, currentY + 36, { width: columnWidths.product });
 
-                    doc.moveDown(1.8); // Extra space for offer details
+                    doc.moveDown(1.8);
                 } else {
-                    doc.moveDown(0.5); // Normal spacing for products without offers
+                    doc.moveDown(0.5);
                 }
             });
 
-            doc.moveDown(1).moveTo(startX, doc.y).lineTo(580, doc.y).stroke().moveDown(0.5);
-
-            // 📋 Order Totals
             const summaryY = doc.y;
             const lineHeight = 15;
             const subtotal = order.total || runningTotal;
@@ -786,11 +778,11 @@ module.exports = {
             doc.font('Helvetica-Bold').text('Grand Total', 400, summaryY + lineHeight * 3, { width: 100, align: 'right' });
             doc.font('Helvetica-Bold').text(`₹${grandTotal.toFixed(2)}`, 500, summaryY + lineHeight * 3, { width: 50, align: 'right' });
 
-            // 🏷️ Show applied coupons (both regular and referral)
+
             if (order.coupenApplied && order.couponCode) {
                 doc.moveDown(1);
 
-                // Check if it's a referral coupon (use saved field or fallback to code prefix)
+
                 const isReferralCoupon = order.isReferralCoupon || order.couponCode.startsWith('REF');
 
                 if (isReferralCoupon) {
@@ -807,7 +799,7 @@ module.exports = {
                 }
             }
 
-            // 🎉 Footer
+
             doc.moveDown(3)
                 .font('Helvetica').text('Thanks for choosing Timeless Aura', { width: 550, align: 'center' })
                 .text('Return Policy: www.timelessaura.com/return-policy', { width: 550, align: 'center' })
@@ -854,7 +846,6 @@ module.exports = {
                 return res.status(400).json({ success: false, message: 'Only delivered orders can be returned' });
             }
 
-            // ✅ Only change status of items that are currently "active"
             let hasActiveItems = false;
             for (let item of order.order_items) {
                 if (item.status === "active") {
@@ -869,7 +860,7 @@ module.exports = {
                 return res.status(400).json({ success: false, message: 'No active items found to return' });
             }
 
-            // ✅ Check if all items are now returned/cancelled, then update order status
+
             const allItemsReturned = order.order_items.every(item =>
                 item.status === "return requested" ||
                 item.status === "returned" ||
@@ -896,7 +887,7 @@ module.exports = {
 
     cancelOrderItem: async (req, res) => {
         try {
-            const { reason, quantity } = req.body; // ⬅️ accept quantity from frontend
+            const { reason, quantity } = req.body;
             const { orderId, productId } = req.params;
 
             const order = await Order.findById(orderId);
@@ -917,14 +908,14 @@ module.exports = {
                 return res.status(400).json({ success: false, message: 'Quantity exceeds ordered amount' });
             }
 
-            // Update product stock
+
             await Product.findByIdAndUpdate(productId, {
                 $inc: { quantity: quantity }
             });
 
             const userId = order.user_id;
 
-            // Handle refund if payment is not COD
+
             if (order.payment_method !== 'cod') {
                 const refundAmount = item.price * quantity;
                 let wallet = await Wallet.findOne({ userId });
@@ -953,21 +944,18 @@ module.exports = {
                 item.status = 'cancelled';
                 item.cancel_reason = reason;
                 item.cancelled_at = new Date();
-                item.cancelled_quantity = quantity; // Store cancelled quantity
-                item.quantity = 0; // Set quantity to zero to reflect full cancel
+                item.cancelled_quantity = quantity;
+                item.quantity = 0;
             } else {
-                // Partial cancellation
-                item.quantity -= quantity; // Reduce ordered quantity
+                // partial
+                item.quantity -= quantity;
                 item.cancelled_quantity = (item.cancelled_quantity || 0) + quantity;
                 item.cancel_reason = reason;
                 item.cancelled_at = new Date();
 
-                // Keep status as 'placed' since part is still active
             }
 
 
-            // Recalculate order total and final amount
-            // Recalculate order total and final amount with delivery charge logic
             let newTotal = 0;
             let hasActiveItems = false;
 
@@ -1001,7 +989,7 @@ module.exports = {
 
     returnOrderItem: async (req, res) => {
         try {
-            const { reason, quantity } = req.body; // ✅ Accept quantity from frontend
+            const { reason, quantity } = req.body;
             const { orderId, productId } = req.params;
 
             const order = await Order.findById(orderId);
@@ -1029,12 +1017,12 @@ module.exports = {
                 return res.status(400).json({ success: false, message: "Only delivered orders can be returned" });
             }
 
-            // ✅ Handle partial quantity returns (similar to cancel logic)
+
             if (quantity < item.quantity) {
-                // Reduce the original item quantity
+
                 item.quantity -= quantity;
 
-                // Create a new item entry for the returned quantity
+
                 const returnedItem = {
                     productId: item.productId,
                     quantity: quantity,
@@ -1048,13 +1036,13 @@ module.exports = {
 
                 order.order_items.push(returnedItem);
             } else {
-                // ✅ Return entire quantity - change status of existing item
+
                 item.set('status', 'return requested');
                 item.set('return_reason', reason);
                 item.set('returned_at', new Date());
             }
 
-            // ✅ Recalculate order totals
+
             let newTotal = 0;
             let hasActiveItems = false;
 
@@ -1160,7 +1148,7 @@ module.exports = {
             const { couponCode, subtotal } = req.body;
             const userId = req.session.user;
 
-            // First check if it's a regular coupon
+
             const coupon = await Coupon.findOne({ couponCode, isActive: true });
 
             // If not a regular coupon, check if it's a referral coupon
@@ -1170,12 +1158,11 @@ module.exports = {
                     return res.status(400).json({ success: false, message: 'Invalid or expired coupon' });
                 }
 
-                // Handle referral coupon
+
                 const discount = referralValidation.discount; // ₹100
                 const newTotal = subtotal - discount;
 
-                // For referral coupons, don't modify any usage count here
-                // Only mark as used when order is actually placed
+
                 return res.status(200).json({
                     success: true,
                     message: 'Referral coupon applied successfully',
@@ -1185,7 +1172,7 @@ module.exports = {
                 });
             }
 
-            // Handle regular coupons
+
             const currentDate = new Date();
             if (coupon.couponValidity < currentDate) {
                 return res.status(400).json({ success: false, message: 'Coupon has expired' });
@@ -1226,17 +1213,15 @@ module.exports = {
             const { couponCode, subtotal } = req.body;
             const userId = req.session.user;
 
-            // First check if it's a regular coupon
             const coupon = await Coupon.findOne({ couponCode: couponCode });
 
             if (!coupon) {
-                // Check if it's a referral coupon
+
                 const referralValidation = await validateReferralCoupon(userId, couponCode);
                 if (!referralValidation.valid) {
                     return res.json({ success: false, message: 'Invalid coupon' });
                 }
 
-                // For referral coupons, just return success (no usage count to revert)
                 return res.json({
                     success: true,
                     cartTotal: subtotal,
@@ -1244,7 +1229,6 @@ module.exports = {
                 });
             }
 
-            // Handle regular coupon removal
             coupon.limit += 1;
             coupon.usageCount -= 1;
             await coupon.save();

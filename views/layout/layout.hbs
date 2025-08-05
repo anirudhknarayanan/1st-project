@@ -47,6 +47,9 @@
 <body>
 
   {{!-- Conditional Header --}}
+  {{#if adminLoginPage}}
+  {{{body}}}
+{{else}}
   {{#if admin}}
     <div class="container-fluid">
       <div class="row">
@@ -62,6 +65,7 @@
     {{#unless hideFooter}}
       {{> user-footer}}
     {{/unless}}
+  {{/if}}
   {{/if}}
 
   <!-- Bootstrap Bundle (includes Popper) -->

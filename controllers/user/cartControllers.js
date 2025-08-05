@@ -33,23 +33,23 @@ module.exports = {
 
                 item.productId.isAvailable = productAvailable && categoryAvailable;
 
-                // ✅ SAFE UPDATE: Get current offer information and update cart item
+               
                 const productWithOffers = getDiscountPriceCart(item.productId);
                 const currentOfferData = getDiscountPrice(item.productId);
 
-                // ✅ DEBUG: Log offer information
+               
                 console.log(`Product: ${item.productId.productName}`);
                 console.log(`Product Offer: ${item.productId.productOffer || 0}%`);
                 console.log(`Category Offer: ${item.productId.category?.categoryOffer || 0}%`);
                 console.log(`Current Offer Data:`, currentOfferData);
 
-                // ✅ CALCULATE: Amount saved per item
+             
                 const regularPrice = item.productId.regularPrice;
                 const salePrice = item.productId.salePrice;
                 const savedPerItem = regularPrice - salePrice;
                 const totalSaved = savedPerItem * item.quantity;
 
-                // ✅ UPDATE: Apply current offer data to cart item
+                
                 const updatedItem = {
                     ...item,
                     productId: productWithOffers,
@@ -110,7 +110,7 @@ module.exports = {
                 });
             }
 
-              // ✅ CHECK FOR OUT-OF-STOCK
+           
         if (product.quantity === 0) {
             return res.status(400).json({
                 success: false,
@@ -185,7 +185,7 @@ module.exports = {
 
             await cart.save();
 
-            // Remove item from wishlist if it exists there
+          
             try {
               await Wishlist.findOneAndUpdate(
                 { userId },
@@ -267,7 +267,7 @@ module.exports = {
                 });
             }
 
-            // Calculate total quantity of all items in cart
+           
             const totalCount = cart.items.reduce((total, item) => {
                 return total + (item.quantity || 0);
             }, 0);

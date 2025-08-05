@@ -6,7 +6,7 @@ const nodemailer = require("nodemailer");
 const path = require("path")
 const bcrypt = require("bcrypt");
 const mongoose = require("mongoose");
-// Import referral helpers
+
 const { getUserReferralCoupons } = require("../../helpers/referralHelpers");
 const Referral = require("../../models/referralSchema");
 require("dotenv").config();
@@ -294,7 +294,6 @@ module.exports = {
         return res.redirect("/pageNotFound");
       }
 
-      // Update the specific address inside the address array
       await Address.updateOne(
         { userId: userId, "address._id": addressId },
         {
@@ -380,21 +379,20 @@ module.exports = {
       const userId = req.session.user;
 
       if (enteredOtp === sessionOtp) {
-        // ✅ OTP matches: Update user's email
+      
         await User.findByIdAndUpdate(userId, { email: newEmail });
 
-        // ✅ Clear OTP and temp email from session
         delete req.session.userOtp;
         delete req.session.email;
 
-        // ✅ Send success response with redirect URL
+       
         return res.json({
           success: true,
           message: "Email updated successfully",
           redirectUrl: "/profile"
         });
       } else {
-        // ❌ OTP does not match
+        
         return res.json({
           success: false,
           message: "OTP does not match"
@@ -434,8 +432,7 @@ module.exports = {
 
 
 
-      // await User.findByIdAndUpdate(userId, { email: newEmail })
-      // res.redirect("/profile")
+      
     } catch (error) {
       res.redirect("/pageNotFound")
     }
@@ -444,7 +441,7 @@ module.exports = {
 
   updateUserName: async (req, res) => {
     try {
-      const userId = req.session.user; // assuming session contains user ID
+      const userId = req.session.user; 
       const newName = req.body.name;
 
       console.log("Updating name for user:", userId, "to:", newName);
@@ -508,28 +505,27 @@ module.exports = {
       // Get user data
       const userData = await User.findById(userId).lean();
 
-      // Get all referral coupons for this user
+      
       const referralCoupons = await getUserReferralCoupons(userId);
 
-      // Get users who used this user's referral code
+      
       const referredUsers = await Referral.find({ referrer: userId })
         .populate('referredUser', 'name email createdOn')
         .sort({ createdAt: -1 })
         .lean();
 
-      // Calculate statistics
       const totalReferrals = referredUsers.length;
       const totalCoupons = referralCoupons.length;
       const usedCoupons = referralCoupons.filter(coupon => coupon.status === 'used').length;
       const unusedCoupons = referralCoupons.filter(coupon => coupon.status === 'unused').length;
       const totalEarnings = totalCoupons * 100; // ₹100 per coupon
 
-      // Debug: Log what we're sending to template
-      console.log("🔍 DEBUG - Data being sent to template:");
+     
+      console.log(" DEBUG - Data being sent to template:");
       console.log("  User:", userData.name, userData.email);
       console.log("  Referral Coupons:", referralCoupons.length);
       referralCoupons.forEach((coupon, i) => {
-        console.log(`    Coupon ${i+1}: ${coupon.couponCode}, Status: ${coupon.status}, Discount: ${coupon.discount}`);
+        console.log(`    Coupon ${i + 1}: ${coupon.couponCode}, Status: ${coupon.status}, Discount: ${coupon.discount}`);
       });
 
       res.render("user/referralDetails", {
@@ -567,7 +563,7 @@ module.exports = {
           req.session.userData = req.body;
           req.session.email = email;
           res.render("user/changePassword-otp");
-          console.log("Email send to : ",email)
+          console.log("Email send to : ", email)
           console.log('OTP has: ', otp);
         } else {
           res.json({ success: false, message: "failed to send otp,please try again" })
@@ -612,10 +608,9 @@ module.exports = {
         return res.status(400).send("No image uploaded.");
       }
 
-      // Construct the relative image path to store in DB
+      
       const imagePath = `/uploads/profile/${req.file.filename}`;
 
-      // Update user image in DB
       const updatedUser = await User.findByIdAndUpdate(
         userId,
         { $set: { userImage: imagePath } },

@@ -10,7 +10,7 @@ const ExcelJS = require("exceljs");
 
 const fs = require("fs");
 const path = require("path");
-const { Console } = require("console");
+
 
 
 
@@ -39,10 +39,10 @@ module.exports = {
             const itemReturnRequests = [];
 
             orders.forEach(order => {
-                // ✅ FIX: Only show item-level returns for orders that haven't been approved for full return
-                // Skip orders with status "Return approved" or "Return rejected"
+                
+                
                 if (order.status === 'Return approved' || order.status === 'Return rejected') {
-                    return; // Skip this entire order
+                    return; 
                 }
 
                 order.order_items.forEach(item => {
@@ -61,9 +61,8 @@ module.exports = {
                     }
                 });
             });
+
             console.log("itemReturnRequests : ", itemReturnRequests)
-
-
 
             res.render('admin/orderMang', {
                 admin: true,
@@ -77,8 +76,7 @@ module.exports = {
             res.status(500).json({ success: false, message: "internal server error" })
 
         }
-
-    },
+ },
 
 
     updateOrder: async (req, res) => {
@@ -174,28 +172,27 @@ module.exports = {
     let totalRefund = 0;
 
     for (let item of order.order_items) {
-      // ✅ Only update items that are in return requested state
+      
       if (item.status === 'return requested') {
         item.status = 'returned';
         item.returned_at = new Date();
 
-        // ✅ Restock
+        
         await Product.findByIdAndUpdate(item.productId, {
           $inc: { quantity: item.quantity }
         });
 
-        // ✅ Refund for this item
+        
         totalRefund += item.price * item.quantity;
       }
     }
 
-    // ✅ Update order status
+    
     order.status = 'Return approved';
     order.adminReturnStatus = 'approved';
     order.markModified('order_items');
     await order.save();
 
-    // ✅ Refund to wallet
     let wallet = await Wallet.findOne({ userId });
     if (!wallet) {
       wallet = new Wallet({
@@ -241,11 +238,11 @@ module.exports = {
                 return res.status(404).json({ success: false, message: "order not found" })
             }
 
-            // ✅ FIX: Update order status
+            
             order.status = "Return rejected"
             order.adminReturnStatus = reason
 
-            // ✅ FIX: Update all individual item statuses from "return requested" to "return rejected"
+            
             for (let item of order.order_items) {
                 if (item.status === 'return requested') {
                     item.status = 'return rejected';
@@ -254,7 +251,7 @@ module.exports = {
                 }
             }
 
-            // ✅ Mark the order_items array as modified so MongoDB saves the changes
+            
             order.markModified('order_items');
             await order.save()
 
@@ -281,7 +278,7 @@ module.exports = {
       return res.status(404).json({ success: false, message: "Order not found" });
     }
 
-    // ✅ Find the correct return-requested item
+    // Find the correct return-requested item
     const item = order.order_items.find(
       (i) => i.productId.toString() === productId && i.status === 'return requested'
     );
@@ -290,18 +287,18 @@ module.exports = {
       return res.status(400).json({ success: false, message: "Item not eligible for return" });
     }
 
-    // ✅ Update product stock based on returned quantity
+    //  Update product stock based on returned quantity
     await Product.findByIdAndUpdate(productId, {
-      $inc: { quantity: item.quantity } // quantity of returned units
+      $inc: { quantity: item.quantity } 
     });
 
-    // ✅ Mark item as returned
+    //  Mark item as returned
     item.status = 'returned';
     item.returned_at = new Date();
 
     await order.save();
 
-    // ✅ Refund to wallet
+    //  Refund to wallet
     const userId = order.user_id;
     let wallet = await Wallet.findOne({ userId });
 
@@ -418,7 +415,7 @@ module.exports = {
                 .skip(skip)
                 .limit(limit).lean();
 
-            // ✅ NEW: Calculate offer savings for each order
+            
             let totalOfferSavingsAllOrders = 0;
 
             for (let order of orders) {
@@ -444,7 +441,7 @@ module.exports = {
 
             console.log("orders : ", orders);
 
-            // ✅ NEW: Calculate coupon usage statistics
+        
             let totalCouponsUsed = 0;
             let adminCouponsUsed = 0;
             let referralCouponsUsed = 0;
@@ -454,23 +451,23 @@ module.exports = {
             let allTopCoupons = [];
 
             try {
-                const Referral = require("../../models/referralSchema");
+                
 
-                // Count admin coupons used (orders with coupons applied, excluding "false")
+                
                 adminCouponsUsed = await Order.countDocuments({
                     ...query,
                     coupenApplied: { $ne: "false" }
                 });
 
-                // Count referral coupons used
+            
                 referralCouponsUsed = await Referral.countDocuments({
                     status: "used"
                 });
 
-                // Total coupons used
+                
                 totalCouponsUsed = adminCouponsUsed + referralCouponsUsed;
 
-                // Calculate total savings from coupons
+                
                 const ordersWithCoupons = await Order.find({
                     ...query,
                     coupenApplied: { $ne: "false" }
@@ -480,7 +477,7 @@ module.exports = {
                     return sum + (order.discount || 0);
                 }, 0);
 
-                // Get referral coupon savings
+                
                 const referralSavings = await Referral.aggregate([
                     { $match: { status: "used" } },
                     { $group: { _id: null, total: { $sum: "$discount" } } }
@@ -489,7 +486,7 @@ module.exports = {
                 totalReferralSavings = referralSavings.length > 0 ? referralSavings[0].total : 0;
                 totalAllCouponSavings = totalCouponSavings + totalReferralSavings;
 
-                // ✅ NEW: Get top used coupons details
+        
                 const topAdminCoupons = await Order.aggregate([
                     { $match: { ...query, coupenApplied: { $ne: "false" } } },
                     { $group: {
@@ -526,18 +523,18 @@ module.exports = {
                     }}
                 ]);
 
-                // Combine and sort all coupons
+                
                 allTopCoupons = [...topAdminCoupons, ...topReferralCoupons]
                     .sort((a, b) => b.usageCount - a.usageCount)
                     .slice(0, 10);
 
             } catch (couponError) {
                 console.log("Error calculating coupon analytics:", couponError);
-                // Use default values if coupon analytics fail
+                
             }
 
             res.render("admin/sales", {
-                layout: false, // ✅ NO LAYOUT - Standalone page
+                layout: false, 
                 orders,
                 totalSales,
                 totalOrders,
@@ -546,7 +543,7 @@ module.exports = {
                 filterType,
                 fromDate,
                 toDate,
-                // ✅ NEW: Coupon analytics data
+                
                 totalCouponsUsed,
                 adminCouponsUsed,
                 referralCouponsUsed,
@@ -554,7 +551,7 @@ module.exports = {
                 totalReferralSavings,
                 totalAllCouponSavings,
                 topCoupons: allTopCoupons,
-                // ✅ NEW: Total Offer Savings data
+                
                 totalOfferSavingsAllOrders
             })
         } catch (error) {
@@ -590,33 +587,31 @@ module.exports = {
             const totalSales = orders.reduce((sum, order) => sum + order.total, 0);
             const totalOrders = orders.length;
 
-            // ✅ CALCULATE ALL SUMMARY STATISTICS (Same as sales page)
-
-            // ✅ FIXED: Coupon analytics (using same logic as sales page)
+           
             let totalCouponsUsed = 0;
             let adminCouponsUsed = 0;
             let referralCouponsUsed = 0;
             let totalAllCouponSavings = 0;
-            let allTopCoupons = []; // ✅ NEW: For top used coupons in PDF
+            let allTopCoupons = []; 
 
             try {
                 const Referral = require("../../models/referralSchema");
 
-                // Count admin coupons used (orders with coupons applied, excluding "false")
+                
                 adminCouponsUsed = await Order.countDocuments({
                     ...query,
                     coupenApplied: { $ne: "false" }
                 });
 
-                // Count referral coupons used
+                
                 referralCouponsUsed = await Referral.countDocuments({
                     status: "used"
                 });
 
-                // Total coupons used
+            
                 totalCouponsUsed = adminCouponsUsed + referralCouponsUsed;
 
-                // Calculate total savings from coupons
+                
                 const ordersWithCoupons = await Order.find({
                     ...query,
                     coupenApplied: { $ne: "false" }
@@ -626,7 +621,7 @@ module.exports = {
                     return sum + (order.discount || 0);
                 }, 0);
 
-                // Get referral coupon savings
+                
                 const referralSavings = await Referral.aggregate([
                     { $match: { status: "used" } },
                     { $group: { _id: null, total: { $sum: "$discount" } } }
@@ -635,7 +630,7 @@ module.exports = {
                 const totalReferralSavings = referralSavings.length > 0 ? referralSavings[0].total : 0;
                 totalAllCouponSavings = totalCouponSavings + totalReferralSavings;
 
-                // ✅ NEW: Get top used coupons details for PDF
+            
                 const topAdminCoupons = await Order.aggregate([
                     { $match: { ...query, coupenApplied: { $ne: "false" } } },
                     { $group: {
@@ -672,22 +667,22 @@ module.exports = {
                     }}
                 ]);
 
-                // Combine and sort all coupons for PDF
+        
                 allTopCoupons = [...topAdminCoupons, ...topReferralCoupons]
                     .sort((a, b) => b.usageCount - a.usageCount)
                     .slice(0, 10);
 
             } catch (error) {
                 console.log("Error calculating coupon statistics:", error);
-                // Set defaults if calculation fails
+                
                 totalCouponsUsed = 0;
                 adminCouponsUsed = 0;
                 referralCouponsUsed = 0;
                 totalAllCouponSavings = 0;
-                allTopCoupons = []; // Default empty array for top coupons
+                allTopCoupons = []; 
             }
 
-            // ✅ FIXED: Offer savings calculation (matching sales page logic)
+            
             let totalOfferSavingsAllOrders = 0;
 
             for (let order of orders) {
@@ -712,8 +707,8 @@ module.exports = {
 
             const doc = new PDFDocument({
                 margin: 50,
-                size: 'A3',        // ✅ LARGER PAGE SIZE
-                layout: 'landscape' // ✅ LANDSCAPE ORIENTATION for more width
+                size: 'A3',        
+                layout: 'landscape' 
             });
 
             const filePath = path.join(__dirname, '../publics/sales_report.pdf');
@@ -766,16 +761,16 @@ module.exports = {
                 })}`, { align: 'center' })
                 .moveDown(1);
 
-            // ✅ CENTERED SUMMARY SECTION (A3 landscape = ~1190px width, center at ~595px)
+            
             const summaryHeight = 160;
             const summaryWidth = 700;
-            const pageWidth = 1190; // A3 landscape width
-            const summaryStartX = (pageWidth - summaryWidth) / 2; // Center horizontally
+            const pageWidth = 1190; 
+            const summaryStartX = (pageWidth - summaryWidth) / 2;
 
             doc.rect(summaryStartX, doc.y, summaryWidth, summaryHeight).stroke();
 
             const summaryStartY = doc.y + 15;
-            const textStartX = summaryStartX + 20; // Padding inside the box
+            const textStartX = summaryStartX + 20; 
 
             doc.fontSize(16)
                 .text('Summary', textStartX, summaryStartY)
@@ -790,35 +785,35 @@ module.exports = {
                 .moveDown(4);
 
             const tableTop = doc.y;
-            // ✅ CENTERED TABLE (9 columns with better spacing for A3 landscape)
+            
             const tableHeaders = ['Order ID', 'Date', 'Customer', 'Product', 'Status', 'Payment', 'Offer Applied', 'Discount', 'Amount'];
             const columnWidths = [90, 80, 100, 120, 80, 80, 110, 80, 90];
-            const tableWidth = columnWidths.reduce((sum, width) => sum + width, 0); // Total table width = 830
-            const tableStartX = (pageWidth - tableWidth) / 2; // Center the table horizontally
+            const tableWidth = columnWidths.reduce((sum, width) => sum + width, 0); 
+            const tableStartX = (pageWidth - tableWidth) / 2; 
             let xPosition = tableStartX;
 
-            doc.rect(tableStartX, tableTop, tableWidth, 25).fill('#f0f0f0'); // ✅ CENTERED table header
+            doc.rect(tableStartX, tableTop, tableWidth, 25).fill('#f0f0f0'); 
 
-            doc.font('Helvetica-Bold').fontSize(11); // ✅ LARGER FONT for better readability
+            doc.font('Helvetica-Bold').fontSize(11); 
             tableHeaders.forEach((header, i) => {
                 doc.fillColor('black')
-                    .text(header, xPosition, tableTop + 7, { // ✅ Better vertical centering
+                    .text(header, xPosition, tableTop + 7, { 
                         width: columnWidths[i],
                         align: ['Amount', 'Discount'].includes(header) ? 'right' : 'left'
                     });
                 xPosition += columnWidths[i];
             });
 
-            doc.font('Helvetica').fontSize(10); // ✅ LARGER FONT for better readability
-            let yPosition = tableTop + 30; // ✅ More space after header
+            doc.font('Helvetica').fontSize(10); 
+            let yPosition = tableTop + 30; 
 
             orders.forEach((order, index) => {
-                if (yPosition > 750) { // ✅ A3 landscape has more height, but still need pagination
+                if (yPosition > 750) { 
                     doc.addPage();
                     yPosition = 50;
 
-                    xPosition = tableStartX; // ✅ CENTERED on new page
-                    doc.rect(tableStartX, yPosition, tableWidth, 25).fill('#f0f0f0'); // ✅ CENTERED header on new page
+                    xPosition = tableStartX; 
+                    doc.rect(tableStartX, yPosition, tableWidth, 25).fill('#f0f0f0'); 
                     doc.font('Helvetica-Bold').fontSize(11);
                     tableHeaders.forEach((header, i) => {
                         doc.fillColor('black')
@@ -833,11 +828,11 @@ module.exports = {
                 }
 
                 if (index % 2 === 0) {
-                    doc.rect(tableStartX, yPosition - 5, tableWidth, 25).fill('#f9f9f9'); // ✅ CENTERED alternating row background
+                    doc.rect(tableStartX, yPosition - 5, tableWidth, 25).fill('#f9f9f9'); 
                 }
 
-                // ✅ ENHANCED TABLE ROWS (9 columns, centered)
-                xPosition = tableStartX; // ✅ START from centered position
+                
+                xPosition = tableStartX; 
 
                 // 1. Order ID
                 doc.fillColor('black')
@@ -921,21 +916,21 @@ module.exports = {
                     align: 'right'
                 });
 
-                yPosition += 25; // ✅ MORE SPACE between rows for better readability
+                yPosition += 25; 
             });
 
-            // ✅ NEW: Add Top Used Coupons Section
+            
             if (allTopCoupons && allTopCoupons.length > 0) {
-                // Add some space before the coupon section
+                
                 yPosition += 40;
 
-                // Check if we need a new page for the coupon table
+                
                 if (yPosition > 650) {
                     doc.addPage();
                     yPosition = 50;
                 }
 
-                // Coupon section title
+                
                 doc.fontSize(16)
                     .font('Helvetica-Bold')
                     .text('Top Used Coupons', tableStartX, yPosition, { align: 'left' })
@@ -943,13 +938,13 @@ module.exports = {
 
                 yPosition = doc.y + 10;
 
-                // Coupon table headers
+                
                 const couponHeaders = ['Coupon Code', 'Type', 'Usage Count', 'Total Savings'];
                 const couponColumnWidths = [200, 150, 120, 150];
                 const couponTableWidth = couponColumnWidths.reduce((sum, width) => sum + width, 0);
                 const couponTableStartX = (pageWidth - couponTableWidth) / 2;
 
-                // Draw coupon table header
+            
                 doc.rect(couponTableStartX, yPosition, couponTableWidth, 25).fill('#e8f4f8');
 
                 let couponXPosition = couponTableStartX;
@@ -966,14 +961,14 @@ module.exports = {
                 doc.font('Helvetica').fontSize(10);
                 yPosition += 30;
 
-                // Draw coupon table rows
+                
                 allTopCoupons.slice(0, 10).forEach((coupon, index) => {
-                    // Check if we need a new page
+                    
                     if (yPosition > 750) {
                         doc.addPage();
                         yPosition = 50;
 
-                        // Redraw header on new page
+                        
                         doc.rect(couponTableStartX, yPosition, couponTableWidth, 25).fill('#e8f4f8');
                         couponXPosition = couponTableStartX;
                         doc.font('Helvetica-Bold').fontSize(11);
@@ -1026,10 +1021,10 @@ module.exports = {
                 });
             }
 
-            doc.fontSize(10) // ✅ LARGER FOOTER for A3
+            doc.fontSize(10) 
                 .text('© 2025 TAKE YOUR TIME. All rights reserved.', 0, 1000, {
                     align: 'center',
-                    width: pageWidth // ✅ FULL PAGE WIDTH for proper centering
+                    width: pageWidth 
                 });
 
             doc.end();
@@ -1067,7 +1062,7 @@ module.exports = {
 
             const orders = await Order.find(query)
                 .populate('user_id', 'name email mobile')
-                .populate('order_items.productId', 'productName price regularPrice salePrice') // ✅ ADD regularPrice and salePrice
+                .populate('order_items.productId', 'productName price regularPrice salePrice') 
                 .sort({ createdAt: -1 });
 
             console.log("orders in excel : ", orders)
@@ -1075,7 +1070,7 @@ module.exports = {
             const totalSales = orders.reduce((sum, order) => sum + order.total, 0);
             const totalOrders = orders.length;
 
-            // ✅ ENHANCED SUMMARY STATISTICS (Same as PDF)
+            
             let totalCouponsUsed = 0;
             let adminCouponsUsed = 0;
             let referralCouponsUsed = 0;
@@ -1121,7 +1116,7 @@ module.exports = {
                 console.log("Error calculating coupon statistics:", error);
             }
 
-            // ✅ ENHANCED OFFER SAVINGS CALCULATION (Same as PDF)
+            
             let totalOfferSavingsAllOrders = 0;
 
             for (let order of orders) {
@@ -1143,7 +1138,7 @@ module.exports = {
             const workbook = new ExcelJS.Workbook();
             const worksheet = workbook.addWorksheet('Sales Report');
 
-            // ✅ WIDER MERGES for 9 columns
+            
             worksheet.mergeCells('A1:I1');
             worksheet.getCell('A1').value = 'TAKE_YOUR_TIME';
             worksheet.getCell('A1').font = { size: 16, bold: true };
@@ -1156,7 +1151,7 @@ module.exports = {
 
             let rowIndex = 3;
             if (fromDate && toDate) {
-                worksheet.mergeCells(`A${rowIndex}:I${rowIndex}`); // ✅ WIDER for 9 columns
+                worksheet.mergeCells(`A${rowIndex}:I${rowIndex}`); 
                 worksheet.getCell(`A${rowIndex}`).value = `Date Range: ${new Date(fromDate).toLocaleDateString()} to ${new Date(toDate).toLocaleDateString()}`;
                 worksheet.getCell(`A${rowIndex}`).alignment = { horizontal: 'center' };
                 rowIndex++;
@@ -1177,13 +1172,13 @@ module.exports = {
                         break;
                 }
 
-                worksheet.mergeCells(`A${rowIndex}:I${rowIndex}`); // ✅ WIDER for 9 columns
+                worksheet.mergeCells(`A${rowIndex}:I${rowIndex}`); 
                 worksheet.getCell(`A${rowIndex}`).value = `Period: ${periodText}`;
                 worksheet.getCell(`A${rowIndex}`).alignment = { horizontal: 'center' };
                 rowIndex++;
             }
 
-            worksheet.mergeCells(`A${rowIndex}:I${rowIndex}`); // ✅ WIDER for 9 columns
+            worksheet.mergeCells(`A${rowIndex}:I${rowIndex}`); 
             worksheet.getCell(`A${rowIndex}`).value = `Generated on: ${new Date().toLocaleDateString('en-US', {
                 year: 'numeric',
                 month: 'long',
@@ -1192,8 +1187,8 @@ module.exports = {
             worksheet.getCell(`A${rowIndex}`).alignment = { horizontal: 'center' };
             rowIndex += 2;
 
-            // ✅ ENHANCED SUMMARY SECTION (7 fields like PDF)
-            worksheet.mergeCells(`A${rowIndex}:I${rowIndex}`); // ✅ WIDER for 9 columns
+            
+            worksheet.mergeCells(`A${rowIndex}:I${rowIndex}`);
             worksheet.getCell(`A${rowIndex}`).value = 'Summary';
             worksheet.getCell(`A${rowIndex}`).font = { bold: true, size: 14 };
             worksheet.getCell(`A${rowIndex}`).alignment = { horizontal: 'center' };
@@ -1229,7 +1224,6 @@ module.exports = {
             worksheet.getCell(`A${rowIndex}`).value = `Total Offer Savings: ₹${Math.round(totalOfferSavingsAllOrders).toLocaleString()}.00 (Product & category offers)`;
             rowIndex += 2;
 
-            // ✅ ENHANCED TABLE HEADERS (9 columns like PDF)
             const headers = ['Order ID', 'Date', 'Customer Name', 'Product', 'Order Status', 'Payment Method', 'Offer Applied', 'Discount', 'Amount'];
             const headerRow = worksheet.addRow(headers);
             headerRow.eachCell((cell) => {
@@ -1248,22 +1242,22 @@ module.exports = {
             });
 
             orders.forEach((order, index) => {
-                // ✅ ENHANCED ROW DATA (9 columns like PDF)
+            
 
-                // 1. Product names (combine all products with null checks)
+                //  Product names (combine all products with null checks)
                 const productNames = order.order_items
                     .filter(item => item.productId && item.productId.productName)
                     .map(item => item.productId.productName)
                     .join(', ');
                 const products = productNames.length > 0 ? productNames : 'Deleted Products';
 
-                // 2. Payment method
+                //  Payment method
                 const paymentMethod = order.payment_method === 'cod' ? 'COD' :
                                     order.payment_method === 'razorpay' ? 'Razorpay' :
                                     order.payment_method === 'wallet' ? 'Wallet' :
                                     order.payment_method || 'Unknown';
 
-                // 3. Offer applied calculation
+            
                 const offerSavings = order.order_items.reduce((sum, item) => {
                     if (item.productId && item.productId.regularPrice && item.productId.salePrice) {
                         const regularPrice = item.productId.regularPrice;
@@ -1277,7 +1271,7 @@ module.exports = {
                 const offerText = offerSavings > 0 ? `₹${Math.round(offerSavings)} Off` :
                                 order.discount > 0 ? `₹${order.discount} Off` : 'No Offer';
 
-                // 4. Create row with all 9 columns
+                
                 const row = worksheet.addRow([
                     `#${order.orderId}`,                                    // Order ID
                     new Date(order.createdAt).toLocaleDateString(),        // Date
@@ -1300,7 +1294,7 @@ module.exports = {
                     });
                 }
 
-                // Add borders to all cells
+        
                 row.eachCell((cell) => {
                     cell.border = {
                         top: { style: 'thin' },
@@ -1311,7 +1305,7 @@ module.exports = {
                 });
             });
 
-            // ✅ ENHANCED COLUMN WIDTHS for 9 columns
+            
             worksheet.columns = [
                 { width: 15 },  // Order ID
                 { width: 12 },  // Date

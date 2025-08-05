@@ -2,9 +2,7 @@ const User = require("../models/userSchema");
 const Referral = require("../models/referralSchema");
 const crypto = require("crypto");
 
-/**
-  Generate a unique referral code for a user
- */
+
 const generateReferralCode = async (userName) => {
     
     try {
@@ -12,7 +10,7 @@ const generateReferralCode = async (userName) => {
         const namePrefix = userName.substring(0, 4).toUpperCase().replace(/[^A-Z]/g, '');
         const paddedName = namePrefix.padEnd(4, 'X');
 
-        // Generate 4 random numbers
+       
         const randomNumbers = Math.floor(1000 + Math.random() * 9000);
 
         let referralCode = `${paddedName}${randomNumbers}`;
@@ -32,9 +30,8 @@ const generateReferralCode = async (userName) => {
     }
 };
 
-/**
-Check if a referral code is valid
- */
+
+
 const validateReferralCode = async (referralCode, excludeUserId = null) => {
     try {
         const referrer = await User.findOne({
@@ -53,9 +50,7 @@ const validateReferralCode = async (referralCode, excludeUserId = null) => {
     }
 };
 
-/**
- Generate unique coupon code for referral rewards
- */
+
 const generateCouponCode = () => {
     return `REF${crypto.randomBytes(4).toString('hex').toUpperCase()}`;
 };
@@ -63,7 +58,7 @@ const generateCouponCode = () => {
 
 const processReferralReward = async (referrerId, newUserId) => {
     try {
-        // Create a ₹100 coupon for the referrer
+      
         const couponCode = generateCouponCode();
         const referralCoupon = new Referral({
             referrer: referrerId,
@@ -85,10 +80,7 @@ const processReferralReward = async (referrerId, newUserId) => {
     }
 };
 
-/**
-  Get all referral coupons for a user
 
- */
 const getUserReferralCoupons = async (userId) => {
     try {
         const coupons = await Referral.find({
@@ -105,10 +97,7 @@ const getUserReferralCoupons = async (userId) => {
     }
 };
 
-/**
- Check if a coupon is valid and can be used
- 
- */
+
 const validateReferralCoupon = async (userId, couponCode) => {
     try {
         const coupon = await Referral.findOne({
@@ -128,10 +117,7 @@ const validateReferralCoupon = async (userId, couponCode) => {
     }
 };
 
-/**
- Mark a coupon as used when order is placed
 
- */
 const markReferralCouponAsUsed = async (couponCode, orderId) => {
     try {
         console.log("🔄 Marking referral coupon as used:", couponCode, "Order ID:", orderId);
