@@ -470,7 +470,7 @@
 
                         <p>{{product.description}}</p>
                         <p>{{product.brand}}</p>
-
+                        {{#isGreaterThanZero product.quantity}}
                         <div class="product-actions-container">
                             <div class="d-flex align-items-center">
                                 <div class="custom-quantity-input">
@@ -480,16 +480,15 @@
                                         value="1" min="1" max="5" readonly>
                                     <button class="quantity-btn"
                                         onclick="updateQuantity('increase', '{{product._id}}')">+</button>
-
                                 </div>
                                 <button onclick="addToCart('{{product._id}}', {{product.quantity}})"
                                     class="add-to-cart-btn">
                                     Add to Cart
                                 </button>
-
-
                             </div>
                         </div>
+                        {{/isGreaterThanZero}}
+
 
                         <div class="text-center">
                             <a href="#" onclick="event.preventDefault(); addToWishlist('{{product._id}}')"
@@ -645,7 +644,7 @@
         }
 
         // ✅ IMPROVED: Add mouseenter event to ensure zoom is ready
-        $image.on('mouseenter.zoom', function() {
+        $image.on('mouseenter.zoom', function () {
             console.log('Mouse entered image, zoom ready');
         });
 
@@ -705,7 +704,7 @@
                     targetPane.classList.add('active', 'show');
 
                     // ✅ IMPROVED: Reapply zoom with delay to ensure image is loaded
-                    setTimeout(function() {
+                    setTimeout(function () {
                         const $img = $(targetPane).find('img');
                         if ($img.length) {
                             console.log('Mobile - Setting up zoom for:', $img.attr('src'));
@@ -768,7 +767,7 @@
             console.log('Tab switched:', e.target.getAttribute('href'));
 
             // Small delay to ensure tab content is fully loaded
-            setTimeout(function() {
+            setTimeout(function () {
                 const targetHref = e.target.getAttribute('href');
                 const $activeImage = $(targetHref).find('img');
 
@@ -780,11 +779,11 @@
         });
 
         // ✅ FIX: Handle direct tab clicks (alternative approach)
-        $('.nav-link[data-toggle="tab"]').on('click', function(e) {
+        $('.nav-link[data-toggle="tab"]').on('click', function (e) {
             const targetHref = $(this).attr('href');
 
             // Delay to ensure tab switch completes
-            setTimeout(function() {
+            setTimeout(function () {
                 const $activeImage = $(targetHref).find('img');
                 if ($activeImage.length) {
                     console.log('Click - Setting up zoom for:', $activeImage.attr('src'));
@@ -794,7 +793,7 @@
         });
 
         // ✅ FIX: Fallback - setup zoom for all images on load
-        $('.product__details__pic__item img').each(function() {
+        $('.product__details__pic__item img').each(function () {
             const $img = $(this);
             // Only setup zoom if the image is in an active tab or if it becomes active
             if ($img.closest('.tab-pane').hasClass('active')) {

@@ -4,6 +4,7 @@ const Category = require("../../models/categorySchema");
 const Brand = require("../../models/brandSchema");
 const Order = require("../../models/orderSchema");
 const Wallet = require("../../models/walletSchema");
+const Referral = require("../../models/referralSchema")
 const { Admin } = require("mongodb");
 const PDFDocument = require("pdfkit");
 const ExcelJS = require("exceljs");
