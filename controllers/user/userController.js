@@ -84,7 +84,7 @@ module.exports = {
 
       const user = req.session.user;
       if (user) {
-        const userData = await User.findOne({ _id: user._id });
+        const userData = await User.findOne({ _id: user }).lean();
         
      
         const cart = await Cart.findOne({ userId: user }).lean();
@@ -93,6 +93,7 @@ module.exports = {
       
         const wishlist = await Wishlist.findOne({ userId: user }).lean();
         const wishlistProductIds = wishlist ? wishlist.items.map(item => item.productId.toString()) : [];
+        console.log("userData :",userData)
         
         return res.render("home", { 
           user: userData, 

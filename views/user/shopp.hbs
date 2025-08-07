@@ -1,72 +1,72 @@
 <style>
-/* Out of stock product styles */
-.product-entry.out-of-stock {
-	position: relative;
-	opacity: 0.8;
-}
+	/* Out of stock product styles */
+	.product-entry.out-of-stock {
+		position: relative;
+		opacity: 0.8;
+	}
 
-.stock-overlay {
-	position: absolute;
-	top: 10px;
-	right: 10px;
-	z-index: 10;
-}
+	.stock-overlay {
+		position: absolute;
+		top: 10px;
+		right: 10px;
+		z-index: 10;
+	}
 
-.out-of-stock-badge {
-	background-color: #dc3545;
-	color: white;
-	padding: 4px 8px;
-	border-radius: 12px;
-	font-size: 10px;
-	font-weight: bold;
-	text-transform: uppercase;
-	letter-spacing: 0.5px;
-}
+	.out-of-stock-badge {
+		background-color: #dc3545;
+		color: white;
+		padding: 4px 8px;
+		border-radius: 12px;
+		font-size: 10px;
+		font-weight: bold;
+		text-transform: uppercase;
+		letter-spacing: 0.5px;
+	}
 
-.stock-status {
-	margin: 8px 0;
-	font-size: 14px;
-	font-weight: 500;
-}
+	.stock-status {
+		margin: 8px 0;
+		font-size: 14px;
+		font-weight: 500;
+	}
 
-.in-stock {
-	color: #28a745;
-	font-weight: 600;
-}
+	.in-stock {
+		color: #28a745;
+		font-weight: 600;
+	}
 
-.out-of-stock-text {
-	color: #dc3545;
-	font-weight: 600;
-}
+	.out-of-stock-text {
+		color: #dc3545;
+		font-weight: 600;
+	}
 
-.add-to-cart-btn:disabled {
-	cursor: not-allowed;
-	opacity: 0.6;
-}
+	.add-to-cart-btn:disabled {
+		cursor: not-allowed;
+		opacity: 0.6;
+	}
 
-.product-entry.out-of-stock .prod-img img {
-	filter: grayscale(30%);
-}
+	.product-entry.out-of-stock .prod-img img {
+		filter: grayscale(30%);
+	}
 
-/* Wishlist button styles */
-.wishlist-btn {
-	color: #6c757d;
-	text-decoration: none;
-	font-size: 14px;
-	transition: all 0.3s ease;
-}
+	/* Wishlist button styles */
+	.wishlist-btn {
+		color: #6c757d;
+		text-decoration: none;
+		font-size: 14px;
+		transition: all 0.3s ease;
+	}
 
-.wishlist-btn:hover {
-	color: #dc3545;
-}
+	.wishlist-btn:hover {
+		color: #dc3545;
+	}
 
-.wishlist-btn.in-wishlist {
-	color: #dc3545;
-}
+	.wishlist-btn.in-wishlist {
+		color: #dc3545;
+	}
 
-.wishlist-btn.in-wishlist:hover {
-	color: #dc3545;
-}
+	.wishlist-btn.in-wishlist:hover {
+		color: #dc3545;
+	}
 </style>
 
 <div class="colorlib-loader"></div>
@@ -152,7 +152,7 @@
 
 	<div class="container">
 		<div class="row">
-			
+
 			<div class="search-container">
 				<form action="/search" method="post" class="w-100">
 					<div class="input-group">
@@ -225,10 +225,10 @@
 									<span class="out-of-stock-badge">OUT OF STOCK</span>
 								</div>
 								{{/unless}}
-								
+
 								<a href="/productDetails?id={{this._id}}" class="prod-img">
 									<img src="/uploads/product-images/{{productImage.[0]}}" class="img-fluid"
-										alt="{{productName}}" {{#unless quantity}}style="opacity: 0.6;"{{/unless}}>
+										alt="{{productName}}" {{#unless quantity}}style="opacity: 0.6;" {{/unless}}>
 								</a>
 								<div class="desc">
 									<h2><a href="#">{{productName}}</a></h2>
@@ -245,11 +245,12 @@
 
 									{{!-- ✅ SHOW OFFER INFORMATION --}}
 									{{#if hasOffer}}
-									<div class="offer-badge" style="background: linear-gradient(45deg, #361414, #1fe962); color: white; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: bold; margin-bottom: 8px; display: inline-block;">
+									<div class="offer-badge"
+										style="background: linear-gradient(45deg, #361414, #1fe962); color: white; padding: 4px 8px; border-radius: 12px; font-size: 12px; font-weight: bold; margin-bottom: 8px; display: inline-block;">
 										{{#if (eq appliedOfferType 'product')}}
-											🏷️ Product Offer: {{appliedOffer}}% OFF
+										🏷️ Product Offer: {{appliedOffer}}% OFF
 										{{else if (eq appliedOfferType 'category')}}
-											📂 Category Offer: {{appliedOffer}}% OFF
+										📂 Category Offer: {{appliedOffer}}% OFF
 										{{/if}}
 									</div>
 									{{/if}}
@@ -260,22 +261,25 @@
 										<span class="text-muted"><strike>{{formatINR regularPrice}}</strike></span>
 										{{/if}}
 									</p>
-									
+
 									{{!-- Add to Cart Button with stock check --}}
 									{{#if quantity}}
-										{{#if isInCart}}
-											<button class="add-to-cart-btn btn-success" disabled onclick="addToCart('{{this._id}}', this)">Added to Cart</button>
-										{{else}}
-											<button class="add-to-cart-btn btn-dark" onclick="addToCart('{{this._id}}', this)">Add To Cart</button>
-										{{/if}}
+									{{#if isInCart}}
+									<button class="add-to-cart-btn btn-success" disabled
+										onclick="addToCart('{{this._id}}', this)">Added to Cart</button>
 									{{else}}
-										<button class="add-to-cart-btn btn-secondary" disabled>Out of Stock</button>
+									<button class="add-to-cart-btn btn-dark"
+										onclick="addToCart('{{this._id}}', this)">Add To Cart</button>
+									{{/if}}
+									{{else}}
+									<button class="add-to-cart-btn btn-secondary" disabled>Out of Stock</button>
 									{{/if}}
 								</div>
 								<div class="text-center" style="margin-bottom: 15px;">
 									<a href="#" onclick="event.preventDefault(); toggleWishlist('{{this._id}}', this)"
 										class="wishlist-btn {{#if (isInWishlist this._id ../wishlistProductIds)}}in-wishlist{{/if}}">
-										<i class="fa fa-heart"></i> {{#if (isInWishlist this._id ../wishlistProductIds)}}Wishlisted{{else}}Add to wishlist{{/if}}
+										<i class="fa fa-heart"></i> {{#if (isInWishlist this._id
+										../wishlistProductIds)}}Wishlisted{{else}}Add to wishlist{{/if}}
 									</a>
 								</div>
 
@@ -515,13 +519,16 @@
 				body: JSON.stringify({ productId })
 			});
 
+			const badge = document.getElementById("wishlist-count-badge");
+
 			const data = await response.json();
 
 			if (data.success) {
 				// Add to wishlist success
 				element.classList.add('in-wishlist');
 				element.innerHTML = '<i class="fa fa-heart"></i> Wishlisted';
-				
+				updateWishlistBadge(badge, data.count);
+
 				Toastify({
 					text: "Success\nProduct added to wishlist successfully",
 					duration: 2000,
@@ -572,14 +579,15 @@
 					const removeResponse = await fetch(`/removeFromWishlist/${productId}`, {
 						method: "DELETE"
 					});
-					
+
 					const removeData = await removeResponse.json();
-					
+
 					if (removeData.success) {
 						// Remove from wishlist success
 						element.classList.remove('in-wishlist');
 						element.innerHTML = '<i class="fa fa-heart"></i> Add to wishlist';
-						
+						updateWishlistBadge(badge, removeData.count);
+
 						Toastify({
 							text: "Success\nProduct removed from wishlist",
 							duration: 2000,
@@ -632,5 +640,16 @@
 			}).showToast();
 		}
 	}
+
+	function updateWishlistBadge(badgeElement, count) {
+	if (!badgeElement) return;
+
+	if (count > 0) {
+		badgeElement.textContent = count;
+		badgeElement.style.display = "inline-block";
+	} else {
+		badgeElement.style.display = "none";
+	}
+}
 
 </script>

@@ -6,6 +6,7 @@ const dotenv = require("dotenv").config();
 const session = require("express-session");
 const passport = require("./config/passport");
 const middleware = require("./middlewares/auth")
+const wishCount = require("./middlewares/wishlistCount")
 const db = require("./config/db");
 const flash = require('connect-flash');
 
@@ -32,6 +33,7 @@ app.use(session({
 
 
 app.use(middleware.checkUserBlocked);
+app.use(wishCount.WishlistCount);
 
 
 app.use(flash());

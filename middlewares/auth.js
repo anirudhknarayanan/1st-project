@@ -48,11 +48,13 @@ module.exports = {
   const user = await User.findById(req.session.user);
   if (!user || user.status === 'blocked') {
     req.session.destroy(() => {
-      return res.redirect('user/login'); // or send 403 JSON if it's an API
+      return res.redirect('user/login'); 
     });
   } else {
     next();
   }
-}
+},
+
+
 
 }

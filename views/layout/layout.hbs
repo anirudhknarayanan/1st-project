@@ -60,7 +60,7 @@
       </div>
     </div>
   {{else}}
-    {{> user-header}}
+    {{> user-header user=user}}
     {{{body}}}
     {{#unless hideFooter}}
       {{> user-footer}}

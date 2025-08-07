@@ -115,5 +115,7 @@ module.exports = {
         });
     }, lowercase: function (str) {
         return str.toLowerCase();
-    }
+    }, firstName: function(fullName) {
+      return fullName.split(' ')[0];
+    },
 }
