@@ -653,7 +653,7 @@
 
               <!-- Available Coupons -->
               {{#if coupon.length}}
-              <div class="mb-4">
+              <div class="mb-4 available-coupons-section">
                 <h6 class="mb-3"><i class="fas fa-tag me-2"></i>Available Coupons</h6>
                 {{#each coupon}}
                 <div class="p-3 border rounded bg-white mb-3">
@@ -673,7 +673,7 @@
 
               <!-- Referral Coupons -->
               {{#if referralCoupons.length}}
-              <div class="mb-4">
+              <div class="mb-4 available-referral-coupons">
                 <h6 class="mb-3"><i class="fas fa-gift me-2"></i>Your Referral Rewards</h6>
                 {{#each referralCoupons}}
                 <div class="p-3 border rounded mb-3" style="background: linear-gradient(135deg, #28a745, #20c997); color: white;">
@@ -1525,9 +1525,9 @@
   });
 
   async function applyCoupons() {
-
     const couponInputElement = document.getElementById("couponCode");
     const couponCode = couponInputElement.value.trim();
+    const availableCouponsSection = document.querySelector('.available-coupons-section');
 
     const subtotalText = document.getElementById("subtotal").innerText.replace("₹", "").trim();
     const subtotal = parseFloat(subtotalText);
@@ -1559,10 +1559,16 @@
         document.getElementById("couponMessage").style.color = "green";
         document.getElementById("couponMessage").innerText = "Coupon applied successfully!";
 
-        // Show remove coupon section
+        // Show remove coupon section and hide available coupons
         document.getElementById("removeCouponSection").style.display = "block";
         document.getElementById("appliedCouponText").innerText = `Applied Coupon: ${couponCode}`;
         currentCouponCode = couponCode;
+        
+        // Hide both available coupons and referral coupons sections
+        const couponSections = document.querySelectorAll('.available-coupons-section, .available-referral-coupons');
+        couponSections.forEach(section => {
+          if (section) section.style.display = 'none';
+        });
 
         // Clear input
         couponInputElement.value = '';
@@ -1591,6 +1597,11 @@
 
   async function removeCoupon() {
     try {
+      // Show both available coupons and referral coupons sections when removing a coupon
+      const couponSections = document.querySelectorAll('.available-coupons-section, .available-referral-coupons');
+      couponSections.forEach(section => {
+        if (section) section.style.display = 'block';
+      });
 
       const subtotalText = document.getElementById("subtotal").innerText.replace("₹", "").trim();
       const subtotal = parseFloat(subtotalText);
