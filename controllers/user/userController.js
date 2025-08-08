@@ -11,9 +11,9 @@ const nodemailer = require("nodemailer")
 const { getDiscountPrice } = require("../../helpers/offerHelpers");
 // Import our referral helper functions
 const {
-    generateReferralCode,
-    validateReferralCode,
-    processReferralReward
+  generateReferralCode,
+  validateReferralCode,
+  processReferralReward
 } = require("../../helpers/referralHelpers")
 
 
@@ -85,18 +85,18 @@ module.exports = {
       const user = req.session.user;
       if (user) {
         const userData = await User.findOne({ _id: user }).lean();
-        
-     
+
+
         const cart = await Cart.findOne({ userId: user }).lean();
         const cartProductIds = cart ? cart.items.map(item => item.productId.toString()) : [];
-        
-      
+
+
         const wishlist = await Wishlist.findOne({ userId: user }).lean();
         const wishlistProductIds = wishlist ? wishlist.items.map(item => item.productId.toString()) : [];
-        console.log("userData :",userData)
-        
-        return res.render("home", { 
-          user: userData, 
+        console.log("userData :", userData)
+
+        return res.render("home", {
+          user: userData,
           products: productData,
           cartProductIds: cartProductIds,
           wishlistProductIds: wishlistProductIds
@@ -178,7 +178,7 @@ module.exports = {
       if (otp === req.session.userOtp) {
         const user = req.session.userData
         const passwordHash = await securePassword(user.password)
-        
+
         const userReferralCode = await generateReferralCode(user.name);
 
         const saveUserDaTa = new User({
@@ -186,12 +186,12 @@ module.exports = {
           email: user.email,
           phone: user.phone,
           password: passwordHash,
-          referralCode: userReferralCode  
+          referralCode: userReferralCode
         })
 
         await saveUserDaTa.save()
 
-        
+
         if (user.referrerData) {
           try {
             const rewardResult = await processReferralReward(user.referrerData._id, saveUserDaTa._id);
@@ -322,7 +322,7 @@ module.exports = {
         category: { $in: categoryIds },
 
       })
-        .populate('category') 
+        .populate('category')
         .sort({ createdAt: -1 })
         .skip(skip)
         .limit(limit)
@@ -344,8 +344,8 @@ module.exports = {
       }));
       console.log("cate dshhsdgds", categoriesWithIds)
 
-      
-      
+
+
       const productsWithOffers = products.map(product => {
         const offerData = getDiscountPrice(product);
         return {
@@ -356,20 +356,20 @@ module.exports = {
         };
       });
 
-      
-      
+
+
       const wishlist = await Wishlist.findOne({ userId: user }).lean();
       const wishlistProductIds = wishlist ? wishlist.items.map(item => item.productId.toString()) : [];
 
-      
-      
+
+
       const cart = await Cart.findOne({ userId: user }).lean();
       const cartProductIds = cart ? cart.items.map(item => item.productId.toString()) : [];
 
       console.log('Cart Product IDs:', cartProductIds);
       console.log('First few product IDs from products:', productsWithOffers.slice(0, 3).map(p => ({ id: p._id.toString(), name: p.name })));
 
-      
+
       const productsWithCartStatus = productsWithOffers.map(product => ({
         ...product,
         isInCart: cartProductIds.includes(product._id.toString())
@@ -377,14 +377,14 @@ module.exports = {
 
       res.render("user/shopp", {
         user: UserData,
-        products: productsWithCartStatus, 
+        products: productsWithCartStatus,
         category: categoriesWithIds,
         brand: brands,
         totalProducts: totalProducts,
         currentPage: page,
         totalPages: totalPages,
-        wishlistProductIds: wishlistProductIds, 
-        cartProductIds: cartProductIds 
+        wishlistProductIds: wishlistProductIds,
+        cartProductIds: cartProductIds
       });
     } catch (error) {
       console.error(error);
@@ -448,8 +448,8 @@ module.exports = {
       }
       req.session.filteredProduct = currentProduct;
 
-      
-      
+
+
       const productsWithOffers = currentProduct.map(product => {
         const offerData = getDiscountPrice(product);
         return {
@@ -460,13 +460,13 @@ module.exports = {
         };
       });
 
-     
+
       const wishlist = await Wishlist.findOne({ userId: user }).lean();
       const wishlistProductIds = wishlist ? wishlist.items.map(item => item.productId.toString()) : [];
 
       res.render("user/shopp", {
         user: userData,
-        products: productsWithOffers, 
+        products: productsWithOffers,
         category: categories,
         brand: brands,
         totalPages: totalPages,
@@ -501,7 +501,7 @@ module.exports = {
         .sort({ createdOn: -1 })
         .lean();
 
-        console.log("findProducts : ",findProducts)
+      console.log("findProducts : ", findProducts)
 
       const itemsPerPage = 6;
       const currentPage = parseInt(req.query.page) || 1;
@@ -512,7 +512,7 @@ module.exports = {
 
       req.session.filteredProduct = findProducts;
 
-     
+
       const productsWithOffers = currentProduct.map(product => {
         const offerData = getDiscountPrice(product);
         return {
@@ -523,14 +523,14 @@ module.exports = {
         };
       });
 
-    
-      
+
+
       const wishlist = await Wishlist.findOne({ userId: user }).lean();
       const wishlistProductIds = wishlist ? wishlist.items.map(item => item.productId.toString()) : [];
 
       res.render("user/shopp", {
         user: userData,
-        products: productsWithOffers, 
+        products: productsWithOffers,
         category: categories,
         brand: brands,
         totalPages,
@@ -559,15 +559,15 @@ module.exports = {
 
       console.log(" SEARCH DEBUG - Searching in database for all products");
 
-      
-      const searchRegex = new RegExp(search.trim(), "i"); 
+
+      const searchRegex = new RegExp(search.trim(), "i");
 
       searchResult = await Product.find({
         $and: [
           {
             $or: [
-              { productName: { $regex: searchRegex } },  
-              { brand: { $regex: searchRegex } }         
+              { productName: { $regex: searchRegex } },
+              { brand: { $regex: searchRegex } }
             ]
           },
           { isBlocked: false },
@@ -592,7 +592,7 @@ module.exports = {
         console.log(`  - ${p.productName} | Brand: ${p.brand} (blocked: ${p.isBlocked}, category: ${p.category})`);
       });
 
-    
+
       console.log("🔍 SEARCH DEBUG - Final filtered results:");
       searchResult.forEach(p => {
         console.log(`   ${p.productName} | Brand: ${p.brand}`);
@@ -612,8 +612,8 @@ module.exports = {
       const totalPages = Math.ceil(searchResult.length / itemsPerPage);
       const currentProduct = searchResult.slice(startIndex, endIndex);
 
-      
-      
+
+
       const productsWithOffers = currentProduct.map(product => {
         const offerData = getDiscountPrice(product);
         return {
@@ -624,13 +624,13 @@ module.exports = {
         };
       });
 
-      
+
       const wishlist = await Wishlist.findOne({ userId: user }).lean();
       const wishlistProductIds = wishlist ? wishlist.items.map(item => item.productId.toString()) : [];
 
       res.render("user/shopp", {
         user: userData,
-        products: productsWithOffers, 
+        products: productsWithOffers,
         category: categories,
         brand: brands,
         totalPages,

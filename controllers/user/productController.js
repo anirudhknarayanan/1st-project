@@ -7,7 +7,7 @@ module.exports = {
     productDetails: async (req, res) => {
         try {
             const userId = req.session.user;
-            const userData = await User.findById(userId)
+            const userData = await User.findById(userId).lean()
             const productId = req.query.id;
             console.log("its my productId", productId)
             const product = await Product.findById(productId).populate('category').lean()
@@ -24,6 +24,7 @@ module.exports = {
             const categoryOffer = findCategory?.categoryOffer || 0;
             const productOffer = product.productOffer || 0;
             const totalOffer = categoryOffer + productOffer;
+            console.log(userData)
             res.render("user/product-details", {
                 user: userData,
                 product: product,

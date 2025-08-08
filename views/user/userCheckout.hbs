@@ -604,26 +604,24 @@
                           {{#if hasOffer}}
                           <div style="margin-top: 4px;">
                             <small class="text-muted">
-                              Original: <span
-                                style="text-decoration: line-through;">₹{{this.productId.regularPrice}}</span>
+                              Original: <span style="text-decoration: line-through;">₹{{this.productId.regularPrice}}</span>
                             </small>
                           </div>
-                          <div class="offer-info"
-                            style="margin-top: 4px; padding: 4px 6px; background: #f8f9fa; border-left: 3px solid #28a745; border-radius: 3px;">
+                          <div class="offer-info" style="margin-top: 4px; padding: 4px 6px; background: #f8f9fa; border-left: 3px solid #28a745; border-radius: 3px;">
                             {{#if (eq appliedOfferType 'product')}}
-                            <small style="color: #28a745; font-weight: bold; font-size: 11px;">
-                              🏷️ <strong>Product Offer</strong>
-                            </small>
-                            <div style="color: #666; font-size: 10px; margin-top: 1px;">
-                              You saved <strong>₹{{totalSaved}}</strong> ({{appliedOffer}}% off)
-                            </div>
+                              <small style="color: #28a745; font-weight: bold; font-size: 11px;">
+                                🏷️ <strong>Product Offer</strong>
+                              </small>
+                              <div style="color: #666; font-size: 10px; margin-top: 1px;">
+                                You saved <strong>₹{{totalSaved}}</strong> ({{appliedOffer}}% off)
+                              </div>
                             {{else if (eq appliedOfferType 'category')}}
-                            <small style="color: #17a2b8; font-weight: bold; font-size: 11px;">
-                              📂 <strong>Category Offer</strong>
-                            </small>
-                            <div style="color: #666; font-size: 10px; margin-top: 1px;">
-                              You saved <strong>₹{{totalSaved}}</strong> ({{appliedOffer}}% off)
-                            </div>
+                              <small style="color: #17a2b8; font-weight: bold; font-size: 11px;">
+                                📂 <strong>Category Offer</strong>
+                              </small>
+                              <div style="color: #666; font-size: 10px; margin-top: 1px;">
+                                You saved <strong>₹{{totalSaved}}</strong> ({{appliedOffer}}% off)
+                              </div>
                             {{/if}}
                           </div>
                           {{else}}
@@ -678,8 +676,7 @@
               <div class="mb-4 available-referral-coupons">
                 <h6 class="mb-3"><i class="fas fa-gift me-2"></i>Your Referral Rewards</h6>
                 {{#each referralCoupons}}
-                <div class="p-3 border rounded mb-3"
-                  style="background: linear-gradient(135deg, #28a745, #20c997); color: white;">
+                <div class="p-3 border rounded mb-3" style="background: linear-gradient(135deg, #28a745, #20c997); color: white;">
                   <div class="d-flex justify-content-between align-items-center">
                     <div>
                       <span class="fw-bold" data-coupon-id="{{this.couponCode}}">{{this.couponCode}}</span>
@@ -809,57 +806,61 @@
   <div class="modal-content p-4">
     <span class="close-btn" onclick="closeModal()">&times;</span>
     <h2 class="modal-title mb-3">Edit Address</h2>
-
+    
     <form id="editAddressForm" action="/editCheckoutAddress" method="POST" novalidate>
       <div class="mb-3">
         <label for="edit_addressType">Address Type</label>
-        <input type="text" id="edit_addressType" name="addressType" class="form-control"
-          placeholder="Address Type (e.g., Home, Office)" required>
+        <input type="text" id="edit_addressType" name="addressType" class="form-control" 
+               placeholder="Address Type (e.g., Home, Office)" required>
         <div class="invalid-feedback">Please enter address type.</div>
       </div>
 
       <div class="mb-3">
         <label for="edit_name">Place Name</label>
-        <input type="text" id="edit_name" name="name" class="form-control" placeholder="Full Name" required>
+        <input type="text" id="edit_name" name="name" class="form-control" 
+               placeholder="Full Name" required>
         <div class="invalid-feedback">Please enter place name.</div>
       </div>
 
       <div class="mb-3">
         <label for="edit_city">City</label>
-        <input type="text" id="edit_city" name="city" class="form-control" placeholder="City" required>
+        <input type="text" id="edit_city" name="city" class="form-control" 
+               placeholder="City" required>
         <div class="invalid-feedback">Please enter city.</div>
       </div>
 
       <div class="mb-3">
         <label for="edit_state">State</label>
-        <input type="text" id="edit_state" name="state" class="form-control" placeholder="State" required>
+        <input type="text" id="edit_state" name="state" class="form-control" 
+               placeholder="State" required>
         <div class="invalid-feedback">Please enter state.</div>
       </div>
 
       <div class="mb-3">
         <label for="edit_landMark">Landmark</label>
-        <input type="text" id="edit_landMark" name="landMark" class="form-control" placeholder="Landmark" required>
+        <input type="text" id="edit_landMark" name="landMark" class="form-control" 
+               placeholder="Landmark" required>
         <div class="invalid-feedback">Please enter landmark.</div>
       </div>
 
       <div class="mb-3">
         <label for="edit_pincode">Pincode</label>
-        <input type="text" id="edit_pincode" name="pincode" class="form-control" placeholder="Pincode" required
-          pattern="^[1-9][0-9]{5}$">
+        <input type="text" id="edit_pincode" name="pincode" class="form-control" 
+               placeholder="Pincode" required pattern="^[1-9][0-9]{5}$">
         <div class="invalid-feedback">Enter a valid 6-digit pincode.</div>
       </div>
 
       <div class="mb-3">
         <label for="edit_phone">Phone Number</label>
-        <input type="tel" id="edit_phone" name="phone" class="form-control" placeholder="Phone Number" required
-          pattern="^[6-9]\d{9}$">
+        <input type="tel" id="edit_phone" name="phone" class="form-control" 
+               placeholder="Phone Number" required pattern="^[6-9]\d{9}$">
         <div class="invalid-feedback">Enter a valid 10-digit mobile number.</div>
       </div>
 
       <div class="mb-4">
         <label for="edit_altPhone">Alternative Phone Number (Optional)</label>
-        <input type="tel" id="edit_altPhone" name="altPhone" class="form-control"
-          placeholder="Alternative Phone Number (Optional)" pattern="^[6-9]\d{9}$">
+        <input type="tel" id="edit_altPhone" name="altPhone" class="form-control" 
+               placeholder="Alternative Phone Number (Optional)" pattern="^[6-9]\d{9}$">
         <div class="invalid-feedback">Enter a valid 10-digit alternative number.</div>
       </div>
 
@@ -890,7 +891,7 @@
       </div>
 
       <div class="mb-3">
-        <label for="city">City</label>
+        <label for="city" >City</label>
         <input type="text" name="city" id="city" class="form-control" required>
         <div class="invalid-feedback">Please enter city.</div>
       </div>
@@ -914,9 +915,9 @@
       </div>
 
       <div class="mb-3">
-        <label for="phone">Phone Number</label>
+         <label for="phone">Phone Number</label>
         <input type="tel" name="phone" id="phone" class="form-control" required pattern="^[6-9]\d{9}$">
-        <div class="invalid-feedback">Enter a valid 10-digit mobile number.</div>
+<div class="invalid-feedback">Enter a valid 10-digit mobile number.</div>
 
       </div>
 
@@ -1351,7 +1352,7 @@
                   orderedItems,
                   totalAmount,
                   couponCode: appliedCouponCode,
-                  discountAmount,
+                   discountAmount,
                   paymentMethod: "razorpay",
 
                 })
@@ -1454,64 +1455,62 @@
     // Get current total from the page (after coupons)
     const totalElement = document.getElementById('total');
     const totalText = totalElement ? totalElement.innerText.replace('₹', '').trim() : '{{cart.cartTotal}}';
-    const currentTotal = parseFloat(totalText) || {{ cart.cartTotal }
-  };
+    const currentTotal = parseFloat(totalText) || {{cart.cartTotal}};
 
-  const codRadio = document.getElementById('cod');
-  const codLabel = document.querySelector('label[for="cod"]');
-  const codError = document.getElementById('codRestrictionMessage');
+    const codRadio = document.getElementById('cod');
+    const codLabel = document.querySelector('label[for="cod"]');
+    const codError = document.getElementById('codRestrictionMessage');
 
-  if (currentTotal > 1000) {
-    codRadio.disabled = true;
-    codLabel.style.color = '#999';
-    codError.style.display = 'block';
+    if (currentTotal > 1000) {
+      codRadio.disabled = true;
+      codLabel.style.color = '#999';
+      codError.style.display = 'block';
 
-    // If COD is currently selected, switch to Razorpay
-    if (codRadio.checked) {
-      document.getElementById('razorpay').checked = true;
+      // If COD is currently selected, switch to Razorpay
+      if (codRadio.checked) {
+        document.getElementById('razorpay').checked = true;
+      }
+    } else {
+      codRadio.disabled = false;
+      codLabel.style.color = '';
+      codError.style.display = 'none';
     }
-  } else {
-    codRadio.disabled = false;
-    codLabel.style.color = '';
-    codError.style.display = 'none';
-  }
   }
 
   // ✅ WALLET BALANCE VALIDATION
   function checkWalletBalance() {
-    const walletBalance = {{ user.walletBalance }
-  };
+    const walletBalance = {{user.walletBalance}};
 
-  // Get current total from the page (after coupons)
-  const totalElement = document.getElementById('total');
-  const totalText = totalElement ? totalElement.innerText.replace('₹', '').trim() : '{{cart.cartTotal}}';
-  const currentTotal = parseFloat(totalText) || {{ cart.cartTotal }};
+    // Get current total from the page (after coupons)
+    const totalElement = document.getElementById('total');
+    const totalText = totalElement ? totalElement.innerText.replace('₹', '').trim() : '{{cart.cartTotal}}';
+    const currentTotal = parseFloat(totalText) || {{cart.cartTotal}};
 
-  const walletRadio = document.getElementById('wallet');
-  const walletLabel = document.querySelector('label[for="wallet"]');
-  const walletError = document.getElementById('walletBalanceCheck');
-  const walletErrorMessage = document.getElementById('walletErrorMessage');
+    const walletRadio = document.getElementById('wallet');
+    const walletLabel = document.querySelector('label[for="wallet"]');
+    const walletError = document.getElementById('walletBalanceCheck');
+    const walletErrorMessage = document.getElementById('walletErrorMessage');
 
-  if (walletBalance < currentTotal) {
-    walletRadio.disabled = true;
-    walletLabel.style.color = '#999';
-    walletError.style.display = 'block';
-    walletErrorMessage.textContent = `Insufficient wallet balance. Need ₹${currentTotal - walletBalance} more.`;
+    if (walletBalance < currentTotal) {
+      walletRadio.disabled = true;
+      walletLabel.style.color = '#999';
+      walletError.style.display = 'block';
+      walletErrorMessage.textContent = `Insufficient wallet balance. Need ₹${currentTotal - walletBalance} more.`;
 
-    // If wallet is currently selected, switch to available option
-    if (walletRadio.checked) {
-      const codRadio = document.getElementById('cod');
-      if (!codRadio.disabled) {
-        codRadio.checked = true;
-      } else {
-        document.getElementById('razorpay').checked = true;
+      // If wallet is currently selected, switch to available option
+      if (walletRadio.checked) {
+        const codRadio = document.getElementById('cod');
+        if (!codRadio.disabled) {
+          codRadio.checked = true;
+        } else {
+          document.getElementById('razorpay').checked = true;
+        }
       }
+    } else {
+      walletRadio.disabled = false;
+      walletLabel.style.color = '';
+      walletError.style.display = 'none';
     }
-  } else {
-    walletRadio.disabled = false;
-    walletLabel.style.color = '';
-    walletError.style.display = 'none';
-  }
   }
 
   // ✅ CHECK ALL PAYMENT METHOD ELIGIBILITY
@@ -1521,7 +1520,7 @@
   }
 
   // Check payment method eligibility on page load
-  document.addEventListener('DOMContentLoaded', function () {
+  document.addEventListener('DOMContentLoaded', function() {
     checkPaymentMethodEligibility();
   });
 
@@ -1564,7 +1563,7 @@
         document.getElementById("removeCouponSection").style.display = "block";
         document.getElementById("appliedCouponText").innerText = `Applied Coupon: ${couponCode}`;
         currentCouponCode = couponCode;
-
+        
         // Hide both available coupons and referral coupons sections
         const couponSections = document.querySelectorAll('.available-coupons-section, .available-referral-coupons');
         couponSections.forEach(section => {
@@ -1693,7 +1692,7 @@
 
 
 
-  document.addEventListener('DOMContentLoaded', function () {
+   document.addEventListener('DOMContentLoaded', function () {
     const form = document.getElementById('addressForm');
 
     form.addEventListener('submit', function (event) {
@@ -1799,3 +1798,5 @@
 
 
 </script>
+
+
