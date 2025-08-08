@@ -5,8 +5,6 @@ const Order = require("../../models/orderSchema");
 const moment = require("moment");
 
 
-
-
 module.exports = {
     adminLogin: async (req, res) => {
         try {
@@ -15,15 +13,15 @@ module.exports = {
             }
             res.render("admin/admin-login", {
                 layout: "layout",
-                adminLoginPage: true  
+                adminLoginPage: true
             });
         } catch (error) {
             res.status(404).send("server error")
 
         }
 
-
     },
+
     login: async (req, res) => {
         try {
             const { email, password } = req.body;
@@ -49,6 +47,7 @@ module.exports = {
         }
 
     },
+
     loadDashBoard: async (req, res) => {
 
         try {
@@ -87,7 +86,6 @@ module.exports = {
     getPageerror: async (req, res) => {
         res.render("admin/admin-error", { admin: true })
     },
-
 
     logout: async (req, res) => {
 
@@ -461,8 +459,6 @@ async function getDashboardData(timeFilter) {
     ]);
 
 
-
-
     const salesData = mapDataToLabels(salesByPeriod, labels, timeFilter, 'total');
     const customersData = mapDataToLabels(customersByPeriod, labels, timeFilter, 'count');
     const ordersData = mapDataToLabels(ordersByPeriod, labels, timeFilter, 'count');
@@ -510,7 +506,6 @@ function calculateGrowthPercentage(current, previous) {
     if (previous === 0) return current > 0 ? 100 : 0;
     return Number(((current - previous) / previous * 100).toFixed(1));
 }
-
 
 
 function mapDataToLabels(data, labels, timeFilter, valueField) {
