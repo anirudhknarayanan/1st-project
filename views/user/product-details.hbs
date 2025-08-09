@@ -481,20 +481,28 @@
                                     <button class="quantity-btn"
                                         onclick="updateQuantity('increase', '{{product._id}}')">+</button>
                                 </div>
-                                <button onclick="addToCart('{{product._id}}', {{product.quantity}})"
+
+                                {{#if isinCart}}
+                                <button class="add-to-cart-btn added" disabled>
+                                    Go to Cart
+                                </button>
+                                {{else}}
+                                <button onclick="addToCart('{{product._id}}', {{product.quantity}},this)"
                                     class="add-to-cart-btn">
                                     Add to Cart
                                 </button>
+                                {{/if}}
                             </div>
                         </div>
                         {{/isGreaterThanZero}}
 
 
-                        <div class="text-center">
-                            <a href="#" onclick="event.preventDefault(); addToWishlist('{{product._id}}')"
-                                class="wishlist-btn">
 
-                                <i class="fa fa-heart"></i> Add to wishlist
+                        <div class="text-center">
+                            <a href="#" onclick="event.preventDefault(); toggleWishlist('{{product._id}}', this)"
+                                class="wishlist-btn {{#if isinWishlist}}in-wishlist{{/if}}">
+                                <i class="fa fa-heart"></i>
+                                {{#if isinWishlist}}Wishlisted{{else}}Add to wishlist{{/if}}
                             </a>
                         </div>
 
@@ -805,7 +813,7 @@
 
 
 
-    async function addToCart(productId, productQty) {
+    async function addToCart(productId, productQty,buttonElement) {
         console.log('Called addToCart with:', productId, productQty);
         try {
             const quantity = parseInt(document.getElementById(`product-quantity-${productId}`).value);
@@ -835,6 +843,12 @@
             if (data.success) {
                 // Update cart badge
                 updateCartBadge();
+
+                 if (buttonElement) {
+                buttonElement.textContent = 'Added to Cart';
+                buttonElement.classList.add('added');
+                buttonElement.disabled = true;
+            }
 
                 Toastify({
                     text: "Success\nProduct added to cart successfully",
@@ -924,16 +938,24 @@
 
 
 
-    async function addToWishlist(productId) {
+    async function toggleWishlist(productId, element) {
         try {
             const response = await fetch("/addToWishlist", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({ productId })
-            })
+            });
+
+            const badge = document.getElementById("wishlist-count-badge");
+
             const data = await response.json();
 
             if (data.success) {
+                // Add to wishlist success
+                element.classList.add('in-wishlist');
+                element.innerHTML = '<i class="fa fa-heart"></i> Wishlisted';
+                updateWishlistBadge(badge, data.count);
+
                 Toastify({
                     text: "Success\nProduct added to wishlist successfully",
                     duration: 2000,
@@ -956,13 +978,74 @@
                     avatar: "https://cdn-icons-png.flaticon.com/512/845/845646.png",
                 }).showToast();
             } else {
-                throw new Error(data.message || 'Failed to add product to Wishlist');
+                // Check if item is already in cart
+                if (data.message === "Item is already in the cart") {
+                    Toastify({
+                        text: "Info\n" + data.message,
+                        duration: 2000,
+                        close: true,
+                        gravity: "top",
+                        position: "right",
+                        stopOnFocus: true,
+                        style: {
+                            background: "#ffffff",
+                            color: "#17a2b8",
+                            boxShadow: "0px 5px 15px rgba(0, 0, 0, 0.2)",
+                            padding: "12px 20px",
+                            borderRadius: "10px",
+                            borderLeft: "5px solid #17a2b8",
+                            fontSize: "14px",
+                            fontWeight: "bold",
+                            textAlign: "left",
+                            animation: "fadeInUp 0.5s ease-in-out"
+                        },
+                        avatar: "https://cdn-icons-png.flaticon.com/512/5753/5753454.png",
+                    }).showToast();
+                } else {
+                    // Item already in wishlist, so remove it
+                    const removeResponse = await fetch(`/removeFromWishlist/${productId}`, {
+                        method: "DELETE"
+                    });
+
+                    const removeData = await removeResponse.json();
+
+                    if (removeData.success) {
+                        // Remove from wishlist success
+                        element.classList.remove('in-wishlist');
+                        element.innerHTML = '<i class="fa fa-heart"></i> Add to wishlist';
+                        updateWishlistBadge(badge, removeData.count);
+
+                        Toastify({
+                            text: "Success\nProduct removed from wishlist",
+                            duration: 2000,
+                            close: true,
+                            gravity: "top",
+                            position: "right",
+                            stopOnFocus: true,
+                            style: {
+                                background: "#ffffff",
+                                color: "#28a745",
+                                boxShadow: "0px 5px 15px rgba(0, 0, 0, 0.2)",
+                                padding: "12px 20px",
+                                borderRadius: "10px",
+                                borderLeft: "5px solid #28a745",
+                                fontSize: "14px",
+                                fontWeight: "bold",
+                                textAlign: "left",
+                                animation: "fadeInUp 0.5s ease-in-out"
+                            },
+                            avatar: "https://cdn-icons-png.flaticon.com/512/845/845646.png",
+                        }).showToast();
+                    } else {
+                        throw new Error(removeData.message || 'Failed to remove product from Wishlist');
+                    }
+                }
             }
         } catch (error) {
             console.error('Error:', error);
 
             Toastify({
-                text: "Error\n" + error || 'Failed to add product to Wishlist',
+                text: "Error\n" + (error.message || 'Failed to update wishlist'),
                 duration: 2000,
                 close: true,
                 gravity: "top",
@@ -982,6 +1065,17 @@
                 },
                 avatar: "https://cdn-icons-png.flaticon.com/512/190/190406.png",
             }).showToast();
+        }
+    }
+
+    function updateWishlistBadge(badgeElement, count) {
+        if (!badgeElement) return;
+
+        if (count > 0) {
+            badgeElement.textContent = count;
+            badgeElement.style.display = "inline-block";
+        } else {
+            badgeElement.style.display = "none";
         }
     }
 
