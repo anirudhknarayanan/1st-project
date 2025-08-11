@@ -8,7 +8,7 @@ passport.use(new googleStrategy({
 
     clientID: process.env.GOOGLE_CLIENT_ID,
     clientSecret: process.env.GOOGLE_CLIENT_SECRET,
-    callbackURL: "https://takeyourtime.world/auth/google/callback"
+    callbackURL: "https://takeyourtime.world/auth/google/callback" 
 },
 
     async (accessToken, refreshToken, profile, done) => {
@@ -34,7 +34,7 @@ passport.use(new googleStrategy({
 
         }
     }
-    
+
 ))
 
 passport.serializeUser((user, done) => {
