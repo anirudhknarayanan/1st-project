@@ -394,7 +394,7 @@
                 <h3>Add Money to Wallet</h3>
                 <form onsubmit="addMoney(event)">
                   <div class="form-group">
-                    <input type="number" name="amount" class="form-control" placeholder="Enter amount" required>
+                    <input type="number" name="amount" class="form-control" placeholder="Enter amount" required min="1" max="10000">
                   </div>
                   <button type="submit" class="btn btn-success">ADD MONEY</button>
                 </form>
@@ -471,7 +471,21 @@
   function addMoney(event) {
     event.preventDefault();
 
-    const amount = document.querySelector('input[name="amount"]').value;
+
+
+    const amount = parseFloat(document.querySelector('input[name="amount"]').value);
+
+
+    if (isNaN(amount) || amount <= 0) {
+      Swal.fire('Invalid Amount!', 'Please enter a valid positive amount.', 'error');
+      return;
+    }
+    if (amount > 10000) {
+      Swal.fire('Limit Exceeded!', 'You cannot add more than ₹10,000 at once.', 'error');
+      return;
+    }
+
+
 
     fetch('/addMoney', {
       method: 'POST',
