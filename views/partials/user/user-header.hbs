@@ -32,10 +32,13 @@
 							<a href="/profile">
 								<i class="fa-solid fa-user"></i>
 								{{#if user}}
+								{{#if user.name}}
 								<span class="position-absolute badge rounded-pill bg-info">
 									{{firstName user.name}}
 								</span>
 								{{/if}}
+								{{/if}}
+
 							</a>
 						</li>
 						<li class="cart">
