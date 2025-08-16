@@ -74,6 +74,13 @@ app.set("views", path.join(__dirname, "views"));
 app.use("/", userRouter);
 app.use("/admin", adminRouter);
 
+app.use((req, res) => {
+  res.status(404).render("404", {
+    title: "Page Not Found",
+    layout: "layout",   // so it uses your main layout.hbs
+  });
+});
+
 
 const PORT = 3000;
 app.listen(PORT, '0.0.0.0',() => {
