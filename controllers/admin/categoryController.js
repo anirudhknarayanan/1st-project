@@ -42,7 +42,9 @@ module.exports = {
         const { name, description, categoryOffer } = req.body; // ✅ Include categoryOffer
 
         try {
-            const existingCategory = await Category.findOne({ name });
+            const existingCategory = await Category.findOne({
+                name: { $regex: new RegExp("^" + name + "$", "i") }
+            });
             if (existingCategory) {
                 return res.status(400).json({ error: "Category already exists" });
             }
@@ -58,7 +60,7 @@ module.exports = {
 
         } catch (error) {
 
-            console.error("Error adding category:", error); 
+            console.error("Error adding category:", error);
             return res.status(500).json({ error: "Internal server error" });
         }
     },
@@ -75,10 +77,10 @@ module.exports = {
 
             const products = await Product.find({ category: category._id })
 
-            
+
             await Category.updateOne({ _id: categoryId }, { $set: { categoryOffer: percentage } })
 
-            
+
             await updateMultipleProductsSalePrice(products, percentage);
 
             res.json({ status: true })
@@ -100,12 +102,12 @@ module.exports = {
 
             const products = await Product.find({ category: category._id })
 
-            
+
             category.categoryOffer = 0;
             await category.save()
 
-           
-          
+
+
             await updateMultipleProductsSalePrice(products, 0);
 
             res.json({ status: true })

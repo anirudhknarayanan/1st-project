@@ -401,7 +401,7 @@
             window.location.reload();
           });
         } else {
-          throw new Error(data.message || 'Failed to add category');
+          throw new Error(data.message ||  data.error || 'Failed to add category');
         }
       })
       .catch(error => {

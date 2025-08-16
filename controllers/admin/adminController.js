@@ -9,7 +9,7 @@ module.exports = {
     adminLogin: async (req, res) => {
         try {
             if (req.session.admin) {
-                res.redirect("/")
+                return res.redirect("/admin");
             }
             res.render("admin/admin-login", {
                 layout: "layout",
