@@ -594,6 +594,7 @@
                 </tr>
             </thead>
             <tbody>
+                
                 {{#if order.order_items.length}}
                 {{#each order.order_items}}
                 {{#if this.productId}}
@@ -610,12 +611,14 @@
                         {{#if this.hasOffer}}
                         <div style="margin-top: 5px;">
                             <div style="color: #666; font-size: 12px;">
-                                Original: <span style="text-decoration: line-through;">₹{{this.productId.regularPrice}}</span>
+                                Original: <span
+                                    style="text-decoration: line-through;">₹{{this.productId.regularPrice}}</span>
                             </div>
                         </div>
 
                         {{!-- ✅ SHOW OFFER INFORMATION --}}
-                        <div class="product-offer-details" style="margin-top: 6px; padding: 4px 6px; background: #f8f9fa; border-left: 3px solid #28a745; border-radius: 3px; font-size: 10px;">
+                        <div class="product-offer-details"
+                            style="margin-top: 6px; padding: 4px 6px; background: #f8f9fa; border-left: 3px solid #28a745; border-radius: 3px; font-size: 10px;">
                             <div style="color: #28a745; font-weight: bold;">
                                 📁 <strong>Category Offer</strong>
                             </div>
@@ -634,8 +637,10 @@
                     <td>₹{{multiply this.price this.quantity}}</td>
 
                     <td>
-                        {{#if (eq this.status "active")}}
-                        {{!-- Show Cancel Item button --}}
+                        {{#if (and
+                        (eq this.status "active")
+                        (ne ../order.status "failed") 
+                        )}}
                         {{#if (and
                         (not (eq ../order.status "cancelled"))
                         (not (eq ../order.status "delivered"))
@@ -703,7 +708,8 @@
 
 
         <div class="action-row">
-            {{#if (and (ne order.status 'cancelled') (ne order.status 'delivered') (ne order.status 'returned') (ne
+            {{#if (and (ne order.status 'failed') (ne order.status 'cancelled') (ne order.status 'delivered') (ne
+            order.status 'returned') (ne
             order.status 'Return requested') (ne order.status 'Return approved') (ne order.status 'Return rejected'))}}
             <button class="btn-cancel" onclick="openModal()">
                 <i class="fas fa-times-circle"></i> Cancel Order
@@ -760,7 +766,8 @@
             {{!-- ✅ Custom reason textarea (hidden by default) --}}
             <div class="form-group" id="customReasonGroup" style="display: none;">
                 <label for="customReason">Please specify your reason:</label>
-                <textarea id="customReason" placeholder="Enter your custom reason for cancellation..." rows="3" style="width: 100%; padding: 10px; border: 2px solid #e2e8f0; border-radius: 6px; font-size: 0.95rem; resize: vertical; min-height: 80px;"></textarea>
+                <textarea id="customReason" placeholder="Enter your custom reason for cancellation..." rows="3"
+                    style="width: 100%; padding: 10px; border: 2px solid #e2e8f0; border-radius: 6px; font-size: 0.95rem; resize: vertical; min-height: 80px;"></textarea>
             </div>
         </div>
         <div class="modal-footer">
@@ -817,7 +824,8 @@
             {{!-- ✅ Custom reason textarea for item cancel (hidden by default) --}}
             <div class="form-group" id="itemCustomReasonGroup" style="display: none;">
                 <label for="itemCustomReason">Please specify your reason:</label>
-                <textarea id="itemCustomReason" placeholder="Enter your custom reason for cancellation..." rows="3" style="width: 100%; padding: 10px; border: 2px solid #e2e8f0; border-radius: 6px; font-size: 0.95rem; resize: vertical; min-height: 80px;"></textarea>
+                <textarea id="itemCustomReason" placeholder="Enter your custom reason for cancellation..." rows="3"
+                    style="width: 100%; padding: 10px; border: 2px solid #e2e8f0; border-radius: 6px; font-size: 0.95rem; resize: vertical; min-height: 80px;"></textarea>
             </div>
         </div>
         <div class="modal-footer">
@@ -831,27 +839,27 @@
 {{!-- return item modal --}}
 
 <div id="itemReturnModal" class="modal">
-  <div class="modal-content">
-    <div class="modal-header">
-      <h2>Return Item</h2>
-      <button class="close-btn" onclick="closeItemReturnModal()">&times;</button>
-    </div>
-    <div class="modal-body">
-      <form id="itemReturnForm">
-        <input type="hidden" id="returnOrderId" name="orderId">
-        <input type="hidden" id="returnProductId" name="productId">
-        <input type="hidden" id="returnQuantity" name="quantity"> <!-- ✅ ADD THIS -->
-
-        <label for="itemReturnReason">Reason:</label>
-        <textarea id="itemReturnReason" required></textarea>
-
-        <div class="modal-footer">
-          <button type="button" class="btn-cancel" onclick="closeItemReturnModal()">Cancel</button>
-          <button type="submit" class="btn-confirm">Submit Return</button>
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Return Item</h2>
+            <button class="close-btn" onclick="closeItemReturnModal()">&times;</button>
         </div>
-      </form>
+        <div class="modal-body">
+            <form id="itemReturnForm">
+                <input type="hidden" id="returnOrderId" name="orderId">
+                <input type="hidden" id="returnProductId" name="productId">
+                <input type="hidden" id="returnQuantity" name="quantity"> <!-- ✅ ADD THIS -->
+
+                <label for="itemReturnReason">Reason:</label>
+                <textarea id="itemReturnReason" required></textarea>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn-cancel" onclick="closeItemReturnModal()">Cancel</button>
+                    <button type="submit" class="btn-confirm">Submit Return</button>
+                </div>
+            </form>
+        </div>
     </div>
-  </div>
 </div>
 
 
@@ -1263,7 +1271,7 @@
 
 {{!-- ✅ CALCULATE CORRECT SAVINGS AMOUNTS --}}
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
+    document.addEventListener('DOMContentLoaded', function () {
         // Calculate correct savings for all order items
         const savingsElements = document.querySelectorAll('.savings-amount');
 
